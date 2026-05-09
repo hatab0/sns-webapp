@@ -61,7 +61,7 @@ def generate_caption(script: dict, platform: str, product: dict = None) -> str:
 方向性：{script.get('caption_hint', '')}
 今の月齢あるある：{struggles_str}
 """
-        closing = "「わかる人いる？」「同じ月齢の人どうだった？」「これあるあるじゃない？」のどれか、または自然に終わる"
+        closing = "「わかる人いますか？」「同じ月齢の人いますか？」「これあるあるですか？」のような丁寧すぎず砕けすぎない自然な問いかけで締める"
         bad_good = """
 【NG例（AIっぽい・絶対使わない）】
 × 「育児の大変さを実感する毎日ですが、せなっちの成長に喜びを感じています」
