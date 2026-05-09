@@ -5,8 +5,10 @@ Buffer APIを使ってInstagram・Threadsに予約投稿する。
 """
 import requests
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
+
+JST = timezone(timedelta(hours=9))
 
 load_dotenv()
 
@@ -23,8 +25,8 @@ def get_headers() -> dict:
 
 
 def get_base_post_time() -> datetime:
-    """現在時刻 + 3分を基準投稿時刻として返す"""
-    return datetime.now() + timedelta(minutes=3)
+    """現在のJST時刻 + 3分を基準投稿時刻として返す"""
+    return datetime.now(tz=JST) + timedelta(minutes=3)
 
 
 def get_profiles() -> list:

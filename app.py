@@ -6,9 +6,11 @@ import os
 import sys
 import base64
 import streamlit as st
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from PIL import Image
+
+JST = timezone(timedelta(hours=9))
 
 # ── Streamlit Cloud の secrets を環境変数に注入
 if hasattr(st, "secrets"):
@@ -241,7 +243,7 @@ for k, v in _defaults.items():
         st.session_state[k] = v
 
 # ── ヘッダー（アイコン画像 + タイトル + SNSリンク）
-today_str  = datetime.now().strftime("%Y年%m月%d日")
+today_str  = datetime.now(tz=JST).strftime("%Y年%m月%d日")
 icon_img   = f'<img src="data:image/png;base64,{_icon_b64}" class="header-icon">' if _icon_b64 else '<div style="font-size:4rem;">🍼</div>'
 
 st.markdown(f"""
@@ -346,7 +348,7 @@ with tab2:
     else:
         posts   = st.session_state.posts or []
         scripts = st.session_state.scripts or []
-        today   = datetime.now().strftime("%Y%m%d")
+        today   = datetime.now(tz=JST).strftime("%Y%m%d")
 
         if posts:
             p = posts[0]
@@ -412,9 +414,9 @@ with tab3:
     if not st.session_state.generated:
         st.info("💡 まず「コンテンツ生成」タブで生成してください。")
     else:
-        post_time_text  = (datetime.now() + timedelta(minutes=3)).strftime("%H:%M")
-        post_time_buzz  = (datetime.now() + timedelta(minutes=33)).strftime("%H:%M")
-        post_time_video = (datetime.now() + timedelta(minutes=3)).strftime("%H:%M")
+        post_time_text  = (datetime.now(tz=JST) + timedelta(minutes=3)).strftime("%H:%M")
+        post_time_buzz  = (datetime.now(tz=JST) + timedelta(minutes=33)).strftime("%H:%M")
+        post_time_video = (datetime.now(tz=JST) + timedelta(minutes=3)).strftime("%H:%M")
 
         # ── ① Threads テキスト投稿（動画不要）
         st.markdown("""
@@ -523,7 +525,7 @@ with tab3:
                     if ok_ig:
                         parts.append(f"Instagram Reel {post_time_video}頃")
                     if ok_th:
-                        parts.append(f"Threads動画 {(datetime.now() + timedelta(minutes=48)).strftime('%H:%M')}頃")
+                        parts.append(f"Threads動画 {(datetime.now(tz=JST) + timedelta(minutes=48)).strftime('%H:%M')}頃")
                     st.success(f"✅ {' / '.join(parts)} に投稿されます")
                     st.rerun()
                 else:
