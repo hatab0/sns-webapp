@@ -364,9 +364,121 @@ with tab2:
     if not st.session_state.generated or not st.session_state.all_products:
         st.info("💡 まず「コンテンツ生成」タブで生成してください。")
     else:
-        all_p   = st.session_state.all_products
-        top3_codes = {p.get("item_code", "") for p in (st.session_state.posts or [])}
+        import plotly.express as px
+        import plotly.graph_objects as go
+        import pandas as pd
 
+        all_p      = st.session_state.all_products
+        top3_codes = {p.get("item_code", "") for p in (st.session_state.posts or []) if p.get("item_code")}
+        selected_p = (st.session_state.posts or [None])[0]
+
+        # ── スコア算出の説明
+        st.markdown("""
+        <div style="background:linear-gradient(135deg,#FFF0F8,#FFE8EF); border-radius:14px;
+                    padding:1rem 1.2rem; margin-bottom:1rem; border:1px solid #FFB6C1; font-size:0.88rem;">
+            📐 <b>スコア計算式</b>：レビュー数 × 0.6 ＋ レビュー評価 × 10 × 0.4<br>
+            <span style="color:#AD1457;">スコアが最も高い商品を今回のコンテンツ対象として選出しています</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── DataFrame 準備
+        df = pd.DataFrame(all_p)
+        df["選出"] = df["item_code"].apply(lambda c: "🏆 選出" if c in top3_codes else "その他")
+        df["商品名（短）"] = df["name"].str[:22] + df["name"].str[22:].apply(lambda x: "…" if x else "")
+        df["スコア"] = df["score"].astype(float)
+        df["レビュー数"] = df["review_count"].astype(int)
+        df["レビュー評価"] = df["review_average"].astype(float)
+        df["価格"] = df["price"].astype(int)
+
+        COLOR_MAP = {"🏆 選出": "#FF6B9D", "その他": "#FFAECB"}
+
+        # ── グラフ① スコアランキング横棒グラフ
+        st.markdown("#### 📊 スコアランキング（上位15件）")
+        top15 = df.head(15).iloc[::-1].copy()
+        fig_bar = px.bar(
+            top15,
+            x="スコア",
+            y="商品名（短）",
+            orientation="h",
+            color="選出",
+            color_discrete_map=COLOR_MAP,
+            hover_data={"レビュー数": True, "レビュー評価": True, "価格": True, "選出": False},
+            height=max(320, len(top15) * 28),
+        )
+        fig_bar.update_layout(
+            plot_bgcolor="rgba(255,245,248,0.6)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            font=dict(family="sans-serif", size=12, color="#3D2B3D"),
+            legend_title_text="",
+            margin=dict(l=10, r=20, t=10, b=10),
+            xaxis=dict(gridcolor="#FFD6E7", title="スコア"),
+            yaxis=dict(title=""),
+        )
+        fig_bar.update_traces(marker_line_width=0)
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+        # ── グラフ② レビュー数 × レビュー評価 散布図
+        st.markdown("#### 🫧 レビュー数 × レビュー評価（バブル = スコア）")
+        st.caption("右上ほど高スコア。バブルが大きいほどスコアが高い商品です")
+        fig_scatter = px.scatter(
+            df,
+            x="レビュー数",
+            y="レビュー評価",
+            size="スコア",
+            color="選出",
+            color_discrete_map=COLOR_MAP,
+            hover_name="商品名（短）",
+            hover_data={"スコア": ":.1f", "価格": True, "選出": False},
+            size_max=40,
+            height=380,
+        )
+        fig_scatter.update_layout(
+            plot_bgcolor="rgba(255,245,248,0.6)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            font=dict(family="sans-serif", size=12, color="#3D2B3D"),
+            legend_title_text="",
+            margin=dict(l=10, r=20, t=10, b=10),
+            xaxis=dict(gridcolor="#FFD6E7", title="レビュー数（件）"),
+            yaxis=dict(gridcolor="#FFD6E7", title="レビュー評価（5点満点）"),
+        )
+        st.plotly_chart(fig_scatter, use_container_width=True)
+
+        # ── 選出商品のスコア内訳
+        if selected_p:
+            st.markdown("#### 🏆 選出商品のスコア内訳")
+            rc  = selected_p.get("review_count", 0)
+            ra  = selected_p.get("review_average", 0.0)
+            s_review = round(rc * 0.6, 1)
+            s_rating = round(ra * 10 * 0.4, 1)
+            total    = round(s_review + s_rating, 1)
+
+            c1, c2, c3 = st.columns(3)
+            c1.metric("レビュー数スコア", f"{s_review}", f"({rc:,}件 × 0.6)")
+            c2.metric("評価スコア",       f"{s_rating}", f"({ra} × 10 × 0.4)")
+            c3.metric("合計スコア",       f"{total}")
+
+            fig_pie = go.Figure(go.Pie(
+                labels=["レビュー数の寄与", "評価の寄与"],
+                values=[s_review, s_rating],
+                hole=0.55,
+                marker_colors=["#FF6B9D", "#FFB6C1"],
+                textinfo="label+percent",
+                textfont_size=13,
+            ))
+            fig_pie.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                margin=dict(l=10, r=10, t=10, b=10),
+                height=240,
+                showlegend=False,
+                annotations=[dict(text=f"<b>{total}</b>", x=0.5, y=0.5,
+                                  font_size=22, font_color="#C2185B", showarrow=False)],
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
+
+        st.divider()
+
+        # ── 全商品リスト（既存の詳細表示）
+        st.markdown("#### 📋 全商品一覧")
         st.caption(f"楽天APIで取得した {len(all_p)} 件をスコア順に表示")
 
         for rank, p in enumerate(all_p, 1):
