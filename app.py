@@ -238,6 +238,7 @@ _defaults = {
     "video_url":           None,
     "threads_text_posted": False,
     "video_posted":        False,
+    "youtube_posted":      False,
 }
 for k, v in _defaults.items():
     if k not in st.session_state:
@@ -600,9 +601,20 @@ with tab3:
                 elif ctype == "reel":
                     st.markdown("#### 📱 Instagram Reel キャプション")
                     st.code(captions.get("instagram", ""), language=None)
+
                     st.markdown("#### 🧵 Threads 動画投稿キャプション")
-                    st.caption("同じ動画をThreadsにも投稿する場合はこちら")
                     st.code(captions.get("threads", ""), language=None)
+
+                    st.markdown("#### ▶️ YouTube Shorts")
+                    _yt_title = captions.get("youtube_title", "")
+                    _yt_desc  = captions.get("youtube", "")
+                    if _yt_title:
+                        st.caption("タイトル")
+                        st.code(_yt_title, language=None)
+                        st.caption("説明文（#Shorts・ハッシュタグ含む）")
+                        st.code(_yt_desc, language=None)
+                    else:
+                        st.info("コンテンツ生成をやり直すとYouTube Shortsコンテンツが追加されます")
 
                 st.divider()
 
@@ -750,6 +762,60 @@ with tab4:
                             if e:
                                 errs.append(e)
                     st.error(f"失敗: {' | '.join(errs) or '不明なエラー'}")
+
+        st.divider()
+
+        # ── ③ YouTube Shorts 投稿
+        st.markdown("""
+        <div style="background:linear-gradient(135deg,#FFF3E0,#FFE0B2); border-radius:16px;
+                    padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #FFB74D;">
+            <div style="font-size:1.1rem; font-weight:800; color:#E65100; margin-bottom:0.3rem;">
+                ▶️ YouTube Shorts 投稿
+            </div>
+            <div style="font-size:0.85rem; color:#BF360C;">
+                リールと同じ動画をYouTube Shortsとして予約投稿（要：Bufferにチャンネル連携済み）
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.session_state.youtube_posted:
+            st.success("✅ YouTube Shorts 投稿済み")
+        elif not st.session_state.video_url:
+            st.button(
+                "▶️ YouTube Shortsに投稿する",
+                use_container_width=True,
+                disabled=True,
+            )
+            st.caption("⚠️ 先に動画ファイルをアップロードしてください")
+        else:
+            _yt_reel = next((s for s in st.session_state.scripts if s.get("type") == "reel"), None)
+            _yt_title_preview = (_yt_reel or {}).get("captions", {}).get("youtube_title", "（タイトル未生成）")
+            st.caption(f"タイトル: {_yt_title_preview}")
+            if st.button(
+                "▶️ YouTube Shortsに投稿する",
+                type="primary",
+                use_container_width=True,
+            ):
+                with st.spinner("Bufferに予約中..."):
+                    from agents.buffer_agent import run as buf_run_yt
+                    results_yt = buf_run_yt(
+                        [s.copy() for s in st.session_state.scripts],
+                        video_url=st.session_state.video_url,
+                        platforms=["youtube"],
+                    )
+                ok_yt = any(r.get("buffer_posts", {}).get("youtube", {}).get("success") for r in results_yt)
+                if ok_yt:
+                    st.session_state.youtube_posted = True
+                    _post_time_yt = (datetime.now(tz=JST) + timedelta(minutes=3)).strftime("%H:%M")
+                    st.success(f"✅ YouTube Shorts {_post_time_yt}頃 に投稿されます")
+                    st.rerun()
+                else:
+                    errs_yt = []
+                    for r in results_yt:
+                        e = r.get("buffer_posts", {}).get("youtube", {}).get("error")
+                        if e:
+                            errs_yt.append(e)
+                    st.error(f"失敗: {' | '.join(errs_yt) or '不明なエラー'}")
 
 
 # ──────────────────────────────────────────────────────

@@ -58,6 +58,7 @@ def schedule_post(
     scheduled_at: str,
     video_url: str = None,
     service: str = "threads",
+    youtube_title: str = "",
 ) -> dict:
     """Bufferに投稿を予約する"""
     if not BUFFER_TOKEN:
@@ -85,6 +86,10 @@ def schedule_post(
     }
     if service == "instagram":
         post_input["metadata"] = {"instagram": {"type": "reel", "shouldShareToFeed": True}}
+        if video_url:
+            post_input["assets"] = {"videos": [{"url": video_url}]}
+    elif service == "youtube":
+        post_input["metadata"] = {"youtube": {"title": youtube_title or "Baby Boo 育児vlog"}}
         if video_url:
             post_input["assets"] = {"videos": [{"url": video_url}]}
 
@@ -131,13 +136,15 @@ def run(scripts: list, video_url: str = None, platforms: list = None) -> list:
     if not profiles:
         return scripts
 
-    platform_map = {"instagram": None, "threads": None}
+    platform_map = {"instagram": None, "threads": None, "youtube": None}
     for ch in profiles:
         service = ch.get("service", "").lower()
         if "instagram" in service:
             platform_map["instagram"] = ch["id"]
         elif "threads" in service:
             platform_map["threads"] = ch["id"]
+        elif "youtube" in service:
+            platform_map["youtube"] = ch["id"]
 
     base = get_base_post_time()
 
@@ -167,6 +174,17 @@ def run(scripts: list, video_url: str = None, platforms: list = None) -> list:
             if not (platforms and "threads" not in platforms) and platform_map["threads"] and video_url:
                 r = schedule_post(platform_map["threads"], captions.get("threads", ""), time_reel_threads, video_url=video_url, service="threads")
                 post_results["threads_reel"] = r
+
+            if not (platforms and "youtube" not in platforms) and platform_map["youtube"] and video_url:
+                r = schedule_post(
+                    platform_map["youtube"],
+                    captions.get("youtube", ""),
+                    time_reel_ig,
+                    video_url=video_url,
+                    service="youtube",
+                    youtube_title=captions.get("youtube_title", ""),
+                )
+                post_results["youtube"] = r
 
         script["buffer_posts"] = post_results
         results.append(script)
