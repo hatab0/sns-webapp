@@ -480,12 +480,8 @@ with tab3:
                 ctype    = s.get("type", "")
                 captions = s.get("captions", {})
 
-                if ctype == "threads_product":
-                    st.markdown("#### 🧵 Threads ① 商品投稿")
-                    st.code(captions.get("threads", ""), language=None)
-
-                elif ctype == "threads_buzz":
-                    st.markdown("#### 🧵 Threads ② バズ投稿")
+                if ctype == "threads_text":
+                    st.markdown("#### 🧵 Threads 投稿")
                     st.caption(f"テーマ: {s.get('theme', '')}")
                     st.code(captions.get("threads", ""), language=None)
 
@@ -509,15 +505,14 @@ with tab4:
         st.info("💡 まず「コンテンツ生成」タブで生成してください。")
     else:
         post_time_text  = (datetime.now(tz=JST) + timedelta(minutes=3)).strftime("%H:%M")
-        post_time_buzz  = (datetime.now(tz=JST) + timedelta(minutes=33)).strftime("%H:%M")
         post_time_video = (datetime.now(tz=JST) + timedelta(minutes=3)).strftime("%H:%M")
 
-        # ── ① Threads テキスト投稿（動画不要）
+        # ── Threads テキスト投稿（動画不要）
         st.markdown("""
         <div style="background:linear-gradient(135deg,#FFF0F8,#FFE8EF); border-radius:16px;
                     padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #FFB6C1;">
             <div style="font-size:1.1rem; font-weight:800; color:#C2185B; margin-bottom:0.3rem;">
-                🧵 Threads テキスト投稿（① ②）
+                🧵 Threads テキスト投稿（育児投稿）
             </div>
             <div style="font-size:0.85rem; color:#AD1457;">
                 動画不要・コンテンツ生成後すぐに予約できます
@@ -528,7 +523,7 @@ with tab4:
         if st.session_state.threads_text_posted:
             st.success(f"✅ Threads①② 投稿済み　（① {post_time_text} / ② {post_time_buzz} 頃）")
         else:
-            if st.button("🧵 Threads に①②を投稿する", type="primary", use_container_width=True):
+            if st.button("🧵 Threads に投稿する", type="primary", use_container_width=True):
                 with st.spinner("Bufferに予約中..."):
                     from agents.buffer_agent import run as buf_run
                     results = buf_run(
@@ -541,12 +536,11 @@ with tab4:
                 )
                 if ok:
                     st.session_state.threads_text_posted = True
-                    # Sheets に Threads 投稿数を記録
                     _ic = (st.session_state.posts or [{}])[0].get("item_code", "")
                     if _ic:
                         from utils.sheets_helper import increment_count as _inc
                         _inc(_ic, "Threads投稿数")
-                    st.success(f"✅ ① {post_time_text} 頃・② {post_time_buzz} 頃に投稿されます")
+                    st.success(f"✅ {post_time_text} 頃に投稿されます")
                     st.rerun()
                 else:
                     err = next(

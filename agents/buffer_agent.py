@@ -144,9 +144,9 @@ def run(scripts: list, video_url: str = None, platforms: list = None) -> list:
     def fmt(dt: datetime) -> str:
         return dt.strftime("%Y-%m-%dT%H:%M:%S+09:00")
 
-    time_product      = fmt(base)
-    time_buzz         = fmt(base + timedelta(minutes=30))
-    time_reel_threads = fmt(base + timedelta(minutes=45))
+    time_threads      = fmt(base)                          # threads_text: +3分
+    time_reel_ig      = fmt(base)                          # Instagram Reel: +3分
+    time_reel_threads = fmt(base + timedelta(minutes=45))  # Threads 動画: +48分
 
     results = []
     for script in scripts:
@@ -154,19 +154,14 @@ def run(scripts: list, video_url: str = None, platforms: list = None) -> list:
         captions = script.get("captions", {})
         post_results = {}
 
-        if ctype == "threads_product":
+        if ctype == "threads_text":
             if not (platforms and "threads" not in platforms) and platform_map["threads"]:
-                r = schedule_post(platform_map["threads"], captions.get("threads", ""), time_product, service="threads")
-                post_results["threads"] = r
-
-        elif ctype == "threads_buzz":
-            if not (platforms and "threads" not in platforms) and platform_map["threads"]:
-                r = schedule_post(platform_map["threads"], captions.get("threads", ""), time_buzz, service="threads")
+                r = schedule_post(platform_map["threads"], captions.get("threads", ""), time_threads, service="threads")
                 post_results["threads"] = r
 
         elif ctype == "reel":
             if not (platforms and "instagram" not in platforms) and platform_map["instagram"] and video_url:
-                r = schedule_post(platform_map["instagram"], captions.get("instagram", ""), time_product, video_url=video_url, service="instagram")
+                r = schedule_post(platform_map["instagram"], captions.get("instagram", ""), time_reel_ig, video_url=video_url, service="instagram")
                 post_results["instagram"] = r
 
             if not (platforms and "threads" not in platforms) and platform_map["threads"] and video_url:
