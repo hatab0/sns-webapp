@@ -90,7 +90,7 @@ def generate_caption(script: dict, platform: str, product: dict = None) -> str:
 【OK例】○ 「この反応見てパパ泣いた😭」○ 「着せたらこうなった」"""
             hashtag_rule = f"【ハッシュタグ】末尾に以下の5個を必ず全て使用（追加・変更・省略禁止）：{FIXED_TAGS_STR}"
         else:
-            # Threadsに動画を投稿するときのキャプション（ハッシュタグなし）
+            # Threadsに動画を投稿するときのキャプション（ハッシュタグあり）
             content_label = "Threads 動画投稿キャプション（短め・自然体）"
             product_info = f"（動画でせなっちが着ている・使っている商品：{product['name']}）" if product else ""
             context_info = f"""
@@ -101,7 +101,7 @@ def generate_caption(script: dict, platform: str, product: dict = None) -> str:
             bad_good = """
 【NG例】× 「可愛い動画をお届けします」× 「商品を着用しています」
 【OK例】○ 「着せたら動き出しちゃって笑」○ 「生後○ヶ月でこんな声出んの？」"""
-            hashtag_rule = "【ハッシュタグ】絶対に使用しない。#も一切つけない。"
+            hashtag_rule = f"【ハッシュタグ】末尾に以下の5個を必ず全て使用（追加・変更・省略禁止）：{FIXED_TAGS_STR}"
 
     else:
         # フォールバック（Instagram reel）
