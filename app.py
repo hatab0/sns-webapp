@@ -231,12 +231,13 @@ h2, h3 { color: #C2185B !important; }
 
 # ── セッション状態の初期化
 _defaults = {
-    "generated":          False,
-    "posts":              None,
-    "scripts":            None,
-    "video_url":          None,
-    "threads_text_posted": False,   # ①② テキスト投稿
-    "video_posted":        False,   # 動画投稿（Instagram Reel + Threads）
+    "generated":           False,
+    "posts":               None,
+    "scripts":             None,
+    "all_products":        None,   # 全商品スコア一覧（商品分析タブ用）
+    "video_url":           None,
+    "threads_text_posted": False,
+    "video_posted":        False,
 }
 for k, v in _defaults.items():
     if k not in st.session_state:
@@ -272,7 +273,9 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── タブ
-tab1, tab2, tab3, tab4 = st.tabs(["🚀 コンテンツ生成", "📋 プロンプト", "📤 投稿", "📊 履歴"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "🚀 コンテンツ生成", "🔍 商品分析", "📋 プロンプト", "📤 投稿", "📊 履歴"
+])
 
 
 # ──────────────────────────────────────────────────────
@@ -304,8 +307,13 @@ with tab1:
                     with st.status("🍼 Baby Boo のコンテンツを準備中...", expanded=True) as status:
                         st.write("🛍️ 楽天APIで売れ筋商品を取得中...")
                         products = rakuten_agent.run()
-                        scored   = analyzer_agent.run(products)
-                        posts    = writer_agent.run(scored)
+                        top3     = analyzer_agent.run(products)
+                        # 全商品（スコア付き）をソートして保存
+                        all_scored = sorted(
+                            [p for p in products if "score" in p],
+                            key=lambda x: x["score"], reverse=True
+                        )
+                        posts    = writer_agent.run(top3)
                         st.write(f"✅ {len(posts)}件の商品を選出・紹介文生成完了")
 
                         st.write("🖼️  画像・動画プロンプトを生成中...")
@@ -320,9 +328,10 @@ with tab1:
 
                         status.update(label="🎉 全コンテンツ生成完了！", state="complete")
 
-                    st.session_state.posts    = posts
-                    st.session_state.scripts  = scripts
-                    st.session_state.generated = True
+                    st.session_state.posts        = posts
+                    st.session_state.scripts      = scripts
+                    st.session_state.all_products = all_scored
+                    st.session_state.generated    = True
                     st.balloons()
                     st.rerun()
 
@@ -338,9 +347,73 @@ with tab1:
 
 
 # ──────────────────────────────────────────────────────
-# TAB 2: プロンプト表示・コピー
+# TAB 2: 商品分析
 # ──────────────────────────────────────────────────────
 with tab2:
+    st.markdown("### 🔍 商品分析レポート")
+
+    if not st.session_state.generated or not st.session_state.all_products:
+        st.info("💡 まず「コンテンツ生成」タブで生成してください。")
+    else:
+        all_p   = st.session_state.all_products
+        top3_codes = {p.get("item_code", "") for p in (st.session_state.posts or [])}
+
+        st.caption(f"楽天APIで取得した {len(all_p)} 件をスコア順に表示")
+
+        for rank, p in enumerate(all_p, 1):
+            is_selected = p.get("item_code", "") in top3_codes and p.get("item_code", "")
+            badge = "🏆 選出" if is_selected else ""
+            score_color = "#FF6B9D" if rank <= 3 else "#888"
+
+            with st.container():
+                col_rank, col_info, col_score = st.columns([1, 6, 2])
+
+                with col_rank:
+                    medal = {1: "🥇", 2: "🥈", 3: "🥉"}.get(rank, f"#{rank}")
+                    st.markdown(
+                        f'<div style="font-size:1.4rem; text-align:center; padding-top:0.5rem;">{medal}</div>',
+                        unsafe_allow_html=True,
+                    )
+
+                with col_info:
+                    name_display = p["name"][:55] + ("…" if len(p["name"]) > 55 else "")
+                    st.markdown(
+                        f'<div style="font-weight:700; font-size:0.95rem; color:#3D2B3D;">'
+                        f'{name_display} {badge}</div>',
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        f'<div style="font-size:0.82rem; color:#888;">'
+                        f'🔑 {p.get("keyword","—")} ｜ 🏪 {p.get("shop_name","")[:20]}'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                    url = p.get("affiliate_url") or p.get("url", "")
+                    if url:
+                        st.markdown(
+                            f'<a href="{url}" target="_blank" style="font-size:0.78rem; color:#FF6B9D;">🔗 商品を見る</a>',
+                            unsafe_allow_html=True,
+                        )
+
+                with col_score:
+                    st.markdown(
+                        f'<div style="text-align:center;">'
+                        f'<div style="font-size:1.3rem; font-weight:800; color:{score_color};">'
+                        f'{p["score"]:.1f}</div>'
+                        f'<div style="font-size:0.75rem; color:#888;">スコア</div>'
+                        f'<div style="font-size:0.85rem; font-weight:700; color:#3D2B3D;">¥{p["price"]:,}</div>'
+                        f'<div style="font-size:0.75rem; color:#888;">⭐ {p.get("review_average",0)} ({p.get("review_count",0):,}件)</div>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+
+            st.markdown('<hr style="border-color:#FFD6E7; margin:0.4rem 0;">', unsafe_allow_html=True)
+
+
+# ──────────────────────────────────────────────────────
+# TAB 3: プロンプト表示・コピー
+# ──────────────────────────────────────────────────────
+with tab3:
     st.markdown("### 📋 プロンプト・投稿文")
 
     if not st.session_state.generated:
@@ -406,9 +479,9 @@ with tab2:
 
 
 # ──────────────────────────────────────────────────────
-# TAB 3: 投稿
+# TAB 4: 投稿
 # ──────────────────────────────────────────────────────
-with tab3:
+with tab4:
     st.markdown("### 📤 投稿")
 
     if not st.session_state.generated:
@@ -540,9 +613,9 @@ with tab3:
 
 
 # ──────────────────────────────────────────────────────
-# TAB 4: 投稿履歴
+# TAB 5: 投稿履歴
 # ──────────────────────────────────────────────────────
-with tab4:
+with tab5:
     st.markdown("### 📊 投稿履歴")
 
     if st.button("🔍 履歴を読み込む", use_container_width=True):
