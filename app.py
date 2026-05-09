@@ -306,8 +306,14 @@ with tab1:
                     )
                     with st.status("🍼 Baby Boo のコンテンツを準備中...", expanded=True) as status:
                         st.write("🛍️ 楽天APIで売れ筋商品を取得中...")
+                        from utils.sheets_helper import (
+                            get_product_history, get_last_generated_code, upsert_product,
+                        )
+                        history   = get_product_history()
+                        last_code = get_last_generated_code(history)
+
                         products = rakuten_agent.run()
-                        top3     = analyzer_agent.run(products)
+                        top3     = analyzer_agent.run(products, history=history, last_code=last_code)
                         # 全商品（スコア付き）をソートして保存
                         all_scored = sorted(
                             [p for p in products if "score" in p],
@@ -332,6 +338,9 @@ with tab1:
                     st.session_state.scripts      = scripts
                     st.session_state.all_products = all_scored
                     st.session_state.generated    = True
+                    # 生成した商品をSheets履歴に記録
+                    if posts:
+                        upsert_product(posts[0])
                     st.balloons()
                     st.rerun()
 
@@ -429,8 +438,20 @@ with tab3:
             st.divider()
 
             st.markdown("#### 🛍️ 楽天ROOM 紹介文")
-            st.caption("📱 楽天ROOMアプリから手動投稿してください")
-            st.link_button("🏠 楽天ROOMを開く", "https://room.rakuten.co.jp/room_3b6e1ab198/items")
+            _room_col1, _room_col2 = st.columns([3, 2])
+            with _room_col1:
+                st.caption("📱 楽天ROOMアプリから手動投稿してください")
+                st.link_button("🏠 楽天ROOMを開く", "https://room.rakuten.co.jp/room_3b6e1ab198/items")
+            with _room_col2:
+                _room_key = f"room_posted_{p.get('item_code','')}"
+                if st.session_state.get(_room_key):
+                    st.success("✅ 楽天ROOM投稿済み")
+                else:
+                    if st.button("🏠 楽天ROOM 投稿済みにする", use_container_width=True):
+                        from utils.sheets_helper import increment_count
+                        increment_count(p.get("item_code", ""), "楽天ROOM投稿数")
+                        st.session_state[_room_key] = True
+                        st.rerun()
             st.code(p.get("room_description", ""), language=None)
             if p.get("affiliate_url"):
                 st.caption(f"アフィリエイトURL: `{p['affiliate_url']}`")
@@ -520,6 +541,11 @@ with tab4:
                 )
                 if ok:
                     st.session_state.threads_text_posted = True
+                    # Sheets に Threads 投稿数を記録
+                    _ic = (st.session_state.posts or [{}])[0].get("item_code", "")
+                    if _ic:
+                        from utils.sheets_helper import increment_count as _inc
+                        _inc(_ic, "Threads投稿数")
                     st.success(f"✅ ① {post_time_text} 頃・② {post_time_buzz} 頃に投稿されます")
                     st.rerun()
                 else:
@@ -594,6 +620,14 @@ with tab4:
                 ok_th = any(r.get("buffer_posts", {}).get("threads_reel", {}).get("success") for r in results)
                 if ok_ig or ok_th:
                     st.session_state.video_posted = True
+                    # Sheets に投稿数を記録
+                    _ic = (st.session_state.posts or [{}])[0].get("item_code", "")
+                    if _ic:
+                        from utils.sheets_helper import increment_count as _inc2
+                        if ok_ig:
+                            _inc2(_ic, "Instagram投稿数")
+                        if ok_th:
+                            _inc2(_ic, "Threads投稿数")
                     parts = []
                     if ok_ig:
                         parts.append(f"Instagram Reel {post_time_video}頃")
@@ -617,6 +651,7 @@ with tab4:
 # ──────────────────────────────────────────────────────
 with tab5:
     st.markdown("### 📊 投稿履歴")
+    st.caption("商品ごとの生成回数・各プラットフォーム投稿数を管理します（生成3回でその商品はスキップ）")
 
     if st.button("🔍 履歴を読み込む", use_container_width=True):
         with st.spinner("Google Sheetsから取得中..."):
@@ -628,5 +663,30 @@ with tab5:
         elif df.empty:
             st.info("📭 まだ投稿履歴がありません。")
         else:
-            st.dataframe(df, use_container_width=True, hide_index=True)
-            st.caption(f"合計 {len(df)} 件")
+            # 投稿済み件数サマリ
+            try:
+                s_col1, s_col2, s_col3, s_col4 = st.columns(4)
+                with s_col1:
+                    st.metric("商品数", len(df))
+                with s_col2:
+                    st.metric("楽天ROOM投稿", int(df["楽天ROOM投稿数"].astype(int).sum()) if "楽天ROOM投稿数" in df.columns else "-")
+                with s_col3:
+                    st.metric("Instagram投稿", int(df["Instagram投稿数"].astype(int).sum()) if "Instagram投稿数" in df.columns else "-")
+                with s_col4:
+                    st.metric("Threads投稿", int(df["Threads投稿数"].astype(int).sum()) if "Threads投稿数" in df.columns else "-")
+            except Exception:
+                pass
+
+            st.divider()
+
+            # カラムの表示順を整理
+            display_cols = [c for c in [
+                "最終生成日", "商品名", "価格", "キーワード",
+                "生成回数", "楽天ROOM投稿数", "Instagram投稿数", "Threads投稿数",
+            ] if c in df.columns]
+            st.dataframe(
+                df[display_cols] if display_cols else df,
+                use_container_width=True,
+                hide_index=True,
+            )
+            st.caption(f"合計 {len(df)} 商品")

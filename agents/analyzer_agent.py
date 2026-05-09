@@ -50,9 +50,22 @@ def score_product(product: dict) -> float:
     return (review_count * 0.6) + (review_average * 10 * 0.4)
 
 
-def run(products: list = None) -> list:
+def _is_skip(item_code: str, history: dict, last_code: str) -> bool:
     """
-    商品をスコアリングしてTOP3を返す
+    - 直前に生成した商品（連続防止）→ True
+    - 生成回数が3回以上 → True
+    """
+    if item_code and item_code == last_code:
+        return True
+    rec = history.get(item_code, {})
+    return rec.get("生成回数", 0) >= 3
+
+
+def run(products: list = None, history: dict = None, last_code: str = "") -> list:
+    """
+    商品をスコアリングしてTOP3を返す。
+    history: sheets_helper.get_product_history() の結果（Webアプリ用）
+    last_code: 直前に生成した item_code（連続防止）
     """
     print("📊 市場分析エージェント 起動")
 
@@ -63,7 +76,6 @@ def run(products: list = None) -> list:
                 products = json.load(f)
         except FileNotFoundError:
             print("  ❌ output/products.json が見つかりません")
-            print("  先に rakuten_agent を実行してください")
             return []
 
     if not products:
@@ -74,36 +86,38 @@ def run(products: list = None) -> list:
     for p in products:
         p["score"] = round(score_product(p), 2)
 
-    # スコア順にソート
     sorted_products = sorted(products, key=lambda x: x["score"], reverse=True)
 
-    # ─── 重複チェック：スキップリストを読み込んでフィルタリング ───
-    skip_keys = []
-    if SKIP_LIST_FILE.exists():
-        with open(SKIP_LIST_FILE, encoding="utf-8") as f:
-            skip_keys = json.load(f)
-
-    if skip_keys:
-        before = len(sorted_products)
-        filtered = [p for p in sorted_products if not any(k in skip_keys for k in _product_keys(p))]
-        skipped = before - len(filtered)
+    # ─── フィルタリング ───
+    if history is not None:
+        # Webアプリ: Sheets履歴ベースでフィルタ
+        filtered = [
+            p for p in sorted_products
+            if not _is_skip(p.get("item_code", ""), history, last_code)
+        ]
+        skipped = len(sorted_products) - len(filtered)
         if skipped:
-            print(f"\n  ⏭️  重複スキップ: {skipped} 件")
-        # フィルタ後に商品が0件になった場合は全件から選ぶ（安全策）
-        if not filtered:
-            print("  ⚠️  全商品がクールダウン中のため、スキップなしで選出します")
-            filtered = sorted_products
+            print(f"\n  ⏭️  重複スキップ: {skipped} 件（生成3回済 or 連続防止）")
     else:
+        # CLI用: ローカル skip_list.json
+        skip_keys = []
+        if SKIP_LIST_FILE.exists():
+            with open(SKIP_LIST_FILE, encoding="utf-8") as f:
+                skip_keys = json.load(f)
+        filtered = (
+            [p for p in sorted_products if not any(k in skip_keys for k in _product_keys(p))]
+            if skip_keys else sorted_products
+        )
+
+    if not filtered:
+        print("  ⚠️  全商品がフィルタ対象のため、制限なしで選出します")
         filtered = sorted_products
 
-    # 上位10件を表示
     print(f"\n  上位10件（重複除外後 {len(filtered)} 件から）：")
     for i, p in enumerate(filtered[:10]):
         print(f"  {i+1:2d}. {p['name'][:35]:35s} | ¥{p['price']:,} | ⭐{p['review_average']}({p['review_count']:,}件) | スコア:{p['score']}")
 
-    # TOP3を選出
     top3 = filtered[:3]
-
     print(f"\n✅ TOP3 選出完了")
     for i, p in enumerate(top3):
         print(f"  {i+1}位: {p['name'][:40]}")
