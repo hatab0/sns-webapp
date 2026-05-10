@@ -853,22 +853,56 @@ with tab4:
             )
             st.caption("⚠️ 先に動画ファイルをアップロードしてください")
         else:
+            # ── Threads 動画キャプション選択
+            _reel_s = next((s for s in (st.session_state.scripts or []) if s.get("type") == "reel"), {})
+            _video_cap   = _reel_s.get("captions", {}).get("threads", "")
+            _text_cap    = (st.session_state.threads_script or {}).get("captions", {}).get("threads", "")
+
+            _cap_options = {}
+            if _video_cap:
+                _cap_options["動画投稿キャプション"] = _video_cap
+            if _text_cap:
+                _cap_options["育児投稿文"] = _text_cap
+
+            if len(_cap_options) >= 2:
+                st.markdown("**🧵 Threads のキャプションを選んでください**")
+                _cap_choice = st.radio(
+                    "",
+                    list(_cap_options.keys()),
+                    key="threads_video_cap_choice",
+                    horizontal=True,
+                    label_visibility="collapsed",
+                )
+                st.caption(f"プレビュー：{_cap_options[_cap_choice][:60]}…")
+            else:
+                _cap_choice = list(_cap_options.keys())[0] if _cap_options else "動画投稿キャプション"
+
+            st.markdown("<div style='height:0.3rem'></div>", unsafe_allow_html=True)
+
             if st.button(
                 "📹 動画を投稿する（Instagram Reel + Threads）",
                 type="primary",
                 use_container_width=True,
             ):
+                # 選択されたキャプションを scripts のコピーに反映
+                scripts_to_post = [s.copy() for s in st.session_state.scripts]
+                chosen_cap = _cap_options.get(_cap_choice, "")
+                if chosen_cap:
+                    for _s in scripts_to_post:
+                        if _s.get("type") == "reel":
+                            _s.setdefault("captions", {})
+                            _s["captions"]["threads"] = chosen_cap
+
                 with st.spinner("Bufferに予約中..."):
                     from agents.buffer_agent import run as buf_run
                     results = buf_run(
-                        [s.copy() for s in st.session_state.scripts],
+                        scripts_to_post,
                         video_url=st.session_state.video_url,
                     )
                 ok_ig = any(r.get("buffer_posts", {}).get("instagram", {}).get("success") for r in results)
                 ok_th = any(r.get("buffer_posts", {}).get("threads_reel", {}).get("success") for r in results)
                 if ok_ig or ok_th:
                     st.session_state.video_posted = True
-                    # Sheets に投稿数を記録
                     _ic = (st.session_state.posts or [{}])[0].get("item_code", "")
                     if _ic:
                         from utils.sheets_helper import increment_count as _inc2
