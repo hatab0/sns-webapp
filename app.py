@@ -234,7 +234,9 @@ _defaults = {
     "generated":           False,
     "posts":               None,
     "scripts":             None,
+    "threads_script":      None,   # Threads投稿文（独立生成）
     "all_products":        None,   # 全商品スコア一覧（商品分析タブ用）
+    "content_mode":        "normal",  # "normal" or "buzz"
     "video_url":           None,
     "threads_text_posted": False,
     "video_posted":        False,
@@ -284,64 +286,131 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 # ──────────────────────────────────────────────────────
 with tab1:
     st.markdown("### 🌸 今日のコンテンツを自動生成")
-    st.caption("楽天APIで売れ筋商品を取得し、Claude APIで全コンテンツを生成します。")
+
+    # ── モード選択トグル
+    _mode_label = st.radio(
+        "投稿モード",
+        ["通常（商品紹介）", "バズmode（フォロワー獲得）"],
+        horizontal=True,
+        key="mode_radio",
+    )
+    _mode = "normal" if "通常" in _mode_label else "buzz"
+    st.session_state.content_mode = _mode
+
+    if _mode == "normal":
+        st.caption("楽天APIで売れ筋商品を取得し、Instagram・YouTube・Threads用コンテンツを生成します。")
+    else:
+        st.caption("商品なし。せなっちが踊る・ふざける動画でフォロワー獲得を狙います。")
+
+    st.divider()
+
+    # ── Threads 今日の出来事（独立セクション）
+    st.markdown("#### 📝 Threads 今日の出来事")
+    st.caption("今日のせなっちとの出来事を入力すると、自然な育児投稿文を生成します（投稿タブから投稿）")
+    _today_event = st.text_area(
+        "今日の出来事を入力（箇条書きでもOK）",
+        placeholder="例）夜泣きが3回あった　/　初めて離乳食を食べた　/　抱っこしたら笑いかけてきた",
+        key="today_event_input",
+        height=80,
+    )
+    _th_col1, _th_col2 = st.columns([2, 1])
+    with _th_col1:
+        if st.button("🧵 Threads投稿文を生成する", use_container_width=True):
+            from agents import threads_agent
+            with st.spinner("生成中..."):
+                _th_script = threads_agent.run(today_event=_today_event)
+            st.session_state.threads_script      = _th_script
+            st.session_state.threads_text_posted = False
+            st.success("✅ Threads投稿文を生成しました（投稿タブから投稿できます）")
+    with _th_col2:
+        if st.session_state.threads_script:
+            st.caption("✅ 投稿文あり")
+
+    if st.session_state.threads_script:
+        _th_text = st.session_state.threads_script.get("captions", {}).get("threads", "")
+        _bait    = st.session_state.threads_script.get("bait_check", "pass")
+        st.code(_th_text, language=None)
+        if _bait == "fail":
+            st.warning("⚠️ エンゲージメントベイト検出。再生成を推奨します。")
+
+    st.divider()
+
+    # ── メインコンテンツ生成
+    st.markdown("#### 🎬 動画・キャプション生成")
 
     if st.session_state.generated and st.session_state.posts:
-        p = st.session_state.posts[0]
-        st.success(f"✅ 生成済み！　**{p['name'][:40]}** | ¥{p.get('price', 0):,}")
-        col_a, col_b = st.columns([1, 3])
-        with col_a:
-            if st.button("🔄 再生成", use_container_width=True):
-                for k, v in _defaults.items():
-                    st.session_state[k] = v
-                st.rerun()
+        _p0 = st.session_state.posts[0]
+        if _p0.get("is_buzz_mode"):
+            st.success("✅ バズmodeで生成済み！")
+        else:
+            st.success(f"✅ 生成済み！　**{_p0['name'][:40]}** | ¥{_p0.get('price', 0):,}")
+        if st.button("🔄 再生成", use_container_width=True):
+            for k, v in _defaults.items():
+                st.session_state[k] = v
+            st.rerun()
     else:
-        st.markdown("<br>", unsafe_allow_html=True)
         col_c, col_d, col_e = st.columns([1, 2, 1])
         with col_d:
-            if st.button("💫 今日のコンテンツを生成する", type="primary", use_container_width=True):
+            _btn_label = "💫 今日のコンテンツを生成する" if _mode == "normal" else "🎉 バズmodeで生成する"
+            if st.button(_btn_label, type="primary", use_container_width=True):
                 try:
-                    from agents import (
-                        rakuten_agent, analyzer_agent, writer_agent,
-                        image_agent, quality_agent, script_agent, caption_agent,
-                    )
-                    with st.status("🍼 Baby Boo のコンテンツを準備中...", expanded=True) as status:
-                        st.write("🛍️ 楽天APIで売れ筋商品を取得中...")
-                        from utils.sheets_helper import (
-                            get_product_history, get_last_generated_code, upsert_product,
-                        )
-                        history   = get_product_history()
-                        last_code = get_last_generated_code(history)
+                    from agents import image_agent, instagram_agent, youtube_agent
+                    if _mode == "normal":
+                        from agents import rakuten_agent, analyzer_agent, writer_agent, quality_agent
+                        with st.status("🍼 Baby Boo のコンテンツを準備中...", expanded=True) as status:
+                            st.write("🛍️ 楽天APIで売れ筋商品を取得中...")
+                            from utils.sheets_helper import (
+                                get_product_history, get_last_generated_code, upsert_product,
+                            )
+                            history   = get_product_history()
+                            last_code = get_last_generated_code(history)
+                            products  = rakuten_agent.run()
+                            top3      = analyzer_agent.run(products, history=history, last_code=last_code)
+                            all_scored = sorted(
+                                [p for p in products if "score" in p],
+                                key=lambda x: x["score"], reverse=True,
+                            )
+                            posts = writer_agent.run(top3)
+                            st.write(f"✅ {len(posts)}件の商品を選出・紹介文生成完了")
 
-                        products = rakuten_agent.run()
-                        top3     = analyzer_agent.run(products, history=history, last_code=last_code)
-                        # 全商品（スコア付き）をソートして保存
-                        all_scored = sorted(
-                            [p for p in products if "score" in p],
-                            key=lambda x: x["score"], reverse=True
-                        )
-                        posts    = writer_agent.run(top3)
-                        st.write(f"✅ {len(posts)}件の商品を選出・紹介文生成完了")
+                            st.write("🖼️  画像・動画プロンプトを生成中...")
+                            posts = image_agent.run(posts)
+                            posts = quality_agent.run(posts)
+                            st.write("✅ プロンプト生成完了")
 
-                        st.write("🖼️  画像・動画プロンプトを生成中...")
-                        posts = image_agent.run(posts)
-                        posts = quality_agent.run(posts)
-                        st.write("✅ プロンプト生成完了")
+                            st.write("📱 Instagram・YouTube コンテンツを生成中...")
+                            reel_script = instagram_agent.run(product=posts[0])
+                            reel_script = youtube_agent.run(instagram_script=reel_script, product=posts[0])
+                            scripts = [reel_script]
+                            st.write("✅ キャプション生成完了")
 
-                        st.write("📱 Threads・Instagramコンテンツを生成中...")
-                        scripts = script_agent.run(product=posts[0])
-                        scripts = caption_agent.run(scripts, product=posts[0])
-                        st.write("✅ キャプション生成完了")
+                            status.update(label="🎉 全コンテンツ生成完了！", state="complete")
 
-                        status.update(label="🎉 全コンテンツ生成完了！", state="complete")
-
-                    st.session_state.posts        = posts
-                    st.session_state.scripts      = scripts
-                    st.session_state.all_products = all_scored
-                    st.session_state.generated    = True
-                    # 生成した商品をSheets履歴に記録
-                    if posts:
+                        st.session_state.posts        = posts
+                        st.session_state.scripts      = scripts
+                        st.session_state.all_products = all_scored
+                        st.session_state.generated    = True
                         upsert_product(posts[0])
+
+                    else:  # buzz mode
+                        with st.status("🎉 バズmodeコンテンツを準備中...", expanded=True) as status:
+                            st.write("🖼️  バズmode画像・動画プロンプトを生成中...")
+                            buzz_post = image_agent.run_buzz()
+                            st.write("✅ プロンプト生成完了")
+
+                            st.write("📱 Instagram・YouTube コンテンツを生成中...")
+                            reel_script = instagram_agent.run_buzz()
+                            reel_script = youtube_agent.run(instagram_script=reel_script, product=None)
+                            scripts = [reel_script]
+                            st.write("✅ キャプション生成完了")
+
+                            status.update(label="🎉 バズmodeコンテンツ生成完了！", state="complete")
+
+                        st.session_state.posts        = [buzz_post]
+                        st.session_state.scripts      = scripts
+                        st.session_state.all_products = []
+                        st.session_state.generated    = True
+
                     st.balloons()
                     st.rerun()
 
@@ -545,45 +614,56 @@ with tab3:
         scripts = st.session_state.scripts or []
         today   = datetime.now(tz=JST).strftime("%Y%m%d")
 
+        is_buzz = (st.session_state.content_mode == "buzz") or (posts and posts[0].get("is_buzz_mode"))
+
         if posts:
             p = posts[0]
-            st.markdown(f"**📦 本日の商品：** {p['name'][:50]}　|　¥{p.get('price',0):,}")
+            if not is_buzz:
+                st.markdown(f"**📦 本日の商品：** {p['name'][:50]}　|　¥{p.get('price',0):,}")
+            else:
+                st.markdown("**🎉 バズmode** - せなっちが踊る・ふざける動画")
             st.divider()
 
-            st.markdown("#### 🛍️ 楽天ROOM 紹介文")
-            _room_col1, _room_col2 = st.columns([3, 2])
-            with _room_col1:
-                st.caption("📱 楽天ROOMアプリから手動投稿してください")
-                st.link_button("🏠 楽天ROOMを開く", "https://room.rakuten.co.jp/room_3b6e1ab198/items")
-            with _room_col2:
-                _room_key = f"room_posted_{p.get('item_code','')}"
-                if st.session_state.get(_room_key):
-                    st.success("✅ 楽天ROOM投稿済み")
-                else:
-                    if st.button("🏠 楽天ROOM 投稿済みにする", use_container_width=True):
-                        from utils.sheets_helper import increment_count
-                        increment_count(p.get("item_code", ""), "楽天ROOM投稿数")
-                        st.session_state[_room_key] = True
-                        st.rerun()
-            st.code(p.get("room_description", ""), language=None)
-            if p.get("affiliate_url"):
-                st.caption(f"アフィリエイトURL: `{p['affiliate_url']}`")
-            st.divider()
+            # 楽天ROOM（通常modeのみ）
+            if not is_buzz:
+                st.markdown("#### 🛍️ 楽天ROOM 紹介文")
+                _room_col1, _room_col2 = st.columns([3, 2])
+                with _room_col1:
+                    st.caption("📱 楽天ROOMアプリから手動投稿してください")
+                    st.link_button("🏠 楽天ROOMを開く", "https://room.rakuten.co.jp/room_3b6e1ab198/items")
+                with _room_col2:
+                    _room_key = f"room_posted_{p.get('item_code','')}"
+                    if st.session_state.get(_room_key):
+                        st.success("✅ 楽天ROOM投稿済み")
+                    else:
+                        if st.button("🏠 楽天ROOM 投稿済みにする", use_container_width=True):
+                            from utils.sheets_helper import increment_count
+                            increment_count(p.get("item_code", ""), "楽天ROOM投稿数")
+                            st.session_state[_room_key] = True
+                            st.rerun()
+                st.code(p.get("room_description", ""), language=None)
+                if p.get("affiliate_url"):
+                    st.caption(f"アフィリエイトURL: `{p['affiliate_url']}`")
+                st.divider()
 
-            st.markdown("#### 🖼️ GPT Image プロンプト（文字あり）")
-            st.caption(f"せなっち写真＋商品写真を添付 → `{today}.png` として保存（楽天ROOM用）")
-            st.link_button("🤖 ChatGPTを開く", "https://chatgpt.com")
-            st.code(p.get("gpt_image_prompt", ""), language=None)
-            st.divider()
+                st.markdown("#### 🖼️ GPT Image プロンプト（文字あり・楽天ROOM用）")
+                st.caption(f"せなっち写真＋商品写真を添付 → `{today}.png` として保存")
+                st.link_button("🤖 ChatGPTを開く", "https://chatgpt.com")
+                st.code(p.get("gpt_image_prompt", ""), language=None)
+                st.divider()
 
-            st.markdown("#### 🎬 GPT Image プロンプト（文字なし・動画生成用）")
-            st.caption(f"せなっち写真＋商品写真を添付 → `{today}_video.png` として保存 → InsMindで動画化")
+            # 動画用画像プロンプト（全mode共通）
+            _img_label = "🎬 GPT Image プロンプト（文字なし・動画用）" if not is_buzz else "🎉 GPT Image プロンプト（バズmode・踊り）"
+            _img_caption = f"{'せなっち写真＋商品写真を添付 → ' if not is_buzz else 'せなっち写真を添付 → '}`{today}_{'video' if not is_buzz else 'buzz'}.png` として保存 → InsMindで動画化"
+            st.markdown(f"#### {_img_label}")
+            st.caption(_img_caption)
             st.link_button("🤖 ChatGPTを開く ", "https://chatgpt.com")
             st.code(p.get("gpt_image_prompt_notxt", ""), language=None)
             st.divider()
 
+            # InsMind動画プロンプト
             st.markdown("#### 🎥 InsMind 動画プロンプト")
-            st.caption(f"`{today}_video.png` をInsMindにアップロードして使用")
+            st.caption(f"上記で生成した画像をInsMindにアップロードして使用")
             st.link_button("🎬 InsMindを開く", "https://www.insmind.com")
             st.code(p.get("video_prompt", ""), language=None)
 
@@ -593,12 +673,21 @@ with tab3:
                 ctype    = s.get("type", "")
                 captions = s.get("captions", {})
 
-                if ctype == "threads_text":
-                    st.markdown("#### 🧵 Threads 投稿")
-                    st.caption(f"テーマ: {s.get('theme', '')}")
-                    st.code(captions.get("threads", ""), language=None)
+                if ctype == "reel":
+                    # コンテンツ設計スコア表示
+                    _dm  = s.get("dm_trigger", "")
+                    _hook = s.get("hook", "")
+                    if _dm or _hook:
+                        st.markdown("""
+                        <div style="background:#FFF0F8; border-radius:10px; padding:0.8rem 1rem;
+                                    border:1px solid #FFB6C1; font-size:0.82rem; margin-bottom:0.5rem;">
+                        """, unsafe_allow_html=True)
+                        if _hook:
+                            st.markdown(f"**🎬 Hook（冒頭0〜2秒）：** {_hook}")
+                        if _dm:
+                            st.markdown(f"**📤 DMシェア設計：** {_dm}")
+                        st.markdown("</div>", unsafe_allow_html=True)
 
-                elif ctype == "reel":
                     st.markdown("#### 📱 Instagram Reel キャプション")
                     st.code(captions.get("instagram", ""), language=None)
 
@@ -606,15 +695,19 @@ with tab3:
                     st.code(captions.get("threads", ""), language=None)
 
                     st.markdown("#### ▶️ YouTube Shorts")
-                    _yt_title = captions.get("youtube_title", "")
-                    _yt_desc  = captions.get("youtube", "")
+                    _yt_title   = captions.get("youtube_title", "")
+                    _yt_desc    = captions.get("youtube", "")
+                    _pin_comment = captions.get("pin_comment", "")
                     if _yt_title:
                         st.caption("タイトル")
                         st.code(_yt_title, language=None)
                         st.caption("説明文（#Shorts・ハッシュタグ含む）")
                         st.code(_yt_desc, language=None)
+                        if _pin_comment:
+                            st.caption("ピン留めコメント")
+                            st.code(_pin_comment, language=None)
                     else:
-                        st.info("コンテンツ生成をやり直すとYouTube Shortsコンテンツが追加されます")
+                        st.info("再生成するとYouTube Shortsコンテンツが追加されます")
 
                 st.divider()
 
@@ -645,13 +738,19 @@ with tab4:
         """, unsafe_allow_html=True)
 
         if st.session_state.threads_text_posted:
-            st.success(f"✅ Threads①② 投稿済み　（① {post_time_text} / ② {post_time_buzz} 頃）")
+            st.success(f"✅ Threads 育児投稿済み（{post_time_text} 頃）")
+        elif not st.session_state.threads_script:
+            st.button("🧵 Threads に投稿する", use_container_width=True, disabled=True)
+            st.caption("⚠️ 「コンテンツ生成」タブで Threads投稿文を先に生成してください")
         else:
+            _th_preview = st.session_state.threads_script.get("captions", {}).get("threads", "")
+            if _th_preview:
+                st.caption(f"投稿内容：{_th_preview[:60]}…")
             if st.button("🧵 Threads に投稿する", type="primary", use_container_width=True):
                 with st.spinner("Bufferに予約中..."):
                     from agents.buffer_agent import run as buf_run
                     results = buf_run(
-                        [s.copy() for s in st.session_state.scripts],
+                        [st.session_state.threads_script.copy()],
                         platforms=["threads"],
                     )
                 ok = any(
