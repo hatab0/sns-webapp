@@ -282,147 +282,158 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 
 
 # ──────────────────────────────────────────────────────
-# TAB 1: コンテンツ生成
+# TAB 1: コンテンツ生成（ウィザード形式）
 # ──────────────────────────────────────────────────────
 with tab1:
-    st.markdown("### 🌸 今日のコンテンツを自動生成")
-
-    # ── モード選択トグル
-    _mode_label = st.radio(
-        "投稿モード",
-        ["通常（商品紹介）", "バズmode（フォロワー獲得）"],
-        horizontal=True,
-        key="mode_radio",
-    )
-    _mode = "normal" if "通常" in _mode_label else "buzz"
-    st.session_state.content_mode = _mode
-
-    if _mode == "normal":
-        st.caption("楽天APIで売れ筋商品を取得し、Instagram・YouTube・Threads用コンテンツを生成します。")
-    else:
-        st.caption("商品なし。せなっちが踊る・ふざける動画でフォロワー獲得を狙います。")
-
-    st.divider()
-
-    # ── Threads 今日の出来事（独立セクション）
-    st.markdown("#### 📝 Threads 今日の出来事")
-    st.caption("今日のせなっちとの出来事を入力すると、自然な育児投稿文を生成します（投稿タブから投稿）")
-    _today_event = st.text_area(
-        "今日の出来事を入力（箇条書きでもOK）",
-        placeholder="例）夜泣きが3回あった　/　初めて離乳食を食べた　/　抱っこしたら笑いかけてきた",
-        key="today_event_input",
-        height=80,
-    )
-    _th_col1, _th_col2 = st.columns([2, 1])
-    with _th_col1:
-        if st.button("🧵 Threads投稿文を生成する", use_container_width=True):
-            from agents import threads_agent
-            with st.spinner("生成中..."):
-                _th_script = threads_agent.run(today_event=_today_event)
-            st.session_state.threads_script      = _th_script
-            st.session_state.threads_text_posted = False
-            st.success("✅ Threads投稿文を生成しました（投稿タブから投稿できます）")
-    with _th_col2:
-        if st.session_state.threads_script:
-            st.caption("✅ 投稿文あり")
-
-    if st.session_state.threads_script:
-        _th_text = st.session_state.threads_script.get("captions", {}).get("threads", "")
-        _bait    = st.session_state.threads_script.get("bait_check", "pass")
-        st.code(_th_text, language=None)
-        if _bait == "fail":
-            st.warning("⚠️ エンゲージメントベイト検出。再生成を推奨します。")
-
-    st.divider()
-
-    # ── メインコンテンツ生成
-    st.markdown("#### 🎬 動画・キャプション生成")
+    st.markdown("### 🌸 今日のコンテンツを生成する")
 
     if st.session_state.generated and st.session_state.posts:
+        # ── 生成済みサマリー
         _p0 = st.session_state.posts[0]
+        st.success("✅ 生成完了！「プロンプト」タブで内容を確認できます。")
+        st.markdown("""
+        <div style="background:#FFF0F8; border-radius:12px; padding:1rem 1.2rem; border:1px solid #FFB6C1;">
+        """, unsafe_allow_html=True)
         if _p0.get("is_buzz_mode"):
-            st.success("✅ バズmodeで生成済み！")
+            st.markdown("**🎉 バズmode** — せなっちが踊る・ふざける動画")
         else:
-            st.success(f"✅ 生成済み！　**{_p0['name'][:40]}** | ¥{_p0.get('price', 0):,}")
-        if st.button("🔄 再生成", use_container_width=True):
+            st.markdown(f"**📦 商品：** {_p0['name'][:50]}")
+            st.markdown(f"**💴 価格：** ¥{_p0.get('price', 0):,}")
+        if st.session_state.threads_script:
+            _th_prev = st.session_state.threads_script.get("captions", {}).get("threads", "")
+            st.markdown(f"**🧵 Threads投稿文：** {_th_prev[:40]}…")
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🔄 再生成する", use_container_width=True):
             for k, v in _defaults.items():
                 st.session_state[k] = v
             st.rerun()
+
     else:
-        col_c, col_d, col_e = st.columns([1, 2, 1])
-        with col_d:
-            _btn_label = "💫 今日のコンテンツを生成する" if _mode == "normal" else "🎉 バズmodeで生成する"
-            if st.button(_btn_label, type="primary", use_container_width=True):
-                try:
-                    from agents import image_agent, instagram_agent, youtube_agent
-                    if _mode == "normal":
-                        from agents import rakuten_agent, analyzer_agent, writer_agent, quality_agent
-                        with st.status("🍼 Baby Boo のコンテンツを準備中...", expanded=True) as status:
-                            st.write("🛍️ 楽天APIで売れ筋商品を取得中...")
-                            from utils.sheets_helper import (
-                                get_product_history, get_last_generated_code, upsert_product,
-                            )
-                            history   = get_product_history()
-                            last_code = get_last_generated_code(history)
-                            products  = rakuten_agent.run()
-                            top3      = analyzer_agent.run(products, history=history, last_code=last_code)
-                            all_scored = sorted(
-                                [p for p in products if "score" in p],
-                                key=lambda x: x["score"], reverse=True,
-                            )
-                            posts = writer_agent.run(top3)
-                            st.write(f"✅ {len(posts)}件の商品を選出・紹介文生成完了")
-
-                            st.write("🖼️  画像・動画プロンプトを生成中...")
-                            posts = image_agent.run(posts)
-                            posts = quality_agent.run(posts)
-                            st.write("✅ プロンプト生成完了")
-
-                            st.write("📱 Instagram・YouTube コンテンツを生成中...")
-                            reel_script = instagram_agent.run(product=posts[0])
-                            reel_script = youtube_agent.run(instagram_script=reel_script, product=posts[0])
-                            scripts = [reel_script]
-                            st.write("✅ キャプション生成完了")
-
-                            status.update(label="🎉 全コンテンツ生成完了！", state="complete")
-
-                        st.session_state.posts        = posts
-                        st.session_state.scripts      = scripts
-                        st.session_state.all_products = all_scored
-                        st.session_state.generated    = True
-                        upsert_product(posts[0])
-
-                    else:  # buzz mode
-                        with st.status("🎉 バズmodeコンテンツを準備中...", expanded=True) as status:
-                            st.write("🖼️  バズmode画像・動画プロンプトを生成中...")
-                            buzz_post = image_agent.run_buzz()
-                            st.write("✅ プロンプト生成完了")
-
-                            st.write("📱 Instagram・YouTube コンテンツを生成中...")
-                            reel_script = instagram_agent.run_buzz()
-                            reel_script = youtube_agent.run(instagram_script=reel_script, product=None)
-                            scripts = [reel_script]
-                            st.write("✅ キャプション生成完了")
-
-                            status.update(label="🎉 バズmodeコンテンツ生成完了！", state="complete")
-
-                        st.session_state.posts        = [buzz_post]
-                        st.session_state.scripts      = scripts
-                        st.session_state.all_products = []
-                        st.session_state.generated    = True
-
-                    st.balloons()
-                    st.rerun()
-
-                except Exception as e:
-                    st.error(f"エラーが発生しました: {e}")
-                    raise
-
+        # ── STEP 1: 今日の出来事
         st.markdown("""
-        <div style="text-align:center; color:#FF6B9D; font-size:0.85rem; margin-top:1rem;">
-            🌸 生成には約30〜60秒かかります 🌸
+        <div style="background:#FFF0F8; border-radius:12px; padding:0.8rem 1rem;
+                    border:1px solid #FFB6C1; margin-bottom:0.3rem;">
+            <b>STEP 1　📝 今日のせなっちとの出来事を教えてください</b><br>
+            <span style="font-size:0.82rem; color:#AD1457;">Threads育児投稿文の元ネタになります（空欄でも自動生成します）</span>
         </div>
         """, unsafe_allow_html=True)
+        _today_event = st.text_area(
+            "",
+            placeholder="例）夜泣きが3回あった　/　初めて離乳食を食べた　/　抱っこしたら笑いかけてきた",
+            key="today_event_input",
+            height=90,
+            label_visibility="collapsed",
+        )
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # ── STEP 2: モード選択
+        st.markdown("""
+        <div style="background:#FFF0F8; border-radius:12px; padding:0.8rem 1rem;
+                    border:1px solid #FFB6C1; margin-bottom:0.3rem;">
+            <b>STEP 2　🎬 今日の動画スタイルを選んでください</b>
+        </div>
+        """, unsafe_allow_html=True)
+        _mode_label = st.radio(
+            "",
+            [
+                "通常（商品紹介）― 楽天商品をせなっちが使う動画",
+                "バズmode ― せなっちが踊る・ふざける動画（商品なし）",
+            ],
+            key="mode_radio",
+            label_visibility="collapsed",
+        )
+        _mode = "normal" if "通常" in _mode_label else "buzz"
+        st.session_state.content_mode = _mode
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # ── STEP 3: 生成ボタン
+        st.markdown("""
+        <div style="background:#FFF0F8; border-radius:12px; padding:0.8rem 1rem;
+                    border:1px solid #FFB6C1; margin-bottom:0.5rem;">
+            <b>STEP 3　🚀 生成スタート</b><br>
+            <span style="font-size:0.82rem; color:#AD1457;">約30〜60秒で全コンテンツが揃います</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("🚀 今日のコンテンツをすべて生成する", type="primary", use_container_width=True):
+            try:
+                from agents import image_agent, instagram_agent, youtube_agent, threads_agent
+
+                if _mode == "normal":
+                    from agents import rakuten_agent, analyzer_agent, writer_agent, quality_agent
+                    with st.status("🍼 コンテンツを生成中...", expanded=True) as status:
+                        st.write("① 楽天で売れ筋商品を取得中...")
+                        from utils.sheets_helper import (
+                            get_product_history, get_last_generated_code, upsert_product,
+                        )
+                        history    = get_product_history()
+                        last_code  = get_last_generated_code(history)
+                        products   = rakuten_agent.run()
+                        top3       = analyzer_agent.run(products, history=history, last_code=last_code)
+                        all_scored = sorted(
+                            [p for p in products if "score" in p],
+                            key=lambda x: x["score"], reverse=True,
+                        )
+                        posts = writer_agent.run(top3)
+                        st.write(f"   ✅ 商品選出完了：{posts[0]['name'][:30]}")
+
+                        st.write("② 画像・動画プロンプトを生成中...")
+                        posts = image_agent.run(posts)
+                        posts = quality_agent.run(posts)
+                        st.write("   ✅ GPT Image 2 / InsMindプロンプト完了")
+
+                        st.write("③ Instagram・YouTube キャプションを生成中...")
+                        reel_script = instagram_agent.run(product=posts[0])
+                        reel_script = youtube_agent.run(instagram_script=reel_script, product=posts[0])
+                        st.write("   ✅ Instagram・YouTube キャプション完了")
+
+                        st.write("④ Threads 育児投稿文を生成中...")
+                        threads_script = threads_agent.run(today_event=_today_event)
+                        st.write("   ✅ Threads投稿文完了")
+
+                        status.update(label="🎉 全コンテンツ生成完了！", state="complete")
+
+                    st.session_state.posts         = posts
+                    st.session_state.scripts       = [reel_script]
+                    st.session_state.threads_script = threads_script
+                    st.session_state.all_products  = all_scored
+                    st.session_state.generated     = True
+                    st.session_state.threads_text_posted = False
+                    upsert_product(posts[0])
+
+                else:  # buzz mode
+                    with st.status("🎉 バズmodeコンテンツを生成中...", expanded=True) as status:
+                        st.write("① バズmode 画像・動画プロンプトを生成中...")
+                        buzz_post = image_agent.run_buzz()
+                        st.write("   ✅ プロンプト完了")
+
+                        st.write("② Instagram・YouTube キャプションを生成中...")
+                        reel_script = instagram_agent.run_buzz()
+                        reel_script = youtube_agent.run(instagram_script=reel_script, product=None)
+                        st.write("   ✅ キャプション完了")
+
+                        st.write("③ Threads 育児投稿文を生成中...")
+                        threads_script = threads_agent.run(today_event=_today_event)
+                        st.write("   ✅ Threads投稿文完了")
+
+                        status.update(label="🎉 バズmodeコンテンツ生成完了！", state="complete")
+
+                    st.session_state.posts          = [buzz_post]
+                    st.session_state.scripts        = [reel_script]
+                    st.session_state.threads_script = threads_script
+                    st.session_state.all_products   = []
+                    st.session_state.generated      = True
+                    st.session_state.threads_text_posted = False
+
+                st.balloons()
+                st.rerun()
+
+            except Exception as e:
+                st.error(f"エラーが発生しました: {e}")
+                raise
 
 
 # ──────────────────────────────────────────────────────
@@ -709,6 +720,15 @@ with tab3:
                     else:
                         st.info("再生成するとYouTube Shortsコンテンツが追加されます")
 
+                st.divider()
+
+        # Threads 育児投稿文（threads_agentが生成したテキスト投稿）
+        if st.session_state.threads_script:
+            _th_text = st.session_state.threads_script.get("captions", {}).get("threads", "")
+            if _th_text:
+                st.markdown("#### 🧵 Threads 育児投稿文（テキスト）")
+                st.caption("動画なしのテキスト投稿です。「投稿」タブからBufferに予約できます。")
+                st.code(_th_text, language=None)
                 st.divider()
 
 
