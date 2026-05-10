@@ -50,22 +50,22 @@ def score_product(product: dict) -> float:
     return (review_count * 0.6) + (review_average * 10 * 0.4)
 
 
-def _is_skip(item_code: str, history: dict, last_code: str) -> bool:
+def _is_skip(item_code: str, history: dict, recent_codes: set) -> bool:
     """
-    - 直前に生成した商品（連続防止）→ True
+    - 直近7日間に生成した商品（recent_codes に含まれる）→ True
     - 生成回数が3回以上 → True
     """
-    if item_code and item_code == last_code:
+    if item_code and item_code in recent_codes:
         return True
     rec = history.get(item_code, {})
     return rec.get("生成回数", 0) >= 3
 
 
-def run(products: list = None, history: dict = None, last_code: str = "") -> list:
+def run(products: list = None, history: dict = None, recent_codes: set = None, last_code: str = "") -> list:
     """
     商品をスコアリングしてTOP3を返す。
     history: sheets_helper.get_product_history() の結果（Webアプリ用）
-    last_code: 直前に生成した item_code（連続防止）
+    recent_codes: 直近7日間に生成した item_code のセット（重複防止）
     """
     print("📊 市場分析エージェント 起動")
 
@@ -91,13 +91,14 @@ def run(products: list = None, history: dict = None, last_code: str = "") -> lis
     # ─── フィルタリング ───
     if history is not None:
         # Webアプリ: Sheets履歴ベースでフィルタ
+        _recent = recent_codes or set()
         filtered = [
             p for p in sorted_products
-            if not _is_skip(p.get("item_code", ""), history, last_code)
+            if not _is_skip(p.get("item_code", ""), history, _recent)
         ]
         skipped = len(sorted_products) - len(filtered)
         if skipped:
-            print(f"\n  ⏭️  重複スキップ: {skipped} 件（生成3回済 or 連続防止）")
+            print(f"\n  ⏭️  重複スキップ: {skipped} 件（直近7日以内 or 生成3回済）")
     else:
         # CLI用: ローカル skip_list.json
         skip_keys = []

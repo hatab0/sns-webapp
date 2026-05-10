@@ -367,12 +367,12 @@ with tab1:
                     with st.status("🍼 コンテンツを生成中...", expanded=True) as status:
                         st.write("① 楽天で売れ筋商品を取得中...")
                         from utils.sheets_helper import (
-                            get_product_history, get_last_generated_code, upsert_product,
+                            get_product_history, get_recent_codes, upsert_product,
                         )
-                        history    = get_product_history()
-                        last_code  = get_last_generated_code(history)
-                        products   = rakuten_agent.run()
-                        top3       = analyzer_agent.run(products, history=history, last_code=last_code)
+                        history      = get_product_history()
+                        recent_codes = get_recent_codes(history, days=7)
+                        products     = rakuten_agent.run()
+                        top3         = analyzer_agent.run(products, history=history, recent_codes=recent_codes)
                         all_scored = sorted(
                             [p for p in products if "score" in p],
                             key=lambda x: x["score"], reverse=True,
@@ -664,10 +664,21 @@ with tab3:
                 st.divider()
 
             # 動画用画像プロンプト（全mode共通）
-            _img_label = "🎬 GPT Image プロンプト（文字なし・動画用）" if not is_buzz else "🎉 GPT Image プロンプト（バズmode・踊り）"
-            _img_caption = f"{'せなっち写真＋商品写真を添付 → ' if not is_buzz else 'せなっち写真を添付 → '}`{today}_{'video' if not is_buzz else 'buzz'}.png` として保存 → InsMindで動画化"
-            st.markdown(f"#### {_img_label}")
-            st.caption(_img_caption)
+            if is_buzz:
+                st.markdown("#### 🎉 GPT Image プロンプト（バズmode・コスチューム）")
+                st.markdown("""
+                <div style="background:#FFF8E7; border-radius:10px; padding:0.7rem 1rem;
+                            border:1px solid #FFCC80; font-size:0.84rem; margin-bottom:0.4rem;">
+                    📎 <b>ChatGPTへ添付する画像は2枚</b><br>
+                    　① せなっちの写真<br>
+                    　② 着させたいコスチューム画像（アニメ服・野菜コス・果物コスなど）<br>
+                    <span style="color:#E65100;">コスチューム画像を変えるだけで毎回違う動画が作れます</span>
+                </div>
+                """, unsafe_allow_html=True)
+                st.caption(f"生成後 `{today}_buzz.png` として保存 → InsMindで動画化")
+            else:
+                st.markdown("#### 🎬 GPT Image プロンプト（文字なし・動画用）")
+                st.caption(f"せなっち写真＋商品写真を添付 → `{today}_video.png` として保存 → InsMindで動画化")
             st.link_button("🤖 ChatGPTを開く ", "https://chatgpt.com")
             st.code(p.get("gpt_image_prompt_notxt", ""), language=None)
             st.divider()

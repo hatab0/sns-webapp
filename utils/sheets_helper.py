@@ -103,7 +103,7 @@ def get_product_history() -> dict:
 
 
 def get_last_generated_code(history: dict) -> str:
-    """最後に生成した item_code を返す（連続投稿防止用）"""
+    """最後に生成した item_code を返す（後方互換用）"""
     if not history:
         return ""
     try:
@@ -111,6 +111,16 @@ def get_last_generated_code(history: dict) -> str:
         return latest[0]
     except Exception:
         return ""
+
+
+def get_recent_codes(history: dict, days: int = 7) -> set:
+    """直近N日間に生成した item_code のセット（同一商品の連続紹介防止）"""
+    cutoff = (datetime.now(tz=JST) - timedelta(days=days)).strftime("%Y-%m-%d")
+    return {
+        code
+        for code, rec in history.items()
+        if rec.get("最終生成日", "") >= cutoff
+    }
 
 
 def upsert_product(product: dict) -> bool:
