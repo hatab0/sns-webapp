@@ -231,16 +231,17 @@ h2, h3 { color: #C2185B !important; }
 
 # ── セッション状態の初期化
 _defaults = {
-    "generated":           False,
-    "posts":               None,
-    "scripts":             None,
-    "threads_script":      None,   # Threads投稿文（独立生成）
-    "all_products":        None,   # 全商品スコア一覧（商品分析タブ用）
-    "content_mode":        "normal",  # "normal" or "buzz"
-    "video_url":           None,
-    "threads_text_posted": False,
-    "video_posted":        False,
-    "youtube_posted":      False,
+    "generated":            False,
+    "posts":                None,
+    "scripts":              None,
+    "threads_script":       None,
+    "all_products":         None,
+    "content_mode":         "normal",
+    "video_url":            None,
+    "instagram_posted":     False,
+    "threads_text_posted":  False,
+    "threads_video_posted": False,
+    "youtube_posted":       False,
 }
 for k, v in _defaults.items():
     if k not in st.session_state:
@@ -713,9 +714,6 @@ with tab3:
                     st.markdown("#### 📱 Instagram Reel キャプション")
                     st.code(captions.get("instagram", ""), language=None)
 
-                    st.markdown("#### 🧵 Threads 動画投稿キャプション")
-                    st.code(captions.get("threads", ""), language=None)
-
                     st.markdown("#### ▶️ YouTube Shorts")
                     _yt_title   = captions.get("youtube_title", "")
                     _yt_desc    = captions.get("youtube", "")
@@ -752,69 +750,22 @@ with tab4:
     if not st.session_state.generated:
         st.info("💡 まず「コンテンツ生成」タブで生成してください。")
     else:
-        post_time_text  = (datetime.now(tz=JST) + timedelta(minutes=3)).strftime("%H:%M")
-        post_time_video = (datetime.now(tz=JST) + timedelta(minutes=3)).strftime("%H:%M")
+        _now = datetime.now(tz=JST)
+        _t3  = (_now + timedelta(minutes=3)).strftime("%H:%M")
+        _t48 = (_now + timedelta(minutes=48)).strftime("%H:%M")
+        _th_text = (st.session_state.threads_script or {}).get("captions", {}).get("threads", "")
 
-        # ── Threads テキスト投稿（動画不要）
+        # ─────────────────────────────────────────
+        # ① 動画アップロード（共通）
+        # ─────────────────────────────────────────
         st.markdown("""
-        <div style="background:linear-gradient(135deg,#FFF0F8,#FFE8EF); border-radius:16px;
-                    padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #FFB6C1;">
-            <div style="font-size:1.1rem; font-weight:800; color:#C2185B; margin-bottom:0.3rem;">
-                🧵 Threads テキスト投稿（育児投稿）
+        <div style="background:linear-gradient(135deg,#F3E5F5,#EDE7F6); border-radius:16px;
+                    padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #CE93D8;">
+            <div style="font-size:1.1rem; font-weight:800; color:#6A1B9A; margin-bottom:0.3rem;">
+                ☁️ 動画アップロード
             </div>
-            <div style="font-size:0.85rem; color:#AD1457;">
-                動画不要・コンテンツ生成後すぐに予約できます
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        if st.session_state.threads_text_posted:
-            st.success(f"✅ Threads 育児投稿済み（{post_time_text} 頃）")
-        elif not st.session_state.threads_script:
-            st.button("🧵 Threads に投稿する", use_container_width=True, disabled=True)
-            st.caption("⚠️ 「コンテンツ生成」タブで Threads投稿文を先に生成してください")
-        else:
-            _th_preview = st.session_state.threads_script.get("captions", {}).get("threads", "")
-            if _th_preview:
-                st.caption(f"投稿内容：{_th_preview[:60]}…")
-            if st.button("🧵 Threads に投稿する", type="primary", use_container_width=True):
-                with st.spinner("Bufferに予約中..."):
-                    from agents.buffer_agent import run as buf_run
-                    results = buf_run(
-                        [st.session_state.threads_script.copy()],
-                        platforms=["threads"],
-                    )
-                ok = any(
-                    r.get("buffer_posts", {}).get("threads", {}).get("success")
-                    for r in results
-                )
-                if ok:
-                    st.session_state.threads_text_posted = True
-                    _ic = (st.session_state.posts or [{}])[0].get("item_code", "")
-                    if _ic:
-                        from utils.sheets_helper import increment_count as _inc
-                        _inc(_ic, "Threads投稿数")
-                    st.success(f"✅ {post_time_text} 頃に投稿されます")
-                    st.rerun()
-                else:
-                    err = next(
-                        (r["buffer_posts"].get("threads", {}).get("error", "")
-                         for r in results if r.get("buffer_posts")),
-                        "不明なエラー"
-                    )
-                    st.error(f"失敗: {err}")
-
-        st.divider()
-
-        # ── ② 動画投稿（Instagram Reel + Threads 動画）
-        st.markdown("""
-        <div style="background:linear-gradient(135deg,#FFF8E7,#FFE8D0); border-radius:16px;
-                    padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #FFCC80;">
-            <div style="font-size:1.1rem; font-weight:800; color:#C2185B; margin-bottom:0.3rem;">
-                🎬 動画投稿（Instagram Reel + Threads）
-            </div>
-            <div style="font-size:0.85rem; color:#AD1457;">
-                InsMindで生成した動画（MP4）をアップロードしてから投稿
+            <div style="font-size:0.85rem; color:#7B1FA2;">
+                Instagram / YouTube / Threads 動画投稿に使います。InsMindで生成した動画（MP4）を選択してください。
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -824,7 +775,6 @@ with tab4:
             type=["mp4", "mov"],
             key="vid_uploader",
         )
-
         if video_file:
             st.video(video_file)
             if not st.session_state.video_url:
@@ -841,125 +791,73 @@ with tab4:
             else:
                 st.success("✅ 動画アップロード済み")
 
-        st.markdown("<div style='height:0.6rem'></div>", unsafe_allow_html=True)
+        st.divider()
 
-        if st.session_state.video_posted:
-            st.success(f"✅ 動画投稿済み（Instagram Reel + Threads 動画）")
+        # ─────────────────────────────────────────
+        # ② Instagram Reel 投稿
+        # ─────────────────────────────────────────
+        st.markdown("""
+        <div style="background:linear-gradient(135deg,#FFF0F8,#FFE8EF); border-radius:16px;
+                    padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #FFB6C1;">
+            <div style="font-size:1.1rem; font-weight:800; color:#C2185B; margin-bottom:0.3rem;">
+                📱 Instagram Reel 投稿
+            </div>
+            <div style="font-size:0.85rem; color:#AD1457;">動画必須 / 上でアップロードしてから投稿</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.session_state.instagram_posted:
+            st.success(f"✅ Instagram Reel 投稿済み（{_t3} 頃）")
         elif not st.session_state.video_url:
-            st.button(
-                "📹 動画を投稿する（Instagram Reel + Threads）",
-                use_container_width=True,
-                disabled=True,
-            )
-            st.caption("⚠️ 先に動画ファイルをアップロードしてください")
+            st.button("📱 Instagram Reel に投稿する", use_container_width=True, disabled=True)
+            st.caption("⚠️ 先に動画をアップロードしてください")
         else:
-            # ── Threads 動画キャプション選択
-            _reel_s = next((s for s in (st.session_state.scripts or []) if s.get("type") == "reel"), {})
-            _video_cap   = _reel_s.get("captions", {}).get("threads", "")
-            _text_cap    = (st.session_state.threads_script or {}).get("captions", {}).get("threads", "")
-
-            _cap_options = {}
-            if _video_cap:
-                _cap_options["動画投稿キャプション"] = _video_cap
-            if _text_cap:
-                _cap_options["育児投稿文"] = _text_cap
-
-            if len(_cap_options) >= 2:
-                st.markdown("**🧵 Threads のキャプションを選んでください**")
-                _cap_choice = st.radio(
-                    "",
-                    list(_cap_options.keys()),
-                    key="threads_video_cap_choice",
-                    horizontal=True,
-                    label_visibility="collapsed",
-                )
-                st.caption(f"プレビュー：{_cap_options[_cap_choice][:60]}…")
-            else:
-                _cap_choice = list(_cap_options.keys())[0] if _cap_options else "動画投稿キャプション"
-
-            st.markdown("<div style='height:0.3rem'></div>", unsafe_allow_html=True)
-
-            if st.button(
-                "📹 動画を投稿する（Instagram Reel + Threads）",
-                type="primary",
-                use_container_width=True,
-            ):
-                # 選択されたキャプションを scripts のコピーに反映
-                scripts_to_post = [s.copy() for s in st.session_state.scripts]
-                chosen_cap = _cap_options.get(_cap_choice, "")
-                if chosen_cap:
-                    for _s in scripts_to_post:
-                        if _s.get("type") == "reel":
-                            _s.setdefault("captions", {})
-                            _s["captions"]["threads"] = chosen_cap
-
+            if st.button("📱 Instagram Reel に投稿する", type="primary", use_container_width=True):
                 with st.spinner("Bufferに予約中..."):
                     from agents.buffer_agent import run as buf_run
                     results = buf_run(
-                        scripts_to_post,
+                        [s.copy() for s in st.session_state.scripts],
                         video_url=st.session_state.video_url,
+                        platforms=["instagram"],
                     )
                 ok_ig = any(r.get("buffer_posts", {}).get("instagram", {}).get("success") for r in results)
-                ok_th = any(r.get("buffer_posts", {}).get("threads_reel", {}).get("success") for r in results)
-                if ok_ig or ok_th:
-                    st.session_state.video_posted = True
+                if ok_ig:
+                    st.session_state.instagram_posted = True
                     _ic = (st.session_state.posts or [{}])[0].get("item_code", "")
                     if _ic:
-                        from utils.sheets_helper import increment_count as _inc2
-                        if ok_ig:
-                            _inc2(_ic, "Instagram投稿数")
-                        if ok_th:
-                            _inc2(_ic, "Threads投稿数")
-                    parts = []
-                    if ok_ig:
-                        parts.append(f"Instagram Reel {post_time_video}頃")
-                    if ok_th:
-                        parts.append(f"Threads動画 {(datetime.now(tz=JST) + timedelta(minutes=48)).strftime('%H:%M')}頃")
-                    st.success(f"✅ {' / '.join(parts)} に投稿されます")
+                        from utils.sheets_helper import increment_count as _inc
+                        _inc(_ic, "Instagram投稿数")
+                    st.success(f"✅ Instagram Reel {_t3} 頃に投稿されます")
                     st.rerun()
                 else:
-                    errs = []
-                    for r in results:
-                        bp = r.get("buffer_posts", {})
-                        for k in ("instagram", "threads_reel"):
-                            e = bp.get(k, {}).get("error")
-                            if e:
-                                errs.append(e)
-                    st.error(f"失敗: {' | '.join(errs) or '不明なエラー'}")
+                    errs = [r.get("buffer_posts", {}).get("instagram", {}).get("error", "") for r in results]
+                    st.error(f"失敗: {' | '.join(e for e in errs if e) or '不明なエラー'}")
 
         st.divider()
 
-        # ── ③ YouTube Shorts 投稿
+        # ─────────────────────────────────────────
+        # ③ YouTube Shorts 投稿
+        # ─────────────────────────────────────────
         st.markdown("""
         <div style="background:linear-gradient(135deg,#FFF3E0,#FFE0B2); border-radius:16px;
                     padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #FFB74D;">
             <div style="font-size:1.1rem; font-weight:800; color:#E65100; margin-bottom:0.3rem;">
                 ▶️ YouTube Shorts 投稿
             </div>
-            <div style="font-size:0.85rem; color:#BF360C;">
-                リールと同じ動画をYouTube Shortsとして予約投稿（要：Bufferにチャンネル連携済み）
-            </div>
+            <div style="font-size:0.85rem; color:#BF360C;">動画必須 / Bufferにチャンネル連携済みが前提</div>
         </div>
         """, unsafe_allow_html=True)
 
         if st.session_state.youtube_posted:
             st.success("✅ YouTube Shorts 投稿済み")
         elif not st.session_state.video_url:
-            st.button(
-                "▶️ YouTube Shortsに投稿する",
-                use_container_width=True,
-                disabled=True,
-            )
-            st.caption("⚠️ 先に動画ファイルをアップロードしてください")
+            st.button("▶️ YouTube Shorts に投稿する", use_container_width=True, disabled=True)
+            st.caption("⚠️ 先に動画をアップロードしてください")
         else:
-            _yt_reel = next((s for s in st.session_state.scripts if s.get("type") == "reel"), None)
+            _yt_reel = next((s for s in (st.session_state.scripts or []) if s.get("type") == "reel"), None)
             _yt_title_preview = (_yt_reel or {}).get("captions", {}).get("youtube_title", "（タイトル未生成）")
             st.caption(f"タイトル: {_yt_title_preview}")
-            if st.button(
-                "▶️ YouTube Shortsに投稿する",
-                type="primary",
-                use_container_width=True,
-            ):
+            if st.button("▶️ YouTube Shorts に投稿する", type="primary", use_container_width=True):
                 with st.spinner("Bufferに予約中..."):
                     from agents.buffer_agent import run as buf_run_yt
                     results_yt = buf_run_yt(
@@ -970,16 +868,92 @@ with tab4:
                 ok_yt = any(r.get("buffer_posts", {}).get("youtube", {}).get("success") for r in results_yt)
                 if ok_yt:
                     st.session_state.youtube_posted = True
-                    _post_time_yt = (datetime.now(tz=JST) + timedelta(minutes=3)).strftime("%H:%M")
-                    st.success(f"✅ YouTube Shorts {_post_time_yt}頃 に投稿されます")
+                    st.success(f"✅ YouTube Shorts {_t3} 頃に投稿されます")
                     st.rerun()
                 else:
-                    errs_yt = []
-                    for r in results_yt:
-                        e = r.get("buffer_posts", {}).get("youtube", {}).get("error")
-                        if e:
-                            errs_yt.append(e)
-                    st.error(f"失敗: {' | '.join(errs_yt) or '不明なエラー'}")
+                    errs_yt = [r.get("buffer_posts", {}).get("youtube", {}).get("error", "") for r in results_yt]
+                    st.error(f"失敗: {' | '.join(e for e in errs_yt if e) or '不明なエラー'}")
+
+        st.divider()
+
+        # ─────────────────────────────────────────
+        # ④ Threads 投稿（育児投稿文 / 動画あり or なし選択）
+        # ─────────────────────────────────────────
+        st.markdown("""
+        <div style="background:linear-gradient(135deg,#E8F5E9,#DCEDC8); border-radius:16px;
+                    padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #A5D6A7;">
+            <div style="font-size:1.1rem; font-weight:800; color:#2E7D32; margin-bottom:0.3rem;">
+                🧵 Threads 投稿（育児投稿文）
+            </div>
+            <div style="font-size:0.85rem; color:#388E3C;">
+                テキストのみ / 動画と一緒に、を投稿タイミングで選べます
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if not _th_text:
+            st.caption("⚠️ 「コンテンツ生成」タブで Threads投稿文を先に生成してください")
+        else:
+            st.caption(f"投稿内容：{_th_text[:60]}…")
+            col_txt, col_vid = st.columns(2)
+
+            with col_txt:
+                if st.session_state.threads_text_posted:
+                    st.success("✅ テキスト投稿済み")
+                else:
+                    if st.button("🧵 テキストのみ投稿", type="primary", use_container_width=True):
+                        with st.spinner("Bufferに予約中..."):
+                            from agents.buffer_agent import run as buf_run_th
+                            results_th = buf_run_th(
+                                [st.session_state.threads_script.copy()],
+                                platforms=["threads"],
+                            )
+                        ok_th = any(r.get("buffer_posts", {}).get("threads", {}).get("success") for r in results_th)
+                        if ok_th:
+                            st.session_state.threads_text_posted = True
+                            _ic = (st.session_state.posts or [{}])[0].get("item_code", "")
+                            if _ic:
+                                from utils.sheets_helper import increment_count as _inc_th
+                                _inc_th(_ic, "Threads投稿数")
+                            st.success(f"✅ {_t3} 頃に投稿されます")
+                            st.rerun()
+                        else:
+                            err = next((r["buffer_posts"].get("threads", {}).get("error", "") for r in results_th if r.get("buffer_posts")), "不明なエラー")
+                            st.error(f"失敗: {err}")
+
+            with col_vid:
+                if st.session_state.threads_video_posted:
+                    st.success("✅ 動画投稿済み")
+                elif not st.session_state.video_url:
+                    st.button("📹 動画と一緒に投稿", use_container_width=True, disabled=True)
+                    st.caption("動画アップロード後に有効")
+                else:
+                    if st.button("📹 動画と一緒に投稿", type="primary", use_container_width=True):
+                        # reelスクリプトに育児投稿文を注入してThreadsのみ投稿
+                        _scripts_vid = [s.copy() for s in (st.session_state.scripts or [])]
+                        for _s in _scripts_vid:
+                            if _s.get("type") == "reel":
+                                _s.setdefault("captions", {})
+                                _s["captions"]["threads"] = _th_text
+                        with st.spinner("Bufferに予約中..."):
+                            from agents.buffer_agent import run as buf_run_thv
+                            results_thv = buf_run_thv(
+                                _scripts_vid,
+                                video_url=st.session_state.video_url,
+                                platforms=["threads"],
+                            )
+                        ok_thv = any(r.get("buffer_posts", {}).get("threads_reel", {}).get("success") for r in results_thv)
+                        if ok_thv:
+                            st.session_state.threads_video_posted = True
+                            _ic = (st.session_state.posts or [{}])[0].get("item_code", "")
+                            if _ic:
+                                from utils.sheets_helper import increment_count as _inc_thv
+                                _inc_thv(_ic, "Threads投稿数")
+                            st.success(f"✅ {_t48} 頃に投稿されます")
+                            st.rerun()
+                        else:
+                            errs_thv = [r.get("buffer_posts", {}).get("threads_reel", {}).get("error", "") for r in results_thv]
+                            st.error(f"失敗: {' | '.join(e for e in errs_thv if e) or '不明なエラー'}")
 
 
 # ──────────────────────────────────────────────────────

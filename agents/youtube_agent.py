@@ -5,7 +5,6 @@ Instagramスクリプトを受け取りYouTube Shorts専用コンテンツを生
 """
 import anthropic
 import os
-import re
 import json
 from datetime import date
 from dotenv import load_dotenv
@@ -42,42 +41,6 @@ def _parse_json(text: str) -> dict:
     except Exception:
         return {}
 
-
-def _threads_video_caption(script: dict, product: dict = None) -> str:
-    """Threads動画投稿用キャプション。バズmodeは#PRなし・バズ特化の文章。"""
-    is_buzz = product is None
-    tags_str = BUZZ_TAGS_STR if is_buzz else FIXED_TAGS_STR
-    concept = script.get("viral_concept", script.get("hook", ""))
-
-    if is_buzz:
-        extra_rule = "・商品紹介は一切しない・せなっちのかわいさ・面白さだけを伝える"
-    else:
-        product_info = f"（{product['name']}）"
-        extra_rule = f"・商品情報：{product_info}・アフィリエイトURLは貼らない"
-
-    prompt = f"""
-育休中のパパとして、Threadsに動画を投稿するときの短いキャプションを書いてください。
-
-動画コンセプト：{concept}
-
-【ルール】
-・450字以内・口語体・自然体
-・感情が先（「やばい」「神すぎ」「まじで」など）
-・体験談ベースで書く
-・文末は「〜だった」「〜だよ」「〜じゃない？」
-{extra_rule}
-・末尾に必ず：{tags_str}
-
-キャプションテキストのみ出力。前置き不要。
-"""
-    message = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=400,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    text = message.content[0].text.strip()
-    text = re.sub(r'https?://\S*(rakuten|amazon|afl)\S*', '', text).strip()
-    return text[:450] if len(text) > 450 else text
 
 
 def _run_normal(instagram_script: dict, product: dict) -> dict:
@@ -192,6 +155,5 @@ def run(instagram_script: dict, product: dict = None) -> dict:
     instagram_script["captions"]["youtube_title"] = result.get("title", default_title)
     instagram_script["captions"]["youtube"] = result.get("description", "")
     instagram_script["captions"]["pin_comment"] = result.get("pin_comment", "")
-    instagram_script["captions"]["threads"] = _threads_video_caption(instagram_script, product)
 
     return instagram_script

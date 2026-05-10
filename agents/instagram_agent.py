@@ -155,29 +155,36 @@ JSONのみ出力。前置き不要。
 
 
 def _generate_buzz_instagram_caption(script: dict) -> str:
-    """バズmode用Instagramキャプション（#PRなし・かわいさ全振り）"""
+    """バズmode用Instagramキャプション（#PRなし・かわいさ全振り・リトライ付き）"""
+    viral_concept = script.get("viral_concept") or script.get("drama_format") or ""
+    hook = script.get("hook") or ""
+    concept_line = f"動画コンセプト：{viral_concept}" if viral_concept else f"生後{MONTH_AGE}ヶ月のせなっちのかわいいバズ動画"
+    hook_line = f"フック：{hook}" if hook else ""
+
     prompt = f"""
 育休中のパパとして、フォロワー獲得に特化したInstagram Reelキャプションを書いてください。
-
-動画コンセプト：{script.get('viral_concept', '')}
-フック：{script.get('hook', '')}
+{concept_line}
+{hook_line}
 
 【ルール】
 ・120〜180字・絵文字2〜3個・口語体（ですます禁止）
 ・商品紹介・アフィリエイト誘導は一切しない
 ・「かわいすぎて無理」「これは保存案件」「友達に送りたい」を感じさせる文章
-・「プロフのROOM」の誘導も不要（バズmodeは商品なし）
 ・DMシェアを誘う感情的な締め（問いかけ形式でも可）
 ・末尾に必ず入れる：{BUZZ_TAGS_STR}
 
 キャプションテキストのみ出力。前置き不要。
 """
-    msg = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=300,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return msg.content[0].text.strip()
+    for _ in range(3):
+        msg = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=400,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        text = msg.content[0].text.strip()
+        if text:
+            return text
+    return f"生後{MONTH_AGE}ヶ月のせなっち、かわいすぎた😭💕 これはフォロー案件じゃない？ {BUZZ_TAGS_STR}"
 
 
 def run(product: dict) -> dict:
