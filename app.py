@@ -373,6 +373,15 @@ with tab1:
                         history      = get_product_history()
                         recent_codes = get_recent_codes(history, days=7)
                         products     = rakuten_agent.run()
+                        # Amazon商品も取得して混合（設定済みの場合）
+                        try:
+                            from agents import amazon_agent
+                            if amazon_agent.is_configured():
+                                st.write("   Amazon商品も取得中...")
+                                amazon_products = amazon_agent.run(max_per_keyword=2)
+                                products = products + amazon_products
+                        except Exception:
+                            pass
                         top3         = analyzer_agent.run(products, history=history, recent_codes=recent_codes)
                         all_scored = sorted(
                             [p for p in products if "score" in p],
@@ -697,10 +706,11 @@ with tab3:
                 captions = s.get("captions", {})
 
                 if ctype == "reel":
-                    # コンテンツ設計スコア表示
+                    # コンテンツ設計スコア + BGM表示
                     _dm  = s.get("dm_trigger", "")
                     _hook = s.get("hook", "")
-                    if _dm or _hook:
+                    _bgm = s.get("bgm_style", "")
+                    if _dm or _hook or _bgm:
                         st.markdown("""
                         <div style="background:#FFF0F8; border-radius:10px; padding:0.8rem 1rem;
                                     border:1px solid #FFB6C1; font-size:0.82rem; margin-bottom:0.5rem;">
@@ -709,7 +719,33 @@ with tab3:
                             st.markdown(f"**🎬 Hook（冒頭0〜2秒）：** {_hook}")
                         if _dm:
                             st.markdown(f"**📤 DMシェア設計：** {_dm}")
+                        if _bgm:
+                            st.markdown(f"**🎵 AI推奨BGMスタイル：** {_bgm}")
                         st.markdown("</div>", unsafe_allow_html=True)
+
+                    # ── BGMトレンド情報
+                    st.markdown("#### 🎵 BGM・音源トレンド（2026年5月）")
+                    st.markdown("""
+                    <div style="background:linear-gradient(135deg,#F3E5F5,#EDE7F6); border-radius:12px;
+                                padding:0.9rem 1.1rem; border:1px solid #CE93D8; font-size:0.84rem; margin-bottom:0.4rem;">
+                    <b>📈 今週のReelsバズり音源カテゴリ</b><br><br>
+                    🥇 <b>LoFi / Nostalgic系（最推奨）</b> — Quiet Comfort・Oldies系。赤ちゃんスローモーション映像に最もマッチ。<br>
+                    🥈 <b>Warm Strings / Gentle Piano</b> — 60〜90 BPMで感情的。育児日常記録に定番。<br>
+                    🥉 <b>K-Pop キャッチー系</b> — IVE "BANG BANG"等。ポジティブ・バズ動画向け。<br>
+                    ✨ <b>バイラル急上昇</b> — Everything Hallelujah（Justin Bieber）特徴紹介リール形式に人気。<br><br>
+                    <b>🎬 InsMindでのBGM選択コツ</b><br>
+                    キーワード: <code>Warm</code> / <code>Nostalgic</code> / <code>Gentle</code> / <code>Heartwarming</code><br>
+                    テンポ: Slow〜Medium（60〜90 BPM）を優先<br><br>
+                    <b>⚡ Instagram内でトレンド音源確認 → InsMindで近いカテゴリを選択</b><br>
+                    Reels投稿時に「↗（上昇中）」マーク付き音源を使うとリールタブへの表示が優先されます
+                    </div>
+                    """, unsafe_allow_html=True)
+                    _col_buf, _col_lat = st.columns(2)
+                    with _col_buf:
+                        st.link_button("📊 Buffer トレンド音源", "https://buffer.com/resources/trending-audio-instagram/")
+                    with _col_lat:
+                        st.link_button("📊 Later トレンド情報", "https://later.com/blog/instagram-reels-trends/")
+                    st.divider()
 
                     st.markdown("#### 📱 Instagram Reel キャプション")
                     st.code(captions.get("instagram", ""), language=None)

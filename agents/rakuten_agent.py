@@ -117,8 +117,13 @@ def fetch_products(keyword: str, hits: int = 5) -> list:
         if i.get("mediumImageUrls"):
             image_url = i["mediumImageUrls"][0]["imageUrl"]
 
-        # アフィリエイトURL（なければ通常URL）
-        affiliate_url = i.get("affiliateUrl", i["itemUrl"])
+        # アフィリエイトURL → もしもW報酬リンクでラップ（設定済みの場合）
+        raw_url = i.get("affiliateUrl", i["itemUrl"])
+        try:
+            from utils.moshimo_helper import wrap_rakuten
+            affiliate_url = wrap_rakuten(raw_url)
+        except Exception:
+            affiliate_url = raw_url
 
         items.append({
             "name": i["itemName"],
