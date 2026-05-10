@@ -15,8 +15,10 @@ load_dotenv()
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 BIRTH_DATE = date(2025, 12, 22)
-FIXED_TAGS = ["#babyboo", "#baby", "#PR", "#育児", "#赤ちゃんのいる生活"]
-FIXED_TAGS_STR = " ".join(FIXED_TAGS)
+FIXED_TAGS      = ["#babyboo", "#baby", "#PR", "#育児", "#赤ちゃんのいる生活"]
+FIXED_TAGS_STR  = " ".join(FIXED_TAGS)
+BUZZ_TAGS       = ["#babyboo", "#baby", "#育児", "#赤ちゃんのいる生活"]   # #PR なし
+BUZZ_TAGS_STR   = " ".join(BUZZ_TAGS)
 
 
 def calc_month_age() -> int:
@@ -42,23 +44,29 @@ def _parse_json(text: str) -> dict:
 
 
 def _threads_video_caption(script: dict, product: dict = None) -> str:
-    """Threads動画投稿用キャプション（ハッシュタグあり・自然体）"""
-    product_info = f"（{product['name']}）" if product else ""
+    """Threads動画投稿用キャプション。バズmodeは#PRなし・バズ特化の文章。"""
+    is_buzz = product is None
+    tags_str = BUZZ_TAGS_STR if is_buzz else FIXED_TAGS_STR
     concept = script.get("viral_concept", script.get("hook", ""))
+
+    if is_buzz:
+        extra_rule = "・商品紹介は一切しない・せなっちのかわいさ・面白さだけを伝える"
+    else:
+        product_info = f"（{product['name']}）"
+        extra_rule = f"・商品情報：{product_info}・アフィリエイトURLは貼らない"
 
     prompt = f"""
 育休中のパパとして、Threadsに動画を投稿するときの短いキャプションを書いてください。
 
 動画コンセプト：{concept}
-商品情報：{product_info}
 
 【ルール】
 ・450字以内・口語体・自然体
 ・感情が先（「やばい」「神すぎ」「まじで」など）
 ・体験談ベースで書く
 ・文末は「〜だった」「〜だよ」「〜じゃない？」
-・アフィリエイトURLは貼らない
-・末尾に必ず：{FIXED_TAGS_STR}
+{extra_rule}
+・末尾に必ず：{tags_str}
 
 キャプションテキストのみ出力。前置き不要。
 """
@@ -72,14 +80,10 @@ def _threads_video_caption(script: dict, product: dict = None) -> str:
     return text[:450] if len(text) > 450 else text
 
 
-def run(instagram_script: dict, product: dict = None) -> dict:
-    """
-    Instagramスクリプトを受け取りYouTube Shorts専用コンテンツを生成。
-    instagram_script の captions に youtube_title / youtube / pin_comment / threads を追記して返す。
-    """
+def _run_normal(instagram_script: dict, product: dict) -> dict:
+    """通常mode：商品紹介YouTube Shortsキャプションを生成"""
     hook = instagram_script.get("hook", "")
     concept = instagram_script.get("viral_concept", "")
-    product_name = product["name"] if product else "せなっちの日常"
 
     prompt = f"""
 あなたはYouTube Shortsの育児チャンネル運営者です。
@@ -89,7 +93,7 @@ def run(instagram_script: dict, product: dict = None) -> dict:
 AIベビーキャラ「せなっち」（生後{MONTH_AGE}ヶ月）
 フック：{hook}
 コンセプト：{concept}
-商品：{product_name}
+商品：{product["name"]}
 
 【タイトルのルール】
 ・100文字以内・感情系
@@ -119,10 +123,73 @@ AIベビーキャラ「せなっち」（生後{MONTH_AGE}ヶ月）
         max_tokens=500,
         messages=[{"role": "user", "content": prompt}]
     )
-    result = _parse_json(message.content[0].text.strip())
+    return _parse_json(message.content[0].text.strip())
+
+
+def _run_buzz(instagram_script: dict) -> dict:
+    """バズmode：かわいさ・面白さ特化のYouTube Shortsキャプションを生成（#PRなし）"""
+    hook = instagram_script.get("hook", "")
+    concept = instagram_script.get("viral_concept", "")
+
+    prompt = f"""
+あなたはバイラル育児系YouTube Shortsのチャンネル運営者です。
+商品紹介ではなく「せなっちのかわいさ・面白さ」でフォロワーを増やすことが目的です。
+
+【動画情報】
+AIベビーキャラ「せなっち」（生後{MONTH_AGE}ヶ月）
+フック：{hook}
+コンセプト：{concept}
+
+【タイトルのルール】
+・100文字以内
+・「生後{MONTH_AGE}ヶ月」を必ず入れる
+・「かわいすぎた」「笑いが止まらない」「奇跡の瞬間」など感情爆発系タイトル
+・「〇〇したら△△だった」形式推奨
+・検索キーワード（育休パパ/育児vlog/赤ちゃん/かわいい赤ちゃん）を1つ含める
+・商品名・ブランド名は一切入れない
+
+【説明文のルール】
+・3〜5行の自然な文章（商品紹介なし）
+・「#Shorts」を必ず入れる
+・末尾に全て入れる：{BUZZ_TAGS_STR} #Shorts #生後{MONTH_AGE}ヶ月 #育児vlog #かわいい赤ちゃん #バズ
+
+【ピン留めコメントのルール】
+・「チャンネル登録してね▼」から始める1行
+・せなっちへの一言コメントで自然に締める
+
+【出力形式】JSONのみ。前置き不要。
+
+{{
+  "title": "YouTubeタイトル（100文字以内）",
+  "description": "説明文テキスト（タグ含む）",
+  "pin_comment": "ピン留めコメントテキスト"
+}}
+"""
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=500,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return _parse_json(message.content[0].text.strip())
+
+
+def run(instagram_script: dict, product: dict = None) -> dict:
+    """
+    Instagramスクリプトを受け取りYouTube Shorts専用コンテンツを生成。
+    product=None のときはバズmode（#PRなし・バズ特化キャプション）。
+    instagram_script の captions に youtube_title / youtube / pin_comment / threads を追記して返す。
+    """
+    is_buzz = product is None
+
+    if is_buzz:
+        result = _run_buzz(instagram_script)
+        default_title = f"生後{MONTH_AGE}ヶ月せなっちが可愛すぎた"
+    else:
+        result = _run_normal(instagram_script, product)
+        default_title = f"生後{MONTH_AGE}ヶ月せなっちの記録"
 
     instagram_script.setdefault("captions", {})
-    instagram_script["captions"]["youtube_title"] = result.get("title", f"生後{MONTH_AGE}ヶ月せなっちの記録")
+    instagram_script["captions"]["youtube_title"] = result.get("title", default_title)
     instagram_script["captions"]["youtube"] = result.get("description", "")
     instagram_script["captions"]["pin_comment"] = result.get("pin_comment", "")
     instagram_script["captions"]["threads"] = _threads_video_caption(instagram_script, product)

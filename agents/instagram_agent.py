@@ -14,8 +14,10 @@ load_dotenv()
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 BIRTH_DATE = date(2025, 12, 22)
-FIXED_TAGS = ["#babyboo", "#baby", "#PR", "#育児", "#赤ちゃんのいる生活"]
+FIXED_TAGS     = ["#babyboo", "#baby", "#PR", "#育児", "#赤ちゃんのいる生活"]
 FIXED_TAGS_STR = " ".join(FIXED_TAGS)
+BUZZ_TAGS      = ["#babyboo", "#baby", "#育児", "#赤ちゃんのいる生活"]   # #PR なし
+BUZZ_TAGS_STR  = " ".join(BUZZ_TAGS)
 
 BABY_SPEECH_BY_MONTH = {
     0:  {"sounds": ["おぎゃー", "ふにゃー"], "desc": "泣き声のみ"},
@@ -153,15 +155,20 @@ JSONのみ出力。前置き不要。
 
 
 def _generate_buzz_instagram_caption(script: dict) -> str:
-    """バズmode用Instagramキャプション"""
+    """バズmode用Instagramキャプション（#PRなし・かわいさ全振り）"""
     prompt = f"""
-育休中のパパとして、バズ狙いのInstagram Reelキャプションを書いてください。
+育休中のパパとして、フォロワー獲得に特化したInstagram Reelキャプションを書いてください。
+
 動画コンセプト：{script.get('viral_concept', '')}
+フック：{script.get('hook', '')}
 
 【ルール】
-・100〜150字・絵文字2個・口語体
-・商品紹介なし・フォロワー獲得狙い
-・末尾に必ず入れる：{FIXED_TAGS_STR}
+・120〜180字・絵文字2〜3個・口語体（ですます禁止）
+・商品紹介・アフィリエイト誘導は一切しない
+・「かわいすぎて無理」「これは保存案件」「友達に送りたい」を感じさせる文章
+・「プロフのROOM」の誘導も不要（バズmodeは商品なし）
+・DMシェアを誘う感情的な締め（問いかけ形式でも可）
+・末尾に必ず入れる：{BUZZ_TAGS_STR}
 
 キャプションテキストのみ出力。前置き不要。
 """
