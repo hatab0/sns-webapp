@@ -122,17 +122,17 @@ st.markdown("""
 /* コードブロック */
 .stCode { border-radius: 12px !important; border: 1px solid #FFB6C1 !important; font-size: 0.85rem !important; }
 
-/* 通常mode用 青ボタン（.blue-btn マーカーの直後ボタンを対象） */
-[data-testid="stMarkdownContainer"]:has(.blue-btn) + div button {
+/* 通常modeカードと同じ列にあるボタンを水色に */
+[data-testid="stMarkdownContainer"]:has(.mode-card-normal) ~ div [data-testid="stBaseButton-primary"] {
     background: linear-gradient(135deg, #42A5F5, #64B5F6) !important;
     border: none !important;
     color: white !important;
     box-shadow: 0 4px 12px rgba(66,165,245,0.35) !important;
 }
-[data-testid="stMarkdownContainer"]:has(.blue-btn) + div button:hover {
+[data-testid="stMarkdownContainer"]:has(.mode-card-normal) ~ div [data-testid="stBaseButton-primary"]:hover {
     box-shadow: 0 6px 16px rgba(66,165,245,0.45) !important;
 }
-[data-testid="stMarkdownContainer"]:has(.blue-btn) + div button[kind="secondary"] {
+[data-testid="stMarkdownContainer"]:has(.mode-card-normal) ~ div [data-testid="stBaseButton-secondary"] {
     background: transparent !important;
     border: 2px solid #42A5F5 !important;
     color: #42A5F5 !important;
@@ -310,13 +310,11 @@ else:
             <div class="mode-card-desc">楽天商品を紹介する動画<br>（商品あり）</div>
         </div>
         """, unsafe_allow_html=True)
-        st.markdown('<div class="blue-btn">', unsafe_allow_html=True)
         if st.button("通常modeを選ぶ", use_container_width=True,
                      type="primary" if not _is_buzz else "secondary", key="sel_normal"):
             st.session_state.content_mode = "normal"
             st.session_state.buzz_mood = ""
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
