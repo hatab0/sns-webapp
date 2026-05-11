@@ -122,17 +122,21 @@ st.markdown("""
 /* コードブロック */
 .stCode { border-radius: 12px !important; border: 1px solid #FFB6C1 !important; font-size: 0.85rem !important; }
 
-/* 通常modeカードと同じ列にあるボタンを水色に */
-[data-testid="stMarkdownContainer"]:has(.mode-card-normal) ~ div [data-testid="stBaseButton-primary"] {
+/* 通常modeカードを含む列のボタンを水色に（stColumn / column 両方対応） */
+[data-testid="stColumn"]:has(.mode-card-normal) [data-testid="stBaseButton-primary"],
+[data-testid="column"]:has(.mode-card-normal) [data-testid="stBaseButton-primary"] {
     background: linear-gradient(135deg, #42A5F5, #64B5F6) !important;
     border: none !important;
     color: white !important;
     box-shadow: 0 4px 12px rgba(66,165,245,0.35) !important;
 }
-[data-testid="stMarkdownContainer"]:has(.mode-card-normal) ~ div [data-testid="stBaseButton-primary"]:hover {
+[data-testid="stColumn"]:has(.mode-card-normal) [data-testid="stBaseButton-primary"]:hover,
+[data-testid="column"]:has(.mode-card-normal) [data-testid="stBaseButton-primary"]:hover {
     box-shadow: 0 6px 16px rgba(66,165,245,0.45) !important;
+    transform: translateY(-2px) !important;
 }
-[data-testid="stMarkdownContainer"]:has(.mode-card-normal) ~ div [data-testid="stBaseButton-secondary"] {
+[data-testid="stColumn"]:has(.mode-card-normal) [data-testid="stBaseButton-secondary"],
+[data-testid="column"]:has(.mode-card-normal) [data-testid="stBaseButton-secondary"] {
     background: transparent !important;
     border: 2px solid #42A5F5 !important;
     color: #42A5F5 !important;
