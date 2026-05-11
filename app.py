@@ -242,6 +242,7 @@ _defaults = {
     "threads_text_posted":  False,
     "threads_video_posted": False,
     "youtube_posted":       False,
+    "buzz_mood":            "",
 }
 for k, v in _defaults.items():
     if k not in st.session_state:
@@ -350,11 +351,40 @@ with tab1:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # ── STEP 3: 生成ボタン
-        st.markdown("""
+        # ── STEP 3（バズmodeのみ）: 気分選択
+        if _mode == "buzz":
+            st.markdown("""
+            <div style="background:#FFF0F8; border-radius:12px; padding:0.8rem 1rem;
+                        border:1px solid #FFB6C1; margin-bottom:0.3rem;">
+                <b>STEP 3　😊 今日の気分を教えてください</b><br>
+                <span style="font-size:0.82rem; color:#AD1457;">AIがあなたの気分に合ったインスタ・YouTubeキャプションを生成します</span>
+            </div>
+            """, unsafe_allow_html=True)
+            _mood_options = [
+                "（おまかせ）",
+                "😭 疲れた・眠い",
+                "😤 怒り・ムカつく",
+                "😊 嬉しい・幸せ",
+                "😂 笑える出来事",
+                "😱 びっくりした",
+                "🥹 感動した",
+                "😮‍💨 諦めた（開き直り）",
+            ]
+            _mood_selected = st.selectbox(
+                "",
+                _mood_options,
+                key="buzz_mood_select",
+                label_visibility="collapsed",
+            )
+            st.session_state.buzz_mood = "" if _mood_selected == "（おまかせ）" else _mood_selected
+            st.markdown("<br>", unsafe_allow_html=True)
+
+        # ── STEP 3/4: 生成ボタン
+        _step_num = "4" if _mode == "buzz" else "3"
+        st.markdown(f"""
         <div style="background:#FFF0F8; border-radius:12px; padding:0.8rem 1rem;
                     border:1px solid #FFB6C1; margin-bottom:0.5rem;">
-            <b>STEP 3　🚀 生成スタート</b><br>
+            <b>STEP {_step_num}　🚀 生成スタート</b><br>
             <span style="font-size:0.82rem; color:#AD1457;">約30〜60秒で全コンテンツが揃います</span>
         </div>
         """, unsafe_allow_html=True)
@@ -421,7 +451,8 @@ with tab1:
                         st.write("   ✅ プロンプト完了")
 
                         st.write("② Instagram・YouTube キャプションを生成中...")
-                        reel_script = instagram_agent.run_buzz()
+                        _buzz_mood = st.session_state.get("buzz_mood", "")
+                        reel_script = instagram_agent.run_buzz(mood=_buzz_mood)
                         reel_script = youtube_agent.run(instagram_script=reel_script, product=None)
                         st.write("   ✅ キャプション完了")
 
@@ -662,7 +693,7 @@ with tab3:
                             increment_count(p.get("item_code", ""), "楽天ROOM投稿数")
                             st.session_state[_room_key] = True
                             st.rerun()
-                st.code(p.get("room_description", ""), language=None)
+                st.text_area("", value=p.get("room_description", ""), height=120, key="ta_room_desc", label_visibility="collapsed")
                 if p.get("affiliate_url"):
                     st.caption(f"アフィリエイトURL: `{p['affiliate_url']}`")
                 st.divider()
@@ -670,7 +701,7 @@ with tab3:
                 st.markdown("#### 🖼️ GPT Image プロンプト（文字あり・楽天ROOM用）")
                 st.caption(f"せなっち写真＋商品写真を添付 → `{today}.png` として保存")
                 st.link_button("🤖 ChatGPTを開く", "https://chatgpt.com")
-                st.code(p.get("gpt_image_prompt", ""), language=None)
+                st.text_area("", value=p.get("gpt_image_prompt", ""), height=200, key="ta_gpt_img", label_visibility="collapsed")
                 st.divider()
 
             # 動画用画像プロンプト（全mode共通）
@@ -689,14 +720,14 @@ with tab3:
                 st.markdown("#### 🎬 GPT Image プロンプト（文字なし・動画用）")
                 st.caption(f"せなっち写真＋商品写真を添付 → `{today}_video.png` として保存 → Kling AIで動画化")
             st.link_button("🤖 ChatGPTを開く ", "https://chatgpt.com")
-            st.code(p.get("gpt_image_prompt_notxt", ""), language=None)
+            st.text_area("", value=p.get("gpt_image_prompt_notxt", ""), height=200, key="ta_gpt_notxt", label_visibility="collapsed")
             st.divider()
 
             # Kling AI動画プロンプト
             st.markdown("#### 🎥 Kling AI 動画プロンプト")
             st.caption("上記で生成した画像をKling AIにアップロード → Image to Video で使用")
             st.link_button("🎬 Kling AIを開く", "https://klingai.com")
-            st.code(p.get("video_prompt", ""), language=None)
+            st.text_area("", value=p.get("video_prompt", ""), height=200, key="ta_video_prompt", label_visibility="collapsed")
 
         if scripts:
             st.divider()
@@ -747,7 +778,7 @@ with tab3:
                     st.divider()
 
                     st.markdown("#### 📱 Instagram Reel キャプション")
-                    st.code(captions.get("instagram", ""), language=None)
+                    st.text_area("", value=captions.get("instagram", ""), height=150, key="ta_ig_caption", label_visibility="collapsed")
 
                     st.markdown("#### ▶️ YouTube Shorts")
                     _yt_title   = captions.get("youtube_title", "")
@@ -755,12 +786,12 @@ with tab3:
                     _pin_comment = captions.get("pin_comment", "")
                     if _yt_title:
                         st.caption("タイトル")
-                        st.code(_yt_title, language=None)
+                        st.text_area("", value=_yt_title, height=70, key="ta_yt_title", label_visibility="collapsed")
                         st.caption("説明文（#Shorts・ハッシュタグ含む）")
-                        st.code(_yt_desc, language=None)
+                        st.text_area("", value=_yt_desc, height=150, key="ta_yt_desc", label_visibility="collapsed")
                         if _pin_comment:
                             st.caption("ピン留めコメント")
-                            st.code(_pin_comment, language=None)
+                            st.text_area("", value=_pin_comment, height=80, key="ta_yt_pin", label_visibility="collapsed")
                     else:
                         st.info("再生成するとYouTube Shortsコンテンツが追加されます")
 
@@ -772,7 +803,7 @@ with tab3:
             if _th_text:
                 st.markdown("#### 🧵 Threads 育児投稿文（テキスト）")
                 st.caption("動画なしのテキスト投稿です。「投稿」タブからBufferに予約できます。")
-                st.code(_th_text, language=None)
+                st.text_area("", value=_th_text, height=120, key="ta_threads_text", label_visibility="collapsed")
                 st.divider()
 
 

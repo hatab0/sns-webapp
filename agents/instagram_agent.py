@@ -158,6 +158,8 @@ JSONのみ出力。前置き不要。
 def _generate_buzz_caption_pattern_a(script: dict) -> str:
     """バズmodeパターンA：育児あるある悩み＋開き直り絵文字（ダンス・コミカル系）"""
     viral_concept = script.get("viral_concept") or script.get("drama_format") or ""
+    mood = script.get("mood_context", "")
+    mood_line = f"今日のパパの気分：{mood}（この気分を文章の軸にすること）" if mood else ""
 
     prompt = f"""
 育休中のパパとして、生後{MONTH_AGE}ヶ月の育児あるあるの「悩み・愚痴」を1〜2行で書いてください。
@@ -167,6 +169,7 @@ def _generate_buzz_caption_pattern_a(script: dict) -> str:
 ・生後3〜4ヶ月：やっと寝かしつけたのにすぐ起きる
 ・生後5ヶ月：離乳食を全部吐き出す、ずり這いで目が離せない
 ・生後{MONTH_AGE}ヶ月ならではのリアルな悩みを自然に
+{mood_line}
 
 動画のコンセプト（参考）：{viral_concept}
 
@@ -193,9 +196,12 @@ def _generate_buzz_caption_pattern_a(script: dict) -> str:
 def _generate_buzz_caption_pattern_b(script: dict) -> str:
     """バズmodeパターンB：パパのアメリカンジョーク形式（超かわいい系）"""
     viral_concept = script.get("viral_concept") or script.get("drama_format") or ""
+    mood = script.get("mood_context", "")
+    mood_line = f"今日のパパの気分：{mood}（この気分をジョークの前振りや落差に活かすこと）" if mood else ""
 
     prompt = f"""
 育休中のパパとして、アメリカンジョーク風のInstagramキャプションを書いてください。
+{mood_line}
 
 【形式】「パパ今日〇〇した。でもせなっちは〇〇だった。」という落差が笑えるオチ形式
 例：
@@ -226,10 +232,21 @@ def _generate_buzz_caption_pattern_b(script: dict) -> str:
     return msg.content[0].text.strip()
 
 
-def _generate_buzz_instagram_caption(script: dict) -> str:
-    """バズmode用Instagramキャプション：パターンA/Bをランダム選択"""
-    pattern = random.choice(["A", "B"])
-    script["buzz_caption_pattern"] = pattern  # app.pyで表示用
+def _generate_buzz_instagram_caption(script: dict, mood: str = "") -> str:
+    """バズmode用Instagramキャプション：気分に応じてパターンA/Bを選択"""
+    # 気分 → パターン対応
+    mood_a = {"😭 疲れた・眠い", "😤 怒り・ムカつく", "😮‍💨 諦めた（開き直り）"}
+    if mood in mood_a:
+        pattern = "A"
+    elif mood:
+        pattern = "B"
+    else:
+        pattern = random.choice(["A", "B"])
+    script["buzz_caption_pattern"] = pattern
+
+    # 気分コンテキストをscriptに追加
+    if mood:
+        script["mood_context"] = mood
 
     try:
         if pattern == "A":
@@ -246,6 +263,8 @@ def _generate_buzz_instagram_caption(script: dict) -> str:
 
 def run(product: dict) -> dict:
     """通常mode：商品あり Reel スクリプト＋Instagramキャプションを生成"""
+    global MONTH_AGE
+    MONTH_AGE = calc_month_age()
     speech_info = BABY_SPEECH_BY_MONTH.get(MONTH_AGE, BABY_SPEECH_BY_MONTH[4])
     sounds_str = "・".join(speech_info["sounds"])
     speech_desc = speech_info["desc"]
@@ -262,10 +281,12 @@ def run(product: dict) -> dict:
     return script
 
 
-def run_buzz() -> dict:
+def run_buzz(mood: str = "") -> dict:
     """バズmode：商品なし Reel スクリプト＋Instagramキャプションを生成"""
+    global MONTH_AGE
+    MONTH_AGE = calc_month_age()
     script = _generate_buzz_script()
     script["type"] = "reel"
-    caption_ig = _generate_buzz_instagram_caption(script)
+    caption_ig = _generate_buzz_instagram_caption(script, mood=mood)
     script["captions"] = {"instagram": caption_ig}
     return script

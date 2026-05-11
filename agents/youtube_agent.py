@@ -94,6 +94,8 @@ def _run_buzz_pattern_a(instagram_script: dict) -> dict:
     """バズmodeパターンA：育児あるある悩み＋開き直り（ダンス・コミカル系）"""
     hook = instagram_script.get("hook", "")
     concept = instagram_script.get("viral_concept", "")
+    mood = instagram_script.get("mood_context", "")
+    mood_line = f"今日のパパの気分：{mood}（この感情をタイトル・説明文の軸にすること）" if mood else ""
 
     prompt = f"""
 あなたはバイラル育児系YouTube Shortsのチャンネル運営者です。
@@ -103,6 +105,7 @@ def _run_buzz_pattern_a(instagram_script: dict) -> dict:
 AIベビーキャラ「せなっち」（生後{MONTH_AGE}ヶ月）
 フック：{hook}
 コンセプト：{concept}
+{mood_line}
 
 【タイトルのルール】
 ・100文字以内
@@ -140,6 +143,8 @@ def _run_buzz_pattern_b(instagram_script: dict) -> dict:
     """バズmodeパターンB：パパのアメリカンジョーク形式（超かわいい系）"""
     hook = instagram_script.get("hook", "")
     concept = instagram_script.get("viral_concept", "")
+    mood = instagram_script.get("mood_context", "")
+    mood_line = f"今日のパパの気分：{mood}（この感情をジョークの前振りに活かすこと）" if mood else ""
 
     prompt = f"""
 あなたはバイラル育児系YouTube Shortsのチャンネル運営者です。
@@ -149,6 +154,7 @@ def _run_buzz_pattern_b(instagram_script: dict) -> dict:
 AIベビーキャラ「せなっち」（生後{MONTH_AGE}ヶ月）
 フック：{hook}
 コンセプト：{concept}
+{mood_line}
 
 【タイトルのルール】
 ・100文字以内
@@ -201,6 +207,8 @@ def run(instagram_script: dict, product: dict = None) -> dict:
     product=None のときはバズmode（#PRなし・バズ特化キャプション）。
     instagram_script の captions に youtube_title / youtube / pin_comment / threads を追記して返す。
     """
+    global MONTH_AGE
+    MONTH_AGE = calc_month_age()
     is_buzz = product is None
 
     if is_buzz:
