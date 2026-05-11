@@ -393,7 +393,7 @@ with tab1:
                         st.write("② 画像・動画プロンプトを生成中...")
                         posts = image_agent.run(posts)
                         posts = quality_agent.run(posts)
-                        st.write("   ✅ GPT Image 2 / InsMindプロンプト完了")
+                        st.write("   ✅ GPT Image 2 / Kling AIプロンプト完了")
 
                         st.write("③ Instagram・YouTube キャプションを生成中...")
                         reel_script = instagram_agent.run(product=posts[0])
@@ -685,18 +685,18 @@ with tab3:
                     <span style="color:#E65100;">コスチューム画像を変えるだけで毎回違う動画が作れます</span>
                 </div>
                 """, unsafe_allow_html=True)
-                st.caption(f"生成後 `{today}_buzz.png` として保存 → InsMindで動画化")
+                st.caption(f"生成後 `{today}_buzz.png` として保存 → Kling AIで動画化")
             else:
                 st.markdown("#### 🎬 GPT Image プロンプト（文字なし・動画用）")
-                st.caption(f"せなっち写真＋商品写真を添付 → `{today}_video.png` として保存 → InsMindで動画化")
+                st.caption(f"せなっち写真＋商品写真を添付 → `{today}_video.png` として保存 → Kling AIで動画化")
             st.link_button("🤖 ChatGPTを開く ", "https://chatgpt.com")
             st.code(p.get("gpt_image_prompt_notxt", ""), language=None)
             st.divider()
 
-            # InsMind動画プロンプト
-            st.markdown("#### 🎥 InsMind 動画プロンプト")
-            st.caption(f"上記で生成した画像をInsMindにアップロードして使用")
-            st.link_button("🎬 InsMindを開く", "https://www.insmind.com")
+            # Kling AI動画プロンプト
+            st.markdown("#### 🎥 Kling AI 動画プロンプト")
+            st.caption("上記で生成した画像をKling AIにアップロード → Image to Video で使用")
+            st.link_button("🎬 Kling AIを開く", "https://klingai.com")
             st.code(p.get("video_prompt", ""), language=None)
 
         if scripts:
@@ -733,10 +733,10 @@ with tab3:
                     🥈 <b>Warm Strings / Gentle Piano</b> — 60〜90 BPMで感情的。育児日常記録に定番。<br>
                     🥉 <b>K-Pop キャッチー系</b> — IVE "BANG BANG"等。ポジティブ・バズ動画向け。<br>
                     ✨ <b>バイラル急上昇</b> — Everything Hallelujah（Justin Bieber）特徴紹介リール形式に人気。<br><br>
-                    <b>🎬 InsMindでのBGM選択コツ</b><br>
+                    <b>🎬 Kling AIでのBGM選択コツ</b><br>
                     キーワード: <code>Warm</code> / <code>Nostalgic</code> / <code>Gentle</code> / <code>Heartwarming</code><br>
                     テンポ: Slow〜Medium（60〜90 BPM）を優先<br><br>
-                    <b>⚡ Instagram内でトレンド音源確認 → InsMindで近いカテゴリを選択</b><br>
+                    <b>⚡ Instagram内でトレンド音源確認 → Kling AIで近いカテゴリを選択</b><br>
                     Reels投稿時に「↗（上昇中）」マーク付き音源を使うとリールタブへの表示が優先されます
                     </div>
                     """, unsafe_allow_html=True)
@@ -801,7 +801,7 @@ with tab4:
                 ☁️ 動画アップロード
             </div>
             <div style="font-size:0.85rem; color:#7B1FA2;">
-                Instagram / YouTube / Threads 動画投稿に使います。InsMindで生成した動画（MP4）を選択してください。
+                Instagram / YouTube / Threads 動画投稿に使います。Kling AIで生成した動画（MP4）を選択してください。
             </div>
         </div>
         """, unsafe_allow_html=True)
