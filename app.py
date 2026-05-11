@@ -122,17 +122,21 @@ st.markdown("""
 /* コードブロック */
 .stCode { border-radius: 12px !important; border: 1px solid #FFB6C1 !important; font-size: 0.85rem !important; }
 
-/* 通常mode用 青ボタン */
-.blue-btn .stButton > button[kind="primary"] {
+/* 通常mode用 青ボタン（.blue-btn マーカーの直後ボタンを対象） */
+[data-testid="stMarkdownContainer"]:has(.blue-btn) + div button {
     background: linear-gradient(135deg, #42A5F5, #64B5F6) !important;
+    border: none !important;
+    color: white !important;
     box-shadow: 0 4px 12px rgba(66,165,245,0.35) !important;
 }
-.blue-btn .stButton > button[kind="primary"]:hover {
+[data-testid="stMarkdownContainer"]:has(.blue-btn) + div button:hover {
     box-shadow: 0 6px 16px rgba(66,165,245,0.45) !important;
 }
-.blue-btn .stButton > button[kind="secondary"] {
+[data-testid="stMarkdownContainer"]:has(.blue-btn) + div button[kind="secondary"] {
+    background: transparent !important;
     border: 2px solid #42A5F5 !important;
     color: #42A5F5 !important;
+    box-shadow: none !important;
 }
 
 /* その他 */
