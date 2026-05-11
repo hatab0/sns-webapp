@@ -92,6 +92,8 @@ def schedule_post(
         post_input["metadata"] = {"youtube": {
             "title": youtube_title or "Baby Boo 育児vlog",
             "privacy": "public",
+            "categoryId": "22",
+            "madeForKids": False,
         }}
         if video_url:
             post_input["assets"] = {"videos": [{"url": video_url}]}
