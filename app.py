@@ -679,10 +679,9 @@ with tab3:
                 st.markdown("""
                 <div style="background:#FFF8E7; border-radius:10px; padding:0.7rem 1rem;
                             border:1px solid #FFCC80; font-size:0.84rem; margin-bottom:0.4rem;">
-                    📎 <b>ChatGPTへ添付する画像は2枚</b><br>
-                    　① せなっちの写真<br>
-                    　② 着させたいコスチューム画像（アニメ服・野菜コス・果物コスなど）<br>
-                    <span style="color:#E65100;">コスチューム画像を変えるだけで毎回違う動画が作れます</span>
+                    📎 <b>ChatGPTへ添付する画像は1枚だけ</b><br>
+                    　① せなっちの写真のみ（コスチューム・背景はプロンプトが自動生成）<br>
+                    <span style="color:#E65100;">生成のたびにコスチュームが自動で変わります</span>
                 </div>
                 """, unsafe_allow_html=True)
                 st.caption(f"生成後 `{today}_buzz.png` として保存 → Kling AIで動画化")
