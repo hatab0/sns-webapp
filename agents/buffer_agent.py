@@ -91,9 +91,7 @@ def schedule_post(
     elif service == "youtube":
         post_input["metadata"] = {"youtube": {
             "title": youtube_title or "Baby Boo 育児vlog",
-            "category": "22",   # People & Blogs（育児vlogに最適）
             "privacy": "public",
-            "made_for_kids": False,
         }}
         if video_url:
             post_input["assets"] = {"videos": [{"url": video_url}]}
