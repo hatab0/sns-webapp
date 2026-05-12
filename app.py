@@ -76,6 +76,7 @@ st.markdown("""
 .social-ig  { background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); box-shadow: 0 3px 10px rgba(220,39,67,0.35); }
 .social-threads { background: #000; box-shadow: 0 3px 10px rgba(0,0,0,0.25); }
 .social-rakuten { background: linear-gradient(135deg,#BF0000,#FF0000); box-shadow: 0 3px 10px rgba(191,0,0,0.3); }
+.social-yt { background: linear-gradient(135deg,#FF0000,#CC0000); box-shadow: 0 3px 10px rgba(255,0,0,0.3); }
 
 /* モードカード */
 .mode-card {
@@ -250,6 +251,12 @@ st.markdown(f"""
         </a>
         <a href="https://room.rakuten.co.jp/room_3b6e1ab198/items" target="_blank" class="social-rakuten">
             🛍️ 楽天ROOM
+        </a>
+        <a href="https://studio.youtube.com" target="_blank" class="social-yt">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white">
+                <path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/>
+            </svg>
+            YouTube Studio
         </a>
     </div>
 </div>
@@ -689,6 +696,49 @@ with tab_post:
             else:
                 errs_yt = [r.get("buffer_posts", {}).get("youtube", {}).get("error", "") for r in results_yt]
                 st.error(f"失敗: {' | '.join(e for e in errs_yt if e) or '不明なエラー'}")
+
+    # ③-b YouTube ピン留めコメント自動投稿
+    _pin_comment_text = next(
+        (s.get("captions", {}).get("pin_comment", "") for s in scripts if s.get("type") == "reel"), ""
+    )
+    if _pin_comment_text:
+        st.markdown("""
+        <div style="background:linear-gradient(135deg,#FFF8E1,#FFF3CD); border-radius:14px;
+                    padding:1rem 1.2rem; margin-top:0.6rem; border:1px solid #FFE082;">
+            <div style="font-size:0.95rem; font-weight:800; color:#F57F17; margin-bottom:0.2rem;">
+                📌 ピン留めコメント自動投稿
+            </div>
+            <div style="font-size:0.8rem; color:#F9A825;">
+                動画公開後にコメント投稿 → YouTube Studioで手動ピン留めしてください
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        _yt_video_url = st.text_input(
+            "YouTube動画URLまたはビデオID",
+            placeholder="https://youtube.com/watch?v=XXXXXXXX  または  XXXXXXXX",
+            key="yt_comment_video_url"
+        )
+        st.caption(f"投稿するコメント: {_pin_comment_text[:80]}…" if len(_pin_comment_text) > 80 else f"投稿するコメント: {_pin_comment_text}")
+
+        if st.session_state.get("yt_comment_posted"):
+            st.success("✅ コメント投稿済み ─ YouTube Studioでピン留めしてください")
+            st.link_button("📌 YouTube Studio を開く", "https://studio.youtube.com")
+        else:
+            _can_comment = bool(_yt_video_url and _yt_video_url.strip())
+            if st.button("💬 コメントを投稿する", type="primary", use_container_width=True, disabled=not _can_comment):
+                with st.spinner("YouTube APIにコメント投稿中..."):
+                    from agents.youtube_comment_agent import post_comment as _post_yt_comment
+                    _comment_result = _post_yt_comment(_yt_video_url.strip(), _pin_comment_text)
+                if _comment_result.get("success"):
+                    st.session_state["yt_comment_posted"] = True
+                    st.success("✅ コメント投稿完了！YouTube Studioでピン留めしてください")
+                    st.link_button("📌 YouTube Studio を開く", "https://studio.youtube.com")
+                    st.rerun()
+                else:
+                    st.error(f"失敗: {_comment_result.get('error', '不明なエラー')}")
+            if not _can_comment:
+                st.caption("⚠️ 動画URLを入力してください")
 
     st.divider()
 

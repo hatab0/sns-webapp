@@ -88,6 +88,9 @@ def schedule_post(
         post_input["metadata"] = {"instagram": {"type": "reel", "shouldShareToFeed": True}}
         if video_url:
             post_input["assets"] = {"videos": [{"url": video_url}]}
+    elif service == "threads":
+        if video_url:
+            post_input["assets"] = {"videos": [{"url": video_url}]}
     elif service == "youtube":
         post_input["metadata"] = {"youtube": {
             "title": youtube_title or "Baby Boo 育児vlog",
