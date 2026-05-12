@@ -383,31 +383,44 @@ BUZZ_SCENE_BY_AGE = {
 
 # バズmode：コスチュームプール（baby_cubo_official スタイル）
 BUZZ_COSTUME_POOL = [
-    # アニマルフーディー・オールインワン
+    # ━━ baby_cubo_official シグネチャー：シンプルオールインワン＋ニットビーニー ━━
+    # (最もバズる組み合わせ - 毎投稿に近い頻度で使用)
+    "solid soft pink onesie with a tiny white chunky-knit beanie hat",
+    "solid lavender purple onesie with a colorful multicolor striped knit beanie",
+    "bright white onesie with a mint green cable-knit pom-pom hat",
+    "pale lemon yellow onesie with an orange knit pom-pom beanie",
+    "coral orange snap-button romper with a cream white knit beanie",
+    "soft sage green onesie with a blush pink ribbed knit hat",
+    "sky blue onesie with a navy and white striped knit beanie",
+    "clean white onesie with a rainbow striped chunky knit hat",
+    "dusty rose onesie with a matching rose-pink oversized pom-pom hat",
+    "tomato red onesie with a white ribbed knit hat",
+    "solid mint green onesie with a mustard yellow knit beanie",
+    "heather gray onesie with a multicolor pompom chunky knit beanie",
+    # ━━ ニットセーター・カーディガン style ━━
+    "soft pastel striped knit sweater (pink-yellow-white horizontal stripes) over white onesie underneath",
+    "tiny cream cable-knit cardigan over a pastel blue onesie, open front",
+    "oversized cozy sage green knit pullover sweater, chunky texture",
+    "bold red and white fair-isle patterned knit sweater",
+    "soft lilac ribbed knit long-sleeve onesie with a matching ribbed beanie",
+    # ━━ つば広ハット・バケットハット style ━━
+    "wide-brim soft pink cotton bucket hat with a plain white short-sleeve onesie",
+    "natural straw sun hat with a simple floral print cotton romper",
+    "floppy oversized cream bucket hat with a sage green onesie",
+    # ━━ アニマルフーディー・テーマ衣装 ━━
     "bright green dinosaur hoodie onesie with tiny spikes along the hood",
-    "brown teddy bear onesie with round plush ears on hood",
-    "black and white panda onesie with panda ear hood",
+    "brown teddy bear hoodie onesie with round plush ears",
+    "black and white panda hoodie onesie with panda ear hood",
     "soft yellow duckling costume with orange beak hood",
-    "white fluffy bunny onesie with long floppy ears",
-    "orange tiger stripe onesie with tiger ear hood",
-    "gray elephant hoodie onesie with big floppy ear hood",
-    "mint green frog costume with round frog eye hood",
-    # 果物・食べ物コスチューム
+    "white fluffy bunny onesie with long floppy ear hood",
+    "mint green frog costume with round bug-eye hood",
+    # ━━ 果物・季節・カジュアル ━━
     "bright red strawberry costume with green leaf hat",
-    "yellow pineapple knit hat with matching yellow romper",
-    "orange pumpkin round costume (Halloween style)",
-    "watermelon themed romper with green ruffles",
-    # キャラクター・カジュアル
-    "tiny black leather jacket over white onesie (mini biker style)",
-    "navy blue baseball cap worn backwards with matching jersey onesie",
-    "oversized pastel pink bucket hat with floral print romper",
-    "blue star-pattern hooded fleece onesie",
+    "orange pumpkin round costume with green stem hat",
+    "tiny navy blue denim jacket over a white onesie (mini casual style)",
     "cream sherpa bear-ear hooded zip-up suit",
-    "red and white striped long-sleeve with tiny jeans (classic baby look)",
-    # 季節・イベント
-    "Santa Claus mini red suit with white trim and tiny hat",
-    "rainbow striped knit sweater with matching booties",
-    "Japanese matsuri happi coat in indigo blue with white pattern",
+    "red and white horizontal striped long-sleeve with tiny denim shorts",
+    "rainbow striped chunky knit sweater with matching booties",
 ]
 
 
@@ -478,47 +491,59 @@ def _base_scene_text_buzz() -> str:
     costume = random.choice(BUZZ_COSTUME_POOL)
 
     return f"""
-ChatGPT GPT Image 2で使用する、高品質な画像生成プロンプトを英語で作成してください。
-ターゲットスタイル：Instagram育児バイラルアカウント「baby_cubo_official」のような、
-プロ品質のリアル赤ちゃん写真。自然でありながらも思わず保存・シェアしたくなるクオリティ。
+Create a high-quality image generation prompt for ChatGPT GPT Image 2.
 
-【前提：ユーザーから参照画像を1枚送信します】
-  参照画像1枚のみ: 赤ちゃん「せなっち」の写真
-  → 顔・目・鼻・輪郭・肌色・髪の毛を完全一致させること
-  → コスチューム・背景はすべて以下のテキスト指示から生成すること（参照画像2は不要）
+TARGET STYLE: Replicate the exact aesthetic of the viral Instagram account "baby_cubo_official" —
+hyper-realistic, professional infant photography that goes instantly viral because it is
+irresistibly cute, emotionally engaging, and technically flawless.
 
-【キャラクター設定（必ず守る）】
-・日本人の男の子（baby boy）、生後{MONTH_AGE}ヶ月
-・ぽっちゃりしたほっぺ、黒髪、丸くてかわいい目
-・性別：male baby boy（女の子っぽくならないこと）
+━━ REFERENCE IMAGE (1 photo provided by user) ━━
+One reference photo of baby "Senacchi" will be provided.
+→ Reproduce face, eyes, nose, facial contours, skin tone, and hair EXACTLY from reference.
+→ Costume and background are 100% generated from text instructions below (no second image needed).
 
-【コスチューム（テキストから完全生成）】
+━━ BABY CHARACTER (strictly follow) ━━
+• Japanese baby boy, {MONTH_AGE} months old
+• Chubby rounded cheeks, jet-black hair, large round dark brown eyes
+• Male baby boy only — must not look feminine
+
+━━ baby_cubo_official SIGNATURE VISUAL RULES (critical) ━━
+① EYES ARE EVERYTHING: Massive, round, dark brown eyes must be razor-sharp and glistening.
+   Bright white catchlights (specular highlights) MUST be visible in both eyes — this is non-negotiable.
+② FACE FILLS THE FRAME: Baby's face occupies 70–90% of the frame. This is the signature crop.
+③ CHUBBY CHEEKS: Emphasize the softness and roundness of chubby baby cheeks — they are a key feature.
+④ SKIN PERFECTION: Smooth, luminous, soft baby skin. Never plastic, never waxy, never AI-looking.
+⑤ CLEAN SIMPLE BACKGROUND: Solid single-color bokeh only. No busy patterns, no cluttered scenes.
+⑥ EXPRESSION IS VIRAL: The expression must trigger an emotional reaction — adorable, funny, shocking, or heartwarming.
+
+━━ COSTUME (fully generate from text) ━━
 {costume}
-→ 上記コスチュームを正確に再現すること。月齢に合ったサイズ感で
+→ Reproduce this costume accurately. Scale appropriately for a {MONTH_AGE}-month-old baby size.
 
-【生後{MONTH_AGE}ヶ月のポーズ・表情】
-ポーズ：{scene['pose']}
-表情：{scene['expression']}
-→ 「本当に撮れた一瞬」のような自然なリアルさ。過度な誇張は不要
+━━ POSE & EXPRESSION for {MONTH_AGE}-month-old ━━
+Pose: {scene['pose']}
+Expression: {scene['expression']}
+→ Capture a genuine candid split-second moment — not posed, not stiff. Real and alive.
 
-【カメラ・構図】
+━━ CAMERA & FRAMING ━━
 {scene['camera']}
-1:1 square format / 85mm portrait lens / very shallow depth of field (f/1.8)
+Format: 1:1 square / 85mm portrait lens equivalent / f/1.8 very shallow depth of field
 
-【照明】
+━━ LIGHTING ━━
 {scene['lighting']}
-目に必ず明るいキャッチライト（白い光の点）を入れること
+MANDATORY: Clear bright catchlights (white sparkle points) in both eyes.
 
-【背景（テキストから完全生成）】
+━━ BACKGROUND ━━
 {scene['background']}
-背景はシンプルにボケさせて赤ちゃんを際立たせる
+Background fully blurred into clean simple bokeh — baby is the only subject that matters.
 
-【撮影品質（必須）】
-・Style: Hyper-realistic professional infant photography, editorial quality
-・Skin: Smooth, soft, naturally glowing baby skin — not plastic, not AI-looking
-・Eyes: Tack sharp, bright, alive with natural catchlights
-・Color: Warm, slightly golden color grade
-・No text, no watermarks, no logos, no overlays, no feminine accessories
+━━ TECHNICAL QUALITY (non-negotiable) ━━
+• Style: Hyper-realistic professional infant photography, editorial/magazine quality
+• Skin: Smooth, soft, naturally glowing — not plastic, not AI-generated looking
+• Eyes: Tack-sharp, large, alive, wet-looking with bright catchlights
+• Color grade: Warm, soft, slightly golden — like natural window light
+• No text, no watermarks, no logos, no overlays, no feminine hair accessories
+• Final result should look like a photo that would get 100K+ likes on Instagram
 """
 
 
