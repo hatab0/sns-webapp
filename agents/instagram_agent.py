@@ -76,7 +76,7 @@ def _generate_script(product_name: str, catch_copy: str, sounds_str: str, speech
 【せなっち情報】生後{MONTH_AGE}ヶ月 / 発声：{speech_desc} / 声：{sounds_str}
 【商品】{product_name} / {catch_copy}
 
-【10秒構成】0〜2秒:Hook / 2〜7秒:問題提起+解決+リアクション / 7〜10秒:CTA+ループ設計
+【8秒構成】0〜2秒:Hook / 2〜6秒:問題提起+解決+リアクション / 6〜8秒:CTA+ループ設計
 
 JSONのみ出力。前置き不要。
 {{
@@ -135,7 +135,7 @@ def _generate_buzz_script() -> dict:
 
 【バズの核心】「かわいすぎてDMした」「友達に見せたい」感情
 【せなっち情報】生後{MONTH_AGE}ヶ月 / {speech_desc} / {sounds_str}
-【10秒構成】0〜2秒:Hook / 2〜8秒:せなっちのリアルな瞬間 / 8〜10秒:余韻+ループ設計
+【8秒構成】0〜2秒:Hook / 2〜6秒:せなっちのリアルな瞬間 / 6〜8秒:余韻+ループ設計
 
 JSONのみ出力。前置き不要。
 {{
