@@ -630,7 +630,7 @@ Output format: PNG / Size: 1024×1024 (square, 1:1) / File size: under 2097152 b
 def generate_kling_prompt(product: dict) -> str:
     """
     【通常mode】Kling AI（Image to Video）用動画プロンプト（英語）
-    月齢に合った動きで15秒バイラル動画を生成。Positive / Negative Prompt形式で出力。
+    月齢に合った動きで10秒バイラル動画を生成。Positive / Negative Prompt形式で出力。
     """
     age_group = _get_age_group(MONTH_AGE)
     age_info = MOTION_BY_AGE_GROUP.get(age_group, MOTION_BY_AGE_GROUP["4-5"])
@@ -648,6 +648,7 @@ Kling AI（Image to Video）でInstagramリール バイラル動画にするプ
 ・月齢({MONTH_AGE}ヶ月)の声のイメージ："{primary_sound}"
 ・「かわいすぎ」「これ何使ってるの？」と思わずコメントしたくなる構成
 ・動画が自然にループする構成（最後のフレームが最初につながる）
+・動画尺：10秒（Kling AIの設定で10sを選択）
 
 【Kling AIプロンプトのルール】
 ・外見の詳細描写は不要（入力画像から取得するため）
@@ -656,7 +657,7 @@ Kling AI（Image to Video）でInstagramリール バイラル動画にするプ
 ・箇条書き不要・それぞれ1段落で出力
 
 【カメラワーク・雰囲気】
-・カメラ：slow gentle zoom in, then slowly pull back（自然ループ用）
+・カメラ：slow gentle zoom in, then slowly pull back（10秒自然ループ用）
 ・全体的な雰囲気：{mood_en}, warm, cozy, natural, cinematic
 
 【出力形式】以下の形式のみ。前置き不要。
@@ -699,6 +700,7 @@ Kling AI（Image to Video）でバイラル ダンス動画にするプロンプ
 ・月齢({MONTH_AGE}ヶ月)の声のイメージ："{primary_sound}"
 ・「かわいすぎて笑える」「友達に送りたい」という感情を引き出す
 ・リズミカルで楽しい動き・明るいテンポ
+・動画尺：10秒（Kling AIの設定で10sを選択）
 
 【Kling AIプロンプトのルール】
 ・外見の詳細描写は不要（入力画像から取得するため）
