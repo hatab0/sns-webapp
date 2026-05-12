@@ -2,6 +2,7 @@
 .streamlit/secrets.toml
 output_secrets.toml
 gen_secrets.py
+get_youtube_token.py
 __pycache__/
 *.pyc
 *.pyo
