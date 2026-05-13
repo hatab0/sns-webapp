@@ -252,17 +252,17 @@ st.markdown(f"""
             </svg>
             @aibaby.jp
         </a>
-        <a href="https://www.tiktok.com/@babyboo" target="_blank" class="social-tiktok">
+        <a href="https://www.tiktok.com/@toshigo_papa_lab" target="_blank" class="social-tiktok">
             🎵 TikTok
         </a>
         <a href="https://room.rakuten.co.jp/room_3b6e1ab198/items" target="_blank" class="social-rakuten">
             🛍️ 楽天ROOM
         </a>
-        <a href="https://studio.youtube.com" target="_blank" class="social-yt">
+        <a href="https://www.youtube.com/channel/UCh-tGc4c1irK3IhYGiqOYYA" target="_blank" class="social-yt">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white">
                 <path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/>
             </svg>
-            YouTube Studio
+            YouTube
         </a>
         <a href="https://lit.link/baby_boo" target="_blank" class="social-lit">
             🔗 lit.link
