@@ -659,7 +659,7 @@ with tab_post:
     _now = datetime.now(tz=JST)
     _t3  = (_now + timedelta(minutes=3)).strftime("%H:%M")
     _t48 = (_now + timedelta(minutes=48)).strftime("%H:%M")
-    _th_text_post = (st.session_state.threads_script or {}).get("captions", {}).get("threads", "")
+    _th_text_post = (st.session_state.get("threads_script") or {}).get("captions", {}).get("threads", "")
 
     # ① 動画アップロード
     st.markdown("""
