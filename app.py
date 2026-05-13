@@ -619,11 +619,13 @@ with tab_prompt:
 
             # ── TikTok キャプション
             _tt_caption = captions.get("tiktok", "")
+            st.markdown("#### 🎵 TikTok キャプション")
+            st.caption("冒頭30文字にキーワード集中・ハッシュタグ5個固定")
             if _tt_caption:
-                st.markdown("#### 🎵 TikTok キャプション")
-                st.caption("冒頭30文字にキーワード集中・ハッシュタグ5個固定")
                 _prompt_block("tt_caption", _tt_caption, height=140)
-                st.divider()
+            else:
+                st.warning("TikTokキャプションが生成されませんでした。再生成してください。")
+            st.divider()
 
             # ── YouTube Shorts
             st.markdown("#### ▶️ YouTube Shorts")

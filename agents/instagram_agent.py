@@ -324,8 +324,16 @@ def run_buzz(mood: str = "") -> dict:
     global MONTH_AGE
     MONTH_AGE = calc_month_age()
     script = _generate_buzz_script()
+    # JSON解析失敗時のフォールバック
+    if not script.get("hook"):
+        script["hook"] = f"生後{MONTH_AGE}ヶ月のせなっちが可愛すぎた瞬間"
+    if not script.get("viral_concept"):
+        script["viral_concept"] = f"生後{MONTH_AGE}ヶ月のAIベビー「せなっち」のリアルな育児日常"
     script["type"] = "reel"
     caption_ig = _generate_buzz_instagram_caption(script, mood=mood)
-    caption_tt = _generate_tiktok_caption(script, is_buzz=True)
+    try:
+        caption_tt = _generate_tiktok_caption(script, is_buzz=True)
+    except Exception:
+        caption_tt = f"生後{MONTH_AGE}ヶ月のせなっち、かわいすぎた😭 {TIKTOK_FIXED_TAGS_STR}"
     script["captions"] = {"instagram": caption_ig, "tiktok": caption_tt}
     return script
