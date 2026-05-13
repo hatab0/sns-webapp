@@ -526,11 +526,11 @@ scripts = st.session_state.scripts or []
 today   = datetime.now(tz=JST).strftime("%Y%m%d")
 
 if _is_buzz:
-    tab_prompt, tab_post = st.tabs(["📋 プロンプト", "📤 投稿"])
+    tab_prompt, tab_post, tab_hashtag = st.tabs(["📋 プロンプト", "📤 投稿", "🏷️ ハッシュタグ"])
     tab_analysis = tab_history = None
 else:
-    tab_prompt, tab_post, tab_analysis, tab_history = st.tabs(
-        ["📋 プロンプト", "📤 投稿", "🔍 商品分析", "📊 商品履歴"]
+    tab_prompt, tab_post, tab_analysis, tab_history, tab_hashtag = st.tabs(
+        ["📋 プロンプト", "📤 投稿", "🔍 商品分析", "📊 商品履歴", "🏷️ ハッシュタグ"]
     )
 
 
@@ -1054,3 +1054,97 @@ if tab_history:
                 display_cols = [c for c in ["最終生成日", "商品名", "価格", "キーワード", "生成回数", "楽天ROOM投稿数", "Instagram投稿数", "TikTok投稿数"] if c in _hist_df.columns]
                 st.dataframe(_hist_df[display_cols] if display_cols else _hist_df, use_container_width=True, hide_index=True)
                 st.caption(f"合計 {len(_hist_df)} 商品")
+
+
+# ──────────────────────────────────────────────────────
+# TAB: ハッシュタグ管理
+# ──────────────────────────────────────────────────────
+with tab_hashtag:
+    st.markdown("### 🏷️ ハッシュタグ管理")
+    st.caption("AIが育児系トレンドタグを提案 → あなたが承認 → 次回の生成から自動で反映されます")
+
+    from utils.sheets_helper import get_hashtags, set_hashtags, HASHTAG_PLATFORMS
+
+    # ── プラットフォーム定義
+    _platform_meta = {
+        "instagram_buzz":  {"label": "📱 Instagram（バズmode）", "default": ["#babyboo", "#baby", "#育児", "#赤ちゃんのいる生活"]},
+        "tiktok":          {"label": "🎵 TikTok",               "default": ["#赤ちゃん", "#育児vlog", "#babyboo", "#赤ちゃんのいる暮らし", "#育休パパ"]},
+        "youtube":         {"label": "▶️ YouTube Shorts",       "default": ["#babyboo", "#baby", "#PR", "#育児", "#赤ちゃんのいる生活"]},
+    }
+
+    # ── AI提案ボタン
+    if st.button("🤖 AIでトレンドタグを提案する", type="primary", use_container_width=True):
+        with st.spinner("育児系トレンドハッシュタグを調査中..."):
+            import anthropic as _ant
+            _ant_client = _ant.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+            _suggest_prompt = f"""
+あなたは2026年の日本のSNSマーケティング専門家です。
+育児系コンテンツ（AIベビー「せなっち」生後{_calc_age() if '_calc_age' in dir() else '数'}ヶ月の成長記録）に関して、
+各プラットフォームで現在バズりやすいハッシュタグを提案してください。
+
+【条件】
+・日本語ハッシュタグ（#から始まる）
+・育児・赤ちゃん・パパ育児に関連するもの
+・2026年現在トレンドになっているもの優先
+・各プラットフォームの特性に合わせる
+
+【出力形式】JSONのみ。前置き不要。
+{{
+  "instagram_buzz": ["#タグ1", "#タグ2", "#タグ3", "#タグ4", "#タグ5"],
+  "tiktok":         ["#タグ1", "#タグ2", "#タグ3", "#タグ4", "#タグ5"],
+  "youtube":        ["#タグ1", "#タグ2", "#タグ3", "#タグ4", "#タグ5"]
+}}
+"""
+            try:
+                _res = _ant_client.messages.create(
+                    model="claude-sonnet-4-6",
+                    max_tokens=400,
+                    messages=[{"role": "user", "content": _suggest_prompt}]
+                )
+                import json as _json
+                _raw = _res.content[0].text.strip()
+                if "```" in _raw:
+                    _raw = _raw.split("```json")[-1].split("```")[0].strip() if "```json" in _raw else _raw.split("```")[1].split("```")[0].strip()
+                _suggestions = _json.loads(_raw)
+                st.session_state["_hashtag_suggestions"] = _suggestions
+                st.success("✅ 提案が完了しました！下で確認・承認してください。")
+            except Exception as _e:
+                st.error(f"提案の取得に失敗しました: {_e}")
+
+    st.divider()
+
+    # ── 各プラットフォームの現在タグ vs 提案タグ
+    _suggestions = st.session_state.get("_hashtag_suggestions", {})
+
+    for _pf, _meta in _platform_meta.items():
+        st.markdown(f"#### {_meta['label']}")
+        _current = get_hashtags(_pf) or _meta["default"]
+        _col_cur, _col_new = st.columns(2)
+
+        with _col_cur:
+            st.caption("現在のタグ")
+            st.code(" ".join(_current))
+
+        with _col_new:
+            st.caption("提案タグ（編集可能）")
+            _suggested = _suggestions.get(_pf, _current)
+            _edited = st.text_area(
+                label=f"{_pf}_edit",
+                value=" ".join(_suggested),
+                height=80,
+                key=f"hashtag_edit_{_pf}",
+                label_visibility="collapsed",
+            )
+
+        if st.button(f"✅ この内容で保存する", key=f"save_hashtag_{_pf}", use_container_width=True):
+            _new_tags = [t.strip() for t in _edited.split() if t.strip().startswith("#")]
+            if _new_tags:
+                if set_hashtags(_pf, _new_tags):
+                    st.success(f"保存しました → 次回生成から反映されます")
+                    st.rerun()
+                else:
+                    st.error("保存に失敗しました（Google Sheets接続を確認）")
+            else:
+                st.warning("#から始まるハッシュタグを入力してください")
+
+        st.divider()

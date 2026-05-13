@@ -190,8 +190,62 @@ def increment_count(item_code: str, platform: str) -> bool:
         return False
 
 
-PROFILE_SHEET_NAME = "senacchi_profile"
+HASHTAG_SHEET_NAME  = "hashtags"
+HASHTAG_PLATFORMS   = ["instagram_fixed", "instagram_buzz", "tiktok", "youtube"]
+PROFILE_SHEET_NAME  = "senacchi_profile"
 PROFILE_HEADERS = ["month_age", "cloudinary_url", "registered_at"]
+
+
+def _get_hashtag_worksheet():
+    """hashtags シートを取得。なければ自動作成。"""
+    client = _get_client()
+    if client is None:
+        return None
+    sheet_id = os.getenv("GOOGLE_SHEETS_ID", SPREADSHEET_ID)
+    spreadsheet = client.open_by_key(sheet_id)
+    try:
+        return spreadsheet.worksheet(HASHTAG_SHEET_NAME)
+    except Exception:
+        ws = spreadsheet.add_worksheet(title=HASHTAG_SHEET_NAME, rows=20, cols=4)
+        ws.update("A1", [["platform", "tags", "updated_at"]])
+        return ws
+
+
+def get_hashtags(platform: str) -> list | None:
+    """指定プラットフォームのハッシュタグリストを返す。未設定の場合は None。"""
+    try:
+        ws = _get_hashtag_worksheet()
+        if ws is None:
+            return None
+        for rec in ws.get_all_records():
+            if rec.get("platform") == platform:
+                raw = rec.get("tags", "").strip()
+                if raw:
+                    return [t.strip() for t in raw.split() if t.strip()]
+        return None
+    except Exception as e:
+        print(f"get_hashtags error: {e}")
+        return None
+
+
+def set_hashtags(platform: str, tags: list) -> bool:
+    """指定プラットフォームのハッシュタグを保存 / 更新する。"""
+    try:
+        ws = _get_hashtag_worksheet()
+        if ws is None:
+            return False
+        today = datetime.now(tz=JST).strftime("%Y-%m-%d")
+        tags_str = " ".join(tags)
+        records = ws.get_all_records()
+        for i, rec in enumerate(records, start=2):
+            if rec.get("platform") == platform:
+                ws.update(f"A{i}:C{i}", [[platform, tags_str, today]])
+                return True
+        ws.append_row([platform, tags_str, today])
+        return True
+    except Exception as e:
+        print(f"set_hashtags error: {e}")
+        return False
 
 
 def _get_profile_worksheet():

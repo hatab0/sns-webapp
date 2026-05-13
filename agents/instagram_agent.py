@@ -180,6 +180,8 @@ def _generate_buzz_caption_pattern_a(script: dict) -> str:
 ・開き直り・諦め絵文字を1〜2個（😇🤷‍♂️😅🫠😮‍💨から選ぶ）
 ・口語体（ですます禁止）
 ・1行目に悩み、2行目に開き直りオチ（「もう踊るしかない」など）
+・3行目に次回予告または共感の問いかけを必ず1行追加
+  例A：「来週また報告します😮‍💨」「同じ経験ある人コメントで教えて！」「育児ってこんなもんだよね😇」
 ・商品紹介なし
 ・ハッシュタグは合計5つのみ。次の4つは固定で必ず末尾に含める：{BUZZ_TAGS_STR}
 ・残り1つは動画の内容に最も合うハッシュタグをあなたが選ぶ（例：#夜泣き #寝かしつけ #育休パパ など）
@@ -189,7 +191,7 @@ def _generate_buzz_caption_pattern_a(script: dict) -> str:
 """
     msg = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=300,
+        max_tokens=350,
         messages=[{"role": "user", "content": prompt}]
     )
     return msg.content[0].text.strip()
@@ -218,7 +220,9 @@ def _generate_buzz_caption_pattern_b(script: dict) -> str:
 ・絵文字1〜2個（😂🥲😭笑い・涙系）
 ・口語体（ですます禁止）
 ・1行目にパパのニュース、2行目にせなっちのオチ（落差が笑いポイント）
-・最後に必ず「（別に〇〇はしていません）」の自虐ツッコミを1行追加（例：「（別に昇進はしていません）」「（プレゼンは大失敗でした）」）
+・「（別に〇〇はしていません）」の自虐ツッコミを1行追加
+・その後にフォロー誘導または次回予告を1行追加
+  例B：「次回も格差ネタ続きます😂」「フォローして見守ってください🥹」「また騙されに来てね😂」
 ・商品紹介なし
 ・ハッシュタグは合計5つのみ。次の4つは固定で必ず末尾に含める：{BUZZ_TAGS_STR}
 ・残り1つは動画の内容に最も合うハッシュタグをあなたが選ぶ（例：#育休パパ #パパ #育児vlog など）
@@ -286,6 +290,8 @@ TikTok用のキャプションを書いてください。
 ・本文は1〜2行・40〜60字（短く読ませる）
 ・絵文字1〜2個
 ・口語体（ですます禁止）
+・本文の最後に次回予告または問いかけCTAを1行追加（10〜20字）
+  例：「同じ経験ある人？💬」「来週また来てね！」「フォローして見守ってね🍼」
 ・末尾に必ず次の5つのハッシュタグを全て入れる（追加・変更禁止）：{TIKTOK_FIXED_TAGS_STR}
 
 キャプションテキストのみ出力。前置き不要。
@@ -321,8 +327,19 @@ def run(product: dict) -> dict:
 
 def run_buzz(mood: str = "") -> dict:
     """バズmode：商品なし Reel スクリプト＋Instagram・TikTokキャプションを生成"""
-    global MONTH_AGE
+    global MONTH_AGE, BUZZ_TAGS_STR, TIKTOK_FIXED_TAGS_STR
     MONTH_AGE = calc_month_age()
+    # Sheetsに承認済みタグがあれば上書きする
+    try:
+        from utils.sheets_helper import get_hashtags
+        _ig = get_hashtags("instagram_buzz")
+        if _ig:
+            BUZZ_TAGS_STR = " ".join(_ig)
+        _tt = get_hashtags("tiktok")
+        if _tt:
+            TIKTOK_FIXED_TAGS_STR = " ".join(_tt)
+    except Exception:
+        pass
     script = _generate_buzz_script()
     # JSON解析失敗時のフォールバック
     if not script.get("hook"):

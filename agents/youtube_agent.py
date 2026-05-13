@@ -164,7 +164,8 @@ AIベビーキャラ「せなっち」（生後{MONTH_AGE}ヶ月）
 
 【ピン留めコメント】
 ・「チャンネル登録してね▼」から始める
-・育児の悩みへの共感一言で締める
+・育児の悩みへの共感一言
+・次回予告を1行追加（例：「来週また育児の修羅場を報告します😮‍💨」「同じ経験のパパママ、コメントで語りましょう」）
 
 【出力形式】JSONのみ。前置き不要。
 {{
@@ -216,7 +217,8 @@ AIベビーキャラ「せなっち」（生後{MONTH_AGE}ヶ月）
 
 【ピン留めコメント】
 ・「チャンネル登録してね▼」から始める
-・「（別に〇〇はしていません）」系の自虐一言で締める
+・「（別に〇〇はしていません）」系の自虐一言
+・次回予告を1行追加（例：「次回も格差ネタ続きます😂」「また笑いに来てね」）
 
 【出力形式】JSONのみ。前置き不要。
 {{
@@ -245,6 +247,19 @@ def _run_buzz(instagram_script: dict) -> dict:
         return _run_buzz_pattern_b(instagram_script)
 
 
+def _load_tags_from_sheets():
+    """Sheetsに承認済みタグがあればモジュール変数を上書きする。"""
+    global FIXED_TAGS_STR, BUZZ_TAGS_STR
+    try:
+        from utils.sheets_helper import get_hashtags
+        _yt = get_hashtags("youtube")
+        if _yt:
+            FIXED_TAGS_STR = " ".join(_yt)
+            BUZZ_TAGS_STR  = " ".join([t for t in _yt if t != "#PR"])
+    except Exception:
+        pass
+
+
 def run(instagram_script: dict, product: dict = None) -> dict:
     """
     Instagramスクリプトを受け取りYouTube Shorts専用コンテンツを生成。
@@ -253,6 +268,7 @@ def run(instagram_script: dict, product: dict = None) -> dict:
     """
     global MONTH_AGE
     MONTH_AGE = calc_month_age()
+    _load_tags_from_sheets()
     is_buzz = product is None
 
     if is_buzz:
