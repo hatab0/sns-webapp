@@ -245,6 +245,48 @@ with st.sidebar:
     except Exception as _e:
         st.caption(f"基準写真機能 読み込みエラー: {_e}")
 
+    # ── Cloudinaryクリーンアップ
+    st.markdown("---")
+    with st.expander("🗑️ Cloudinaryクリーンアップ"):
+        st.caption("古い動画・画像ファイルをまとめて削除します")
+        _cl_days = st.number_input("削除対象の経過日数", min_value=7, max_value=365, value=30, step=7, key="cl_days")
+        if st.button("🔍 古いファイルを確認", use_container_width=True, key="cl_check"):
+            with st.spinner("確認中..."):
+                try:
+                    from utils.cloudinary_helper import list_assets as _list_cl
+                    _old_all = (
+                        _list_cl(days_old=_cl_days, resource_type="video") +
+                        _list_cl(days_old=_cl_days, resource_type="image")
+                    )
+                    st.session_state["_cl_old"] = _old_all
+                except Exception as _ce:
+                    st.error(f"取得失敗: {_ce}")
+                    st.session_state["_cl_old"] = []
+
+        _old_cl = st.session_state.get("_cl_old")
+        if _old_cl is not None:
+            if not _old_cl:
+                st.success("✅ 削除対象なし")
+            else:
+                _cl_mb = sum(f.get("bytes", 0) for f in _old_cl) / 1024 / 1024
+                st.warning(f"⚠️ {len(_old_cl)}件 / {_cl_mb:.1f}MB が削除対象")
+                for _of in _old_cl[:8]:
+                    st.caption(f"・{_of['public_id'].split('/')[-1]} ({_of.get('bytes',0)//1024}KB) {_of.get('created_at','')[:10]}")
+                if len(_old_cl) > 8:
+                    st.caption(f"  他 {len(_old_cl)-8}件")
+                if st.button("🗑️ 全て削除する", type="primary", use_container_width=True, key="cl_delete"):
+                    _cl_ok = _cl_ng = 0
+                    with st.spinner("削除中..."):
+                        from utils.cloudinary_helper import delete_asset as _del_cl
+                        for _of in _old_cl:
+                            if _del_cl(_of["public_id"], _of["resource_type"]):
+                                _cl_ok += 1
+                            else:
+                                _cl_ng += 1
+                    st.session_state.pop("_cl_old", None)
+                    _ng_msg = f"（{_cl_ng}件失敗）" if _cl_ng else ""
+                    st.success(f"✅ {_cl_ok}件削除完了 {_ng_msg}")
+
 
 def _reset_session():
     """再生成時にセッション状態をリセット"""
@@ -448,6 +490,8 @@ else:
                     except Exception:
                         pass
                     top3 = analyzer_agent.run(products, history=history, recent_codes=recent_codes)
+                    if top3 and top3[0].get("item_code") in recent_codes:
+                        st.warning(f"⚠️ 「{top3[0]['name'][:25]}」は直近7日以内に生成済みです。他に候補がなかったため同じ商品が選ばれました。")
                     all_scored = sorted(
                         [p for p in products if "score" in p],
                         key=lambda x: x["score"], reverse=True,
@@ -532,6 +576,30 @@ else:
     tab_prompt, tab_post, tab_analysis, tab_history, tab_hashtag = st.tabs(
         ["📋 プロンプト", "📤 投稿", "🔍 商品分析", "📊 商品履歴", "🏷️ ハッシュタグ"]
     )
+
+
+# ── セッション保存（リロード対策）
+import json as _json_dl
+_dl_data = {
+    "generated_at": datetime.now(tz=JST).isoformat(),
+    "mode": _mode,
+    "posts": posts,
+    "scripts": scripts,
+}
+_dl_c1, _dl_c2 = st.columns([1, 3])
+with _dl_c1:
+    st.download_button(
+        "📥 JSONで保存",
+        data=_json_dl.dumps(_dl_data, ensure_ascii=False, indent=2),
+        file_name=f"babyboo_{today}.json",
+        mime="application/json",
+        use_container_width=True,
+        help="ページをリロードすると内容が消えます。JSONに保存しておくと安心です。",
+    )
+with _dl_c2:
+    st.caption("⚠️ ページをリロードすると生成内容は消えます。左のボタンでJSONバックアップができます。")
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 
 # ──────────────────────────────────────────────────────
@@ -774,7 +842,12 @@ with tab_post:
     """, unsafe_allow_html=True)
 
     if st.session_state.instagram_posted:
-        st.success(f"✅ Instagram Reel 投稿済み（{_t3} 頃）")
+        _ig_sched = st.session_state.get("ig_scheduled_at", "")
+        _ig_disp  = _ig_sched if _ig_sched else f"{_t3}頃"
+        st.success("✅ Instagram Reel 予約完了")
+        _igc1, _igc2 = st.columns(2)
+        with _igc1: st.info(f"📅 投稿予定: {_ig_disp}")
+        with _igc2: st.link_button("📋 Bufferで確認", "https://buffer.com")
     elif not st.session_state.video_url:
         st.button("📱 Instagram Reel に投稿する", use_container_width=True, disabled=True)
         st.caption("⚠️ 先に動画をアップロードしてください")
@@ -790,11 +863,13 @@ with tab_post:
                 if _ic:
                     from utils.sheets_helper import increment_count as _inc
                     _inc(_ic, "Instagram投稿数")
-                st.success(f"✅ Instagram Reel {_t3} 頃に投稿されます")
+                _ig_res = next((r.get("buffer_posts", {}).get("instagram", {}) for r in results if r.get("buffer_posts", {}).get("instagram", {}).get("success")), {})
+                st.session_state["ig_scheduled_at"] = _ig_res.get("scheduled_at", "")
                 st.rerun()
             else:
                 errs = [r.get("buffer_posts", {}).get("instagram", {}).get("error", "") for r in results]
-                st.error(f"失敗: {' | '.join(e for e in errs if e) or '不明なエラー'}")
+                st.error(f"❌ Instagram 投稿失敗: {' | '.join(e for e in errs if e) or '不明なエラー'}")
+                st.link_button("⚙️ Bufferダッシュボードを確認", "https://buffer.com")
 
     st.divider()
 
@@ -808,7 +883,12 @@ with tab_post:
     """, unsafe_allow_html=True)
 
     if st.session_state.youtube_posted:
-        st.success("✅ YouTube Shorts 投稿済み")
+        _yt_sched = st.session_state.get("yt_scheduled_at", "")
+        _yt_disp  = _yt_sched if _yt_sched else f"{_t3}頃"
+        st.success("✅ YouTube Shorts 予約完了")
+        _ytc1, _ytc2 = st.columns(2)
+        with _ytc1: st.info(f"📅 投稿予定: {_yt_disp}")
+        with _ytc2: st.link_button("📋 Bufferで確認", "https://buffer.com")
     elif not st.session_state.video_url:
         st.button("▶️ YouTube Shorts に投稿する", use_container_width=True, disabled=True)
         st.caption("⚠️ 先に動画をアップロードしてください")
@@ -823,11 +903,13 @@ with tab_post:
             ok_yt = any(r.get("buffer_posts", {}).get("youtube", {}).get("success") for r in results_yt)
             if ok_yt:
                 st.session_state.youtube_posted = True
-                st.success(f"✅ YouTube Shorts {_t3} 頃に投稿されます")
+                _yt_res = next((r.get("buffer_posts", {}).get("youtube", {}) for r in results_yt if r.get("buffer_posts", {}).get("youtube", {}).get("success")), {})
+                st.session_state["yt_scheduled_at"] = _yt_res.get("scheduled_at", "")
                 st.rerun()
             else:
                 errs_yt = [r.get("buffer_posts", {}).get("youtube", {}).get("error", "") for r in results_yt]
-                st.error(f"失敗: {' | '.join(e for e in errs_yt if e) or '不明なエラー'}")
+                st.error(f"❌ YouTube 投稿失敗: {' | '.join(e for e in errs_yt if e) or '不明なエラー'}")
+                st.link_button("⚙️ Bufferダッシュボードを確認", "https://buffer.com")
 
     # ③-b YouTube ピン留めコメント自動投稿
     _pin_comment_text = next(
@@ -900,7 +982,12 @@ with tab_post:
     else:
         st.caption(f"投稿内容: {_tt_caption_post[:60]}…")
         if st.session_state.tiktok_posted:
-            st.success("✅ TikTok投稿済み")
+            _tt_sched = st.session_state.get("tt_scheduled_at", "")
+            _tt_disp  = _tt_sched if _tt_sched else f"{_t3}頃"
+            st.success("✅ TikTok 予約完了")
+            _ttc1, _ttc2 = st.columns(2)
+            with _ttc1: st.info(f"📅 投稿予定: {_tt_disp}")
+            with _ttc2: st.link_button("📋 Bufferで確認", "https://buffer.com")
         elif not st.session_state.video_url:
             st.button("🎵 TikTokに動画投稿", use_container_width=True, disabled=True)
             st.caption("動画アップロード後に有効")
@@ -917,11 +1004,13 @@ with tab_post:
                     if _ic:
                         from utils.sheets_helper import increment_count as _inc_tt
                         _inc_tt(_ic, "TikTok投稿数")
-                    st.success(f"✅ {_t3} 頃に投稿されます")
+                    _tt_res = next((r.get("buffer_posts", {}).get("tiktok", {}) for r in results_tt if r.get("buffer_posts", {}).get("tiktok", {}).get("success")), {})
+                    st.session_state["tt_scheduled_at"] = _tt_res.get("scheduled_at", "")
                     st.rerun()
                 else:
                     errs_tt = [r.get("buffer_posts", {}).get("tiktok", {}).get("error", "") for r in results_tt]
-                    st.error(f"失敗: {' | '.join(e for e in errs_tt if e) or '不明なエラー'}")
+                    st.error(f"❌ TikTok 投稿失敗: {' | '.join(e for e in errs_tt if e) or '不明なエラー'}")
+                    st.link_button("⚙️ Bufferダッシュボードを確認", "https://buffer.com")
 
 
 # ──────────────────────────────────────────────────────
