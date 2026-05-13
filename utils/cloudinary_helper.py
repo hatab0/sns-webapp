@@ -6,7 +6,6 @@ import os
 from datetime import datetime, timedelta, timezone
 import cloudinary
 import cloudinary.uploader
-import cloudinary.api
 
 
 def _configure():
@@ -38,6 +37,7 @@ def upload_bytes(data: bytes, resource_type: str = "image") -> str:
 
 def list_assets(days_old: int = 30, resource_type: str = "video") -> list:
     """指定日数以上前にアップロードされたアセット一覧を返す"""
+    import cloudinary.api
     _configure()
     try:
         result = cloudinary.api.resources(
