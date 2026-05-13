@@ -36,7 +36,7 @@ def _get_next_peak_slot(platform: str) -> datetime:
     """
     now = datetime.now(tz=JST)
     min_time = now + timedelta(minutes=5)
-    slots = PEAK_SLOTS.get(platform, PEAK_SLOTS["threads"])
+    slots = PEAK_SLOTS.get(platform, PEAK_SLOTS["instagram"])
     used = _used_slots.get(platform, [])
 
     for day_offset in range(5):

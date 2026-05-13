@@ -1063,7 +1063,13 @@ with tab_hashtag:
     st.markdown("### 🏷️ ハッシュタグ管理")
     st.caption("AIが育児系トレンドタグを提案 → あなたが承認 → 次回の生成から自動で反映されます")
 
-    from utils.sheets_helper import get_hashtags, set_hashtags, HASHTAG_PLATFORMS
+    try:
+        from utils.sheets_helper import get_hashtags, set_hashtags
+    except Exception as _ht_err:
+        st.error(f"ハッシュタグ機能の読み込みに失敗しました: {_ht_err}")
+        st.stop()
+
+    _HASHTAG_PLATFORMS = ["instagram_buzz", "tiktok", "youtube"]
 
     # ── プラットフォーム定義
     _platform_meta = {

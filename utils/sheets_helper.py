@@ -16,7 +16,7 @@ JST = timezone(timedelta(hours=9))
 
 HEADERS = [
     "最終生成日", "item_code", "商品名", "価格", "キーワード",
-    "生成回数", "楽天ROOM投稿数", "Instagram投稿数", "Threads投稿数", "アフィリエイトURL", "メモ",
+    "生成回数", "楽天ROOM投稿数", "Instagram投稿数", "TikTok投稿数", "アフィリエイトURL", "メモ",
 ]
 
 
@@ -73,7 +73,7 @@ def get_product_history() -> dict:
         "生成回数": int,
         "楽天ROOM投稿数": int,
         "Instagram投稿数": int,
-        "Threads投稿数": int,
+        "TikTok投稿数": int,
         "最終生成日": str,
     }}
     """
@@ -93,7 +93,7 @@ def get_product_history() -> dict:
                 "生成回数":       int(rec.get("生成回数", 0) or 0),
                 "楽天ROOM投稿数": int(rec.get("楽天ROOM投稿数", 0) or 0),
                 "Instagram投稿数": int(rec.get("Instagram投稿数", 0) or 0),
-                "Threads投稿数":  int(rec.get("Threads投稿数", 0) or 0),
+                "TikTok投稿数":  int(rec.get("TikTok投稿数", 0) or 0),
                 "最終生成日":     str(rec.get("最終生成日", "")),
             }
         return history
@@ -152,7 +152,7 @@ def upsert_product(product: dict) -> bool:
                 ("生成回数",        1),
                 ("楽天ROOM投稿数",  0),
                 ("Instagram投稿数", 0),
-                ("Threads投稿数",   0),
+                ("TikTok投稿数",   0),
                 ("アフィリエイトURL", product.get("affiliate_url", "")),
             ]:
                 idx = col_map.get(header)
@@ -167,7 +167,7 @@ def upsert_product(product: dict) -> bool:
 
 def increment_count(item_code: str, platform: str) -> bool:
     """
-    platform: "楽天ROOM投稿数" | "Instagram投稿数" | "Threads投稿数"
+    platform: "楽天ROOM投稿数" | "Instagram投稿数" | "TikTok投稿数"
     対象行の投稿数を +1 する
     """
     try:
