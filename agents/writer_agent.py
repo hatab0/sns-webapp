@@ -27,7 +27,7 @@ def calc_month_age() -> int:
 MONTH_AGE = calc_month_age()
 
 # 必須ハッシュタグ（毎投稿で必ず含める）
-REQUIRED_TAGS = ["#オリジナル写真", f"#生後{MONTH_AGE}ヶ月"]
+REQUIRED_TAGS = ["#オリジナル写真", f"#生後{MONTH_AGE}ヶ月", "#babyboo", "#育児"]
 
 
 def ensure_required_tags(description: str) -> str:
@@ -79,7 +79,7 @@ def generate_description(product: dict, event: str = None) -> str:
 8. 語尾：口語体（〜だった、〜だよ、〜かも）
 
 9. ハッシュタグ（必須）：
-   #オリジナル写真 #生後{MONTH_AGE}ヶ月
+   #オリジナル写真 #生後{MONTH_AGE}ヶ月 #babyboo #育児
    ＋商品に合うタグを2〜3個追加（例：#おくるみ #夜泣き対策 など）
    ※ #PR は絶対に使わない（楽天ROOMには不要）
 

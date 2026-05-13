@@ -19,6 +19,8 @@ FIXED_TAGS     = ["#babyboo", "#baby", "#PR", "#育児", "#赤ちゃんのいる
 FIXED_TAGS_STR = " ".join(FIXED_TAGS)
 BUZZ_TAGS      = ["#babyboo", "#baby", "#育児", "#赤ちゃんのいる生活"]   # #PR なし
 BUZZ_TAGS_STR  = " ".join(BUZZ_TAGS)
+TIKTOK_FIXED_TAGS = ["#赤ちゃん", "#育児vlog", "#babyboo", "#AIbaby", "#育休パパ"]
+TIKTOK_FIXED_TAGS_STR = " ".join(TIKTOK_FIXED_TAGS)
 
 BABY_SPEECH_BY_MONTH = {
     0:  {"sounds": ["おぎゃー", "ふにゃー"], "desc": "泣き声のみ"},
@@ -261,8 +263,43 @@ def _generate_buzz_instagram_caption(script: dict, mood: str = "") -> str:
     return f"生後{MONTH_AGE}ヶ月のせなっち、かわいすぎた😭💕 これはフォロー案件じゃない？ {BUZZ_TAGS_STR}"
 
 
+def _generate_tiktok_caption(script: dict, product_name: str = "", is_buzz: bool = False) -> str:
+    """TikTok専用キャプション生成
+    ・冒頭30文字にキーワードを集中（アルゴリズム対策）
+    ・短め本文（1〜2行）＋固定ハッシュタグ5個
+    """
+    concept = script.get("viral_concept", "") or script.get("drama_format", "")
+    hook = script.get("hook", "")
+    product_line = f"商品：{product_name}" if product_name else "商品紹介なし（バズ系コンテンツ）"
+
+    prompt = f"""
+あなたは生後{MONTH_AGE}ヶ月の赤ちゃん「せなっち」を育てる育休中のパパです。
+TikTok用のキャプションを書いてください。
+
+動画のコンセプト：{concept}
+フック：{hook}
+{product_line}
+
+【TikTokキャプションのルール】
+・1行目（冒頭30文字以内）に必ずキーワードを入れる
+  例：「生後{MONTH_AGE}ヶ月の赤ちゃんが〇〇した瞬間」「AIで生み出した赤ちゃんが〇〇」
+・本文は1〜2行・60〜80字（短く読ませる）
+・絵文字1〜2個
+・口語体（ですます禁止）
+・末尾に必ず次の5つのハッシュタグを全て入れる（追加・変更禁止）：{TIKTOK_FIXED_TAGS_STR}
+
+キャプションテキストのみ出力。前置き不要。
+"""
+    msg = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=300,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return msg.content[0].text.strip()
+
+
 def run(product: dict) -> dict:
-    """通常mode：商品あり Reel スクリプト＋Instagramキャプションを生成"""
+    """通常mode：商品あり Reel スクリプト＋Instagram・TikTokキャプションを生成"""
     global MONTH_AGE
     MONTH_AGE = calc_month_age()
     speech_info = BABY_SPEECH_BY_MONTH.get(MONTH_AGE, BABY_SPEECH_BY_MONTH[4])
@@ -277,16 +314,18 @@ def run(product: dict) -> dict:
     )
     script["type"] = "reel"
     caption_ig = _generate_instagram_caption(script, product["name"])
-    script["captions"] = {"instagram": caption_ig}
+    caption_tt = _generate_tiktok_caption(script, product_name=product["name"])
+    script["captions"] = {"instagram": caption_ig, "tiktok": caption_tt}
     return script
 
 
 def run_buzz(mood: str = "") -> dict:
-    """バズmode：商品なし Reel スクリプト＋Instagramキャプションを生成"""
+    """バズmode：商品なし Reel スクリプト＋Instagram・TikTokキャプションを生成"""
     global MONTH_AGE
     MONTH_AGE = calc_month_age()
     script = _generate_buzz_script()
     script["type"] = "reel"
     caption_ig = _generate_buzz_instagram_caption(script, mood=mood)
-    script["captions"] = {"instagram": caption_ig}
+    caption_tt = _generate_tiktok_caption(script, is_buzz=True)
+    script["captions"] = {"instagram": caption_ig, "tiktok": caption_tt}
     return script

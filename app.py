@@ -74,7 +74,8 @@ st.markdown("""
     transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.2);
 }
 .social-ig  { background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); box-shadow: 0 3px 10px rgba(220,39,67,0.35); }
-.social-threads { background: #000; box-shadow: 0 3px 10px rgba(0,0,0,0.25); }
+/* .social-threads { background: #000; box-shadow: 0 3px 10px rgba(0,0,0,0.25); } */
+.social-tiktok  { background: linear-gradient(135deg,#010101,#333); box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
 .social-rakuten { background: linear-gradient(135deg,#BF0000,#FF0000); box-shadow: 0 3px 10px rgba(191,0,0,0.3); }
 .social-yt   { background: linear-gradient(135deg,#FF0000,#CC0000); box-shadow: 0 3px 10px rgba(255,0,0,0.3); }
 .social-lit  { background: linear-gradient(135deg,#FF6B6B,#FF8E53); box-shadow: 0 3px 10px rgba(255,107,107,0.3); }
@@ -181,13 +182,14 @@ _defaults = {
     "generated":            False,
     "posts":                None,
     "scripts":              None,
-    "threads_script":       None,
+    # "threads_script":     None,  # Threads → TikTokに移行
     "all_products":         None,
     "content_mode":         "normal",
     "video_url":            None,
     "instagram_posted":     False,
-    "threads_text_posted":  False,
-    "threads_video_posted": False,
+    # "threads_text_posted":  False,  # Threads廃止
+    # "threads_video_posted": False,  # Threads廃止
+    "tiktok_posted":        False,
     "youtube_posted":       False,
     "buzz_mood":            "",
 }
@@ -244,11 +246,13 @@ st.markdown(f"""
             </svg>
             @aibaby.jp
         </a>
+        <!-- Threads link コメントアウト（TikTokに移行）
         <a href="https://www.threads.com/@aibaby.jp" target="_blank" class="social-threads">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 192 192" fill="white">
-                <path d="M141.537 88.9883C140.71 88.5919 139.87 88.2104 139.019 87.8451C137.537 60.5382 122.616 44.905 97.5619 44.745C97.4484 44.7443 97.3355 44.7443 97.222 44.7443C82.2364 44.7443 69.7731 51.1409 62.102 62.7807L75.881 72.2328C81.6116 63.5383 90.6052 61.6848 97.2286 61.6848C97.3051 61.6848 97.3819 61.6848 97.4576 61.6855C105.707 61.7381 111.932 64.1366 115.961 68.814C118.893 72.2193 120.854 76.925 121.825 82.8638C114.511 81.6207 106.601 81.2385 98.145 81.7233C74.3247 83.0954 59.0111 96.9879 60.0396 116.292C60.5615 126.084 65.4397 134.508 73.775 140.011C80.8224 144.663 89.899 146.938 99.3323 146.423C111.79 145.74 121.563 140.987 128.381 132.296C133.559 125.696 136.834 117.143 138.28 106.366C144.217 109.949 148.617 114.664 151.047 120.332C155.179 129.967 155.42 145.8 142.501 158.708C131.182 170.016 117.576 174.908 97.0135 175.059C74.2042 174.89 56.9538 167.575 45.7381 153.317C35.2355 139.966 29.8077 120.682 29.6052 96C29.8077 71.3178 35.2355 52.0336 45.7381 38.6827C56.9538 24.4249 74.2039 17.11 97.0132 16.9405C119.988 17.1113 137.539 24.4614 149.184 38.788C154.894 45.8136 159.199 54.6488 162.037 64.9503L178.184 60.6422C174.744 47.9622 169.331 37.0357 161.965 27.974C147.036 9.60668 125.202 0.195148 97.0695 0H96.9569C68.8816 0.19447 47.2921 9.6418 32.7883 28.0793C19.8819 44.4864 13.2244 67.3157 13.0007 95.9325L13 96L13.0007 96.0675C13.2244 124.684 19.8819 147.514 32.7883 163.921C47.2921 182.358 68.8816 191.806 96.9569 192H97.0695C122.03 191.827 139.624 185.292 154.118 170.811C173.081 151.866 172.51 128.119 166.26 113.541C161.776 103.087 153.227 94.5962 141.537 88.9883ZM98.4405 129.507C88.0005 130.095 77.1544 125.409 76.6196 115.372C76.2232 107.93 81.9158 99.626 99.0812 98.6368C101.047 98.5234 102.976 98.468 104.871 98.468C111.106 98.468 116.939 99.0737 122.242 100.233C120.264 124.935 108.662 128.946 98.4405 129.507Z"/>
-            </svg>
-            @aibaby.jp
+            @aibaby.jp (Threads)
+        </a>
+        -->
+        <a href="https://www.tiktok.com/@babyboo" target="_blank" class="social-tiktok">
+            🎵 TikTok
         </a>
         <a href="https://room.rakuten.co.jp/room_3b6e1ab198/items" target="_blank" class="social-rakuten">
             🛍️ 楽天ROOM
@@ -283,10 +287,11 @@ if st.session_state.generated and st.session_state.posts:
             st.success(f"✅ **バズmode** 生成完了 — {'気分: ' + st.session_state.buzz_mood if st.session_state.buzz_mood else 'おまかせ'}")
         else:
             st.success(f"✅ **通常mode** 生成完了 — {_p0['name'][:35]}　¥{_p0.get('price',0):,}")
-        if st.session_state.threads_script:
-            _th_prev = st.session_state.threads_script.get("captions", {}).get("threads", "")
-            if _th_prev:
-                st.caption(f"🧵 Threads: {_th_prev[:55]}…")
+        # Threads preview コメントアウト（TikTokに移行）
+        # if st.session_state.threads_script:
+        #     _th_prev = st.session_state.threads_script.get("captions", {}).get("threads", "")
+        #     if _th_prev:
+        #         st.caption(f"🧵 Threads: {_th_prev[:55]}…")
     with _col_btn:
         if st.button("🔄 再生成", use_container_width=True):
             _reset_session()
@@ -335,12 +340,14 @@ else:
 
     # ── STEP 2: 入力フォーム（モードごと）
     with st.form("generation_form", clear_on_submit=False):
-        _today_event = st.text_area(
-            "📝 今日のせなっちとの出来事（任意 — Threads投稿文に使います）",
-            placeholder="例）夜泣きが3回あった　/ 初めて離乳食を食べた　/ 抱っこしたら笑いかけてきた",
-            height=80,
-            key="today_event_input",
-        )
+        # Threads投稿文入力欄 コメントアウト（Threads廃止）
+        # _today_event = st.text_area(
+        #     "📝 今日のせなっちとの出来事（任意 — Threads投稿文に使います）",
+        #     placeholder="例）夜泣きが3回あった　/ 初めて離乳食を食べた　/ 抱っこしたら笑いかけてきた",
+        #     height=80,
+        #     key="today_event_input",
+        # )
+        _today_event = ""
 
         _mood_selected = ""
         if _is_buzz:
@@ -370,7 +377,8 @@ else:
         st.session_state.buzz_mood = _buzz_mood
 
         try:
-            from agents import image_agent, instagram_agent, youtube_agent, threads_agent
+            from agents import image_agent, instagram_agent, youtube_agent
+            # threads_agent コメントアウト（Threads廃止）
 
             if not _is_buzz:
                 from agents import rakuten_agent, analyzer_agent, writer_agent, quality_agent
@@ -403,23 +411,24 @@ else:
                     posts = quality_agent.run(posts)
                     st.write("   ✅ GPT Image 2 / Kling AIプロンプト完了")
 
-                    st.write("③ Instagram・YouTube キャプションを生成中...")
+                    st.write("③ Instagram・YouTube・TikTok キャプションを生成中...")
                     reel_script = instagram_agent.run(product=posts[0])
                     reel_script = youtube_agent.run(instagram_script=reel_script, product=posts[0])
                     st.write("   ✅ キャプション完了")
 
-                    st.write("④ Threads 育児投稿文を生成中...")
-                    threads_script = threads_agent.run(today_event=_today_event)
-                    st.write("   ✅ Threads投稿文完了")
+                    # Threads生成 コメントアウト（Threads廃止）
+                    # st.write("④ Threads 育児投稿文を生成中...")
+                    # threads_script = threads_agent.run(today_event=_today_event)
+                    # st.write("   ✅ Threads投稿文完了")
 
                     status.update(label="🎉 全コンテンツ生成完了！", state="complete")
 
                 st.session_state.posts          = posts
                 st.session_state.scripts        = [reel_script]
-                st.session_state.threads_script = threads_script
+                # st.session_state.threads_script = threads_script  # Threads廃止
                 st.session_state.all_products   = all_scored
                 st.session_state.generated      = True
-                st.session_state.threads_text_posted = False
+                st.session_state.tiktok_posted  = False
                 upsert_product(posts[0])
 
             else:
@@ -428,23 +437,24 @@ else:
                     buzz_post = image_agent.run_buzz()
                     st.write("   ✅ プロンプト完了")
 
-                    st.write("② Instagram・YouTube キャプションを生成中...")
+                    st.write("② Instagram・YouTube・TikTok キャプションを生成中...")
                     reel_script = instagram_agent.run_buzz(mood=_buzz_mood)
                     reel_script = youtube_agent.run(instagram_script=reel_script, product=None)
                     st.write("   ✅ キャプション完了")
 
-                    st.write("③ Threads 育児投稿文を生成中...")
-                    threads_script = threads_agent.run(today_event=_today_event)
-                    st.write("   ✅ Threads投稿文完了")
+                    # Threads生成 コメントアウト（Threads廃止）
+                    # st.write("③ Threads 育児投稿文を生成中...")
+                    # threads_script = threads_agent.run(today_event=_today_event)
+                    # st.write("   ✅ Threads投稿文完了")
 
                     status.update(label="🎉 バズmodeコンテンツ生成完了！", state="complete")
 
                 st.session_state.posts          = [buzz_post]
                 st.session_state.scripts        = [reel_script]
-                st.session_state.threads_script = threads_script
+                # st.session_state.threads_script = threads_script  # Threads廃止
                 st.session_state.all_products   = []
                 st.session_state.generated      = True
-                st.session_state.threads_text_posted = False
+                st.session_state.tiktok_posted  = False
 
             st.balloons()
             st.rerun()
@@ -572,6 +582,14 @@ with tab_prompt:
             _prompt_block("ig_caption", captions.get("instagram", ""), height=160)
             st.divider()
 
+            # ── TikTok キャプション
+            _tt_caption = captions.get("tiktok", "")
+            if _tt_caption:
+                st.markdown("#### 🎵 TikTok キャプション")
+                st.caption("冒頭30文字にキーワード集中・ハッシュタグ5個固定")
+                _prompt_block("tt_caption", _tt_caption, height=140)
+                st.divider()
+
             # ── YouTube Shorts
             st.markdown("#### ▶️ YouTube Shorts")
             _yt_title    = captions.get("youtube_title", "")
@@ -588,13 +606,13 @@ with tab_prompt:
             else:
                 st.info("再生成するとYouTube Shortsコンテンツが追加されます")
 
-    # ── Threads 育児投稿文
-    _th_text = (st.session_state.threads_script or {}).get("captions", {}).get("threads", "")
-    if _th_text:
-        st.divider()
-        st.markdown("#### 🧵 Threads 育児投稿文（テキスト）")
-        st.caption("動画なしのテキスト投稿です。「投稿」タブからBufferに予約できます。")
-        _prompt_block("threads_text", _th_text, height=130)
+    # Threads育児投稿文 コメントアウト（Threads廃止）
+    # _th_text = (st.session_state.threads_script or {}).get("captions", {}).get("threads", "")
+    # if _th_text:
+    #     st.divider()
+    #     st.markdown("#### 🧵 Threads 育児投稿文（テキスト）")
+    #     st.caption("動画なしのテキスト投稿です。「投稿」タブからBufferに予約できます。")
+    #     _prompt_block("threads_text", _th_text, height=130)
 
 
 # ──────────────────────────────────────────────────────
@@ -746,70 +764,54 @@ with tab_post:
 
     st.divider()
 
-    # ④ Threads
+    # ④ Threads コメントアウト（TikTokに移行）
+    # st.markdown("""
+    # <div ...>🧵 Threads 投稿</div>
+    # """, unsafe_allow_html=True)
+    # （Threads投稿ロジック一式コメントアウト）
+
+    # ④ TikTok
     st.markdown("""
-    <div style="background:linear-gradient(135deg,#E8F5E9,#DCEDC8); border-radius:16px;
-                padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #A5D6A7;">
-        <div style="font-size:1.05rem; font-weight:800; color:#2E7D32; margin-bottom:0.3rem;">🧵 Threads 投稿（育児投稿文）</div>
-        <div style="font-size:0.85rem; color:#388E3C;">テキストのみ / 動画と一緒に、を選べます</div>
+    <div style="background:linear-gradient(135deg,#1a1a2e,#2d2d44); border-radius:16px;
+                padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #444;">
+        <div style="font-size:1.05rem; font-weight:800; color:#fff; margin-bottom:0.3rem;">🎵 TikTok 投稿（動画）</div>
+        <div style="font-size:0.85rem; color:#aaa;">動画URLをアップロード後に投稿できます</div>
     </div>
     """, unsafe_allow_html=True)
 
-    if not _th_text_post:
-        st.caption("⚠️ Threads投稿文が未生成です。再生成してください。")
+    _tt_caption_post = ""
+    for _s in (scripts or []):
+        if _s.get("type") == "reel":
+            _tt_caption_post = _s.get("captions", {}).get("tiktok", "")
+            break
+
+    if not _tt_caption_post:
+        st.caption("⚠️ TikTokキャプションが未生成です。再生成してください。")
     else:
-        st.caption(f"投稿内容: {_th_text_post[:60]}…")
-        col_txt, col_vid = st.columns(2)
-
-        with col_txt:
-            if st.session_state.threads_text_posted:
-                st.success("✅ テキスト投稿済み")
-            else:
-                if st.button("🧵 テキストのみ投稿", type="primary", use_container_width=True):
-                    with st.spinner("Bufferに予約中..."):
-                        from agents.buffer_agent import run as buf_run_th
-                        results_th = buf_run_th([st.session_state.threads_script.copy()], platforms=["threads"])
-                    ok_th = any(r.get("buffer_posts", {}).get("threads", {}).get("success") for r in results_th)
-                    if ok_th:
-                        st.session_state.threads_text_posted = True
-                        _ic = (posts or [{}])[0].get("item_code", "")
-                        if _ic:
-                            from utils.sheets_helper import increment_count as _inc_th
-                            _inc_th(_ic, "Threads投稿数")
-                        st.success(f"✅ {_t3} 頃に投稿されます")
-                        st.rerun()
-                    else:
-                        err = next((r["buffer_posts"].get("threads", {}).get("error", "") for r in results_th if r.get("buffer_posts")), "不明なエラー")
-                        st.error(f"失敗: {err}")
-
-        with col_vid:
-            if st.session_state.threads_video_posted:
-                st.success("✅ 動画投稿済み")
-            elif not st.session_state.video_url:
-                st.button("📹 動画と一緒に投稿", use_container_width=True, disabled=True)
-                st.caption("動画アップロード後に有効")
-            else:
-                if st.button("📹 動画と一緒に投稿", type="primary", use_container_width=True):
-                    _scripts_vid = [s.copy() for s in scripts]
-                    for _s in _scripts_vid:
-                        if _s.get("type") == "reel":
-                            _s.setdefault("captions", {})
-                            _s["captions"]["threads"] = _th_text_post
-                    with st.spinner("Bufferに予約中..."):
-                        from agents.buffer_agent import run as buf_run_thv
-                        results_thv = buf_run_thv(_scripts_vid, video_url=st.session_state.video_url, platforms=["threads"])
-                    ok_thv = any(r.get("buffer_posts", {}).get("threads_reel", {}).get("success") for r in results_thv)
-                    if ok_thv:
-                        st.session_state.threads_video_posted = True
-                        _ic = (posts or [{}])[0].get("item_code", "")
-                        if _ic:
-                            from utils.sheets_helper import increment_count as _inc_thv
-                            _inc_thv(_ic, "Threads投稿数")
-                        st.success(f"✅ {_t48} 頃に投稿されます")
-                        st.rerun()
-                    else:
-                        errs_thv = [r.get("buffer_posts", {}).get("threads_reel", {}).get("error", "") for r in results_thv]
-                        st.error(f"失敗: {' | '.join(e for e in errs_thv if e) or '不明なエラー'}")
+        st.caption(f"投稿内容: {_tt_caption_post[:60]}…")
+        if st.session_state.tiktok_posted:
+            st.success("✅ TikTok投稿済み")
+        elif not st.session_state.video_url:
+            st.button("🎵 TikTokに動画投稿", use_container_width=True, disabled=True)
+            st.caption("動画アップロード後に有効")
+        else:
+            if st.button("🎵 TikTokに動画投稿", type="primary", use_container_width=True):
+                _scripts_tt = [s.copy() for s in scripts]
+                with st.spinner("Bufferに予約中..."):
+                    from agents.buffer_agent import run as buf_run_tt
+                    results_tt = buf_run_tt(_scripts_tt, video_url=st.session_state.video_url, platforms=["tiktok"])
+                ok_tt = any(r.get("buffer_posts", {}).get("tiktok", {}).get("success") for r in results_tt)
+                if ok_tt:
+                    st.session_state.tiktok_posted = True
+                    _ic = (posts or [{}])[0].get("item_code", "")
+                    if _ic:
+                        from utils.sheets_helper import increment_count as _inc_tt
+                        _inc_tt(_ic, "TikTok投稿数")
+                    st.success(f"✅ {_t3} 頃に投稿されます")
+                    st.rerun()
+                else:
+                    errs_tt = [r.get("buffer_posts", {}).get("tiktok", {}).get("error", "") for r in results_tt]
+                    st.error(f"失敗: {' | '.join(e for e in errs_tt if e) or '不明なエラー'}")
 
 
 # ──────────────────────────────────────────────────────
@@ -934,11 +936,11 @@ if tab_history:
                     with s_col1: st.metric("商品数", len(_hist_df))
                     with s_col2: st.metric("楽天ROOM投稿", int(_hist_df["楽天ROOM投稿数"].astype(int).sum()) if "楽天ROOM投稿数" in _hist_df.columns else "-")
                     with s_col3: st.metric("Instagram投稿", int(_hist_df["Instagram投稿数"].astype(int).sum()) if "Instagram投稿数" in _hist_df.columns else "-")
-                    with s_col4: st.metric("Threads投稿", int(_hist_df["Threads投稿数"].astype(int).sum()) if "Threads投稿数" in _hist_df.columns else "-")
+                    with s_col4: st.metric("TikTok投稿", int(_hist_df["TikTok投稿数"].astype(int).sum()) if "TikTok投稿数" in _hist_df.columns else "-")
                 except Exception:
                     pass
 
                 st.divider()
-                display_cols = [c for c in ["最終生成日", "商品名", "価格", "キーワード", "生成回数", "楽天ROOM投稿数", "Instagram投稿数", "Threads投稿数"] if c in _hist_df.columns]
+                display_cols = [c for c in ["最終生成日", "商品名", "価格", "キーワード", "生成回数", "楽天ROOM投稿数", "Instagram投稿数", "TikTok投稿数"] if c in _hist_df.columns]
                 st.dataframe(_hist_df[display_cols] if display_cols else _hist_df, use_container_width=True, hide_index=True)
                 st.caption(f"合計 {len(_hist_df)} 商品")

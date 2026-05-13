@@ -1,6 +1,6 @@
 """
 Buffer投稿エージェント（Webアプリ版）
-Buffer APIを使ってInstagram・Threads・YouTubeに予約投稿する。
+Buffer APIを使ってInstagram・TikTok・YouTubeに予約投稿する。
 投稿時刻はプラットフォームごとのピーク時間帯に自動スケジュール。
 枠が重複した場合は次のピーク枠に自動スライド。
 """
@@ -20,12 +20,12 @@ BUFFER_GRAPHQL = "https://api.buffer.com/graphql"
 # ── プラットフォームごとのピーク時間帯（JST, 24h表記）
 PEAK_SLOTS = {
     "instagram": [(7, 0), (12, 0), (19, 0), (21, 0)],
-    "threads":   [(7, 0), (12, 0), (19, 0), (22, 0)],
+    "tiktok":    [(7, 0), (12, 0), (19, 0), (21, 0)],
     "youtube":   [(12, 0), (20, 0), (22, 0)],
 }
 
 # ── セッション内で使用済みのスロットを記録（プラットフォームごと）
-_used_slots: dict = {"instagram": [], "threads": [], "youtube": []}
+_used_slots: dict = {"instagram": [], "tiktok": [], "youtube": []}
 
 
 def _get_next_peak_slot(platform: str) -> datetime:
@@ -122,7 +122,8 @@ def schedule_post(
         post_input["metadata"] = {"instagram": {"type": "reel", "shouldShareToFeed": True}}
         if video_url:
             post_input["assets"] = {"videos": [{"url": video_url}]}
-    elif service == "threads":
+    elif service == "tiktok":
+        post_input["metadata"] = {"tiktok": {"privacy": "PUBLIC_TO_EVERYONE", "disableDuet": False, "disableStitch": False}}
         if video_url:
             post_input["assets"] = {"videos": [{"url": video_url}]}
     elif service == "youtube":
@@ -175,13 +176,13 @@ def run(scripts: list, video_url: str = None, platforms: list = None) -> list:
     if not profiles:
         return scripts
 
-    platform_map = {"instagram": None, "threads": None, "youtube": None}
+    platform_map = {"instagram": None, "tiktok": None, "youtube": None}
     for ch in profiles:
         service = ch.get("service", "").lower()
         if "instagram" in service:
             platform_map["instagram"] = ch["id"]
-        elif "threads" in service:
-            platform_map["threads"] = ch["id"]
+        elif "tiktok" in service:
+            platform_map["tiktok"] = ch["id"]
         elif "youtube" in service:
             platform_map["youtube"] = ch["id"]
 
@@ -203,10 +204,10 @@ def run(scripts: list, video_url: str = None, platforms: list = None) -> list:
                 r = schedule_post(platform_map["instagram"], captions.get("instagram", ""), slot, video_url=video_url, service="instagram")
                 post_results["instagram"] = r
 
-            if not (platforms and "threads" not in platforms) and platform_map["threads"] and video_url:
-                slot = _fmt(_get_next_peak_slot("threads"))
-                r = schedule_post(platform_map["threads"], captions.get("threads", ""), slot, video_url=video_url, service="threads")
-                post_results["threads_reel"] = r
+            if not (platforms and "tiktok" not in platforms) and platform_map["tiktok"] and video_url:
+                slot = _fmt(_get_next_peak_slot("tiktok"))
+                r = schedule_post(platform_map["tiktok"], captions.get("tiktok", ""), slot, video_url=video_url, service="tiktok")
+                post_results["tiktok"] = r
 
             if not (platforms and "youtube" not in platforms) and platform_map["youtube"] and video_url:
                 slot = _fmt(_get_next_peak_slot("youtube"))
