@@ -198,6 +198,54 @@ for k, v in _defaults.items():
         st.session_state[k] = v
 
 
+# ──────────────────────────────────────────────────────
+# サイドバー：今月の基準写真管理
+# ──────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("## 📸 今月の基準写真")
+    try:
+        from agents.image_agent import calc_month_age as _calc_age
+        from utils.sheets_helper import get_reference_photo, set_reference_photo
+        from utils.cloudinary_helper import upload_bytes as _upload_bytes
+        _cur_month = _calc_age()
+        _ref = get_reference_photo(_cur_month)
+
+        if _ref:
+            st.image(_ref["url"], use_container_width=True)
+            st.caption(f"生後{_cur_month}ヶ月 / 登録日: {_ref['registered_at']}")
+            st.success("✅ 基準写真登録済み")
+        else:
+            st.warning(f"⚠️ 生後{_cur_month}ヶ月の基準写真が未登録です")
+            st.caption("下から写真を登録してください")
+
+        st.markdown("---")
+        _ref_file = st.file_uploader(
+            "写真を登録・更新（PNG / JPG）",
+            type=["png", "jpg", "jpeg"],
+            key="ref_photo_uploader",
+        )
+        if _ref_file:
+            st.image(_ref_file, caption="プレビュー", use_container_width=True)
+            if st.button("📸 この写真を基準写真として登録", use_container_width=True, type="primary"):
+                with st.spinner("Cloudinaryにアップロード中..."):
+                    _ref_url = _upload_bytes(_ref_file.read(), resource_type="image")
+                if _ref_url:
+                    set_reference_photo(_cur_month, _ref_url)
+                    st.success("✅ 登録しました！")
+                    st.rerun()
+                else:
+                    st.error("アップロードに失敗しました")
+
+        st.markdown("---")
+        st.caption(
+            "💡 月齢が上がったら新しい写真を登録してください。\n"
+            "登録した写真を毎回 ChatGPT の参照画像として使うことで、\n"
+            "せなっちの顔が一定に保たれます。"
+        )
+    except Exception as _e:
+        st.caption(f"基準写真機能 読み込みエラー: {_e}")
+
+
 def _reset_session():
     """再生成時にセッション状態をリセット"""
     for k, v in _defaults.items():
@@ -539,6 +587,31 @@ with tab_prompt:
     else:
         st.markdown("#### 🎬 GPT Image プロンプト（文字なし・動画用）")
         st.caption(f"せなっち写真＋商品写真を添付 → `{today}_video.png` として保存 → Kling AIで動画化")
+
+    # ── 基準写真リマインダー
+    try:
+        from utils.sheets_helper import get_reference_photo as _get_ref
+        from agents.image_agent import calc_month_age as _ca
+        _rm = _get_ref(_ca())
+        if _rm:
+            _rc1, _rc2 = st.columns([1, 3])
+            with _rc1:
+                st.image(_rm["url"], use_container_width=True)
+            with _rc2:
+                st.markdown(
+                    f"<div style='background:#E8F5E9; border-radius:10px; padding:0.6rem 0.9rem;"
+                    f"border:1px solid #A5D6A7; font-size:0.83rem;'>"
+                    f"📎 <b>今月の基準写真（左）をChatGPTに添付してください</b><br>"
+                    f"<span style='color:#555;'>毎回この写真を使うことでせなっちの顔が一定に保たれます</span><br>"
+                    f"<a href='{_rm['url']}' target='_blank' style='font-size:0.78rem;'>🔗 Cloudinaryで開く</a>"
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
+        else:
+            st.info("📸 サイドバーから今月の基準写真を登録すると、ここにリマインダーが表示されます。")
+    except Exception:
+        pass
+
     st.link_button("🤖 ChatGPTを開く ", "https://chatgpt.com")
     _prompt_block("gpt_img_notxt", p.get("gpt_image_prompt_notxt", ""), height=220)
     st.divider()

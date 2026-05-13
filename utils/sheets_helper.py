@@ -190,6 +190,62 @@ def increment_count(item_code: str, platform: str) -> bool:
         return False
 
 
+PROFILE_SHEET_NAME = "senacchi_profile"
+PROFILE_HEADERS = ["month_age", "cloudinary_url", "registered_at"]
+
+
+def _get_profile_worksheet():
+    """senacchi_profile シートを取得。なければ自動作成。"""
+    client = _get_client()
+    if client is None:
+        return None
+    sheet_id = os.getenv("GOOGLE_SHEETS_ID", SPREADSHEET_ID)
+    spreadsheet = client.open_by_key(sheet_id)
+    try:
+        return spreadsheet.worksheet(PROFILE_SHEET_NAME)
+    except Exception:
+        ws = spreadsheet.add_worksheet(title=PROFILE_SHEET_NAME, rows=50, cols=5)
+        ws.update("A1", [PROFILE_HEADERS])
+        return ws
+
+
+def get_reference_photo(month_age: int) -> dict | None:
+    """指定月齢の基準写真情報を返す。未登録の場合は None。"""
+    try:
+        ws = _get_profile_worksheet()
+        if ws is None:
+            return None
+        records = ws.get_all_records()
+        for rec in records:
+            if str(rec.get("month_age", "")) == str(month_age):
+                url = rec.get("cloudinary_url", "")
+                if url:
+                    return {"url": url, "registered_at": rec.get("registered_at", "")}
+        return None
+    except Exception as e:
+        print(f"get_reference_photo error: {e}")
+        return None
+
+
+def set_reference_photo(month_age: int, url: str) -> bool:
+    """指定月齢の基準写真URLを保存 / 上書き更新する。"""
+    try:
+        ws = _get_profile_worksheet()
+        if ws is None:
+            return False
+        today = datetime.now(tz=JST).strftime("%Y-%m-%d")
+        records = ws.get_all_records()
+        for i, rec in enumerate(records, start=2):
+            if str(rec.get("month_age", "")) == str(month_age):
+                ws.update(f"A{i}:C{i}", [[month_age, url, today]])
+                return True
+        ws.append_row([month_age, url, today])
+        return True
+    except Exception as e:
+        print(f"set_reference_photo error: {e}")
+        return False
+
+
 def get_history() -> pd.DataFrame | None:
     """履歴タブ用: 全行を DataFrame で返す"""
     try:
