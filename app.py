@@ -578,6 +578,40 @@ with tab_prompt:
                     with _lc1: st.link_button("📊 Buffer トレンド音源", "https://buffer.com/resources/trending-audio-instagram/")
                     with _lc2: st.link_button("📊 Later トレンド情報", "https://later.com/blog/instagram-reels-trends/")
 
+            # ── バズモード：キャプションパターン表示
+            if _is_buzz:
+                _cap_pattern = s.get("buzz_caption_pattern", "")
+                _mood_label  = st.session_state.get("buzz_mood", "") or "おまかせ（ランダム）"
+                if _cap_pattern == "A":
+                    _pat_bg     = "#FFF8F0"
+                    _pat_border = "#FFB74D"
+                    _pat_hdr    = "#E65100"
+                    _pat_title  = "パターン A ─ 育児あるある悩み＋開き直り"
+                    _pat_icon   = "😇"
+                    _pat_desc   = "育児の悩み・疲れ・諦めを正直に吐き出し、開き直りオチでバズる形式。Instagram・YouTube・TikTok 全媒体でこのトーンを統一。"
+                    _pat_trigger = "😭 疲れた・眠い　/　😤 怒り・ムカつく　/　😮‍💨 諦めた（開き直り）"
+                else:
+                    _pat_bg     = "#F1FFF3"
+                    _pat_border = "#66BB6A"
+                    _pat_hdr    = "#2E7D32"
+                    _pat_title  = "パターン B ─ アメリカンジョーク形式"
+                    _pat_icon   = "😂"
+                    _pat_desc   = "「パパ今日〇〇した。でもせなっちは〇〇だった。」という落差ネタでバズる形式。Instagram・YouTube・TikTok 全媒体でこのトーンを統一。"
+                    _pat_trigger = "😊 嬉しい・幸せ　/　😂 笑える出来事　/　😱 びっくり　/　🥹 感動"
+                st.markdown(f"""
+                <div style="background:{_pat_bg}; border-radius:14px; padding:1rem 1.3rem;
+                            margin-bottom:1rem; border:2px solid {_pat_border};">
+                    <div style="font-size:1rem; font-weight:800; color:{_pat_hdr}; margin-bottom:0.25rem;">
+                        {_pat_icon} キャプションパターン：{_pat_title}
+                    </div>
+                    <div style="font-size:0.83rem; color:#444; margin-bottom:0.4rem;">{_pat_desc}</div>
+                    <div style="font-size:0.78rem; color:#777;">
+                        <b>このパターンが選ばれる気分：</b>{_pat_trigger}<br>
+                        <b>今回の気分：</b>{_mood_label}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
             # ── Instagram キャプション
             st.markdown("#### 📱 Instagram Reel キャプション")
             _prompt_block("ig_caption", captions.get("instagram", ""), height=160)

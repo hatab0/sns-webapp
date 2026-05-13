@@ -19,7 +19,7 @@ FIXED_TAGS     = ["#babyboo", "#baby", "#PR", "#育児", "#赤ちゃんのいる
 FIXED_TAGS_STR = " ".join(FIXED_TAGS)
 BUZZ_TAGS      = ["#babyboo", "#baby", "#育児", "#赤ちゃんのいる生活"]   # #PR なし
 BUZZ_TAGS_STR  = " ".join(BUZZ_TAGS)
-TIKTOK_FIXED_TAGS = ["#赤ちゃん", "#育児vlog", "#babyboo", "#AIbaby", "#育休パパ"]
+TIKTOK_FIXED_TAGS = ["#赤ちゃん", "#育児vlog", "#babyboo", "#赤ちゃんのいる暮らし", "#育休パパ"]
 TIKTOK_FIXED_TAGS_STR = " ".join(TIKTOK_FIXED_TAGS)
 
 BABY_SPEECH_BY_MONTH = {
@@ -283,7 +283,7 @@ TikTok用のキャプションを書いてください。
 【TikTokキャプションのルール】
 ・1行目（冒頭30文字以内）に必ずキーワードを入れる
   例：「生後{MONTH_AGE}ヶ月の赤ちゃんが〇〇した瞬間」「AIで生み出した赤ちゃんが〇〇」
-・本文は1〜2行・60〜80字（短く読ませる）
+・本文は1〜2行・40〜60字（短く読ませる）
 ・絵文字1〜2個
 ・口語体（ですます禁止）
 ・末尾に必ず次の5つのハッシュタグを全て入れる（追加・変更禁止）：{TIKTOK_FIXED_TAGS_STR}
