@@ -12,6 +12,18 @@ from PIL import Image
 
 JST = timezone(timedelta(hours=9))
 
+
+def _fmt_sched(iso_str: str, fallback: str = "") -> str:
+    """Buffer APIのISO時刻文字列を "MM/DD HH:MM" に変換"""
+    if not iso_str:
+        return fallback
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        return dt.astimezone(JST).strftime("%m/%d %H:%M")
+    except Exception:
+        return iso_str or fallback
+
+
 # ── Streamlit Cloud の secrets を環境変数に注入
 if hasattr(st, "secrets"):
     for _k, _v in st.secrets.items():
@@ -370,19 +382,30 @@ _mode    = st.session_state.content_mode
 _is_buzz = (_mode == "buzz")
 
 if st.session_state.generated and st.session_state.posts:
-    # ── 生成済みサマリー（再生成ボタン付き）
+    # ── 生成済みサマリー（保存・再生成ボタン付き）
+    import json as _json_dl
     _p0 = st.session_state.posts[0]
-    _col_info, _col_btn = st.columns([4, 1])
+    _col_info, _col_dl, _col_btn = st.columns([4, 1, 1])
     with _col_info:
         if _is_buzz:
             st.success(f"✅ **バズmode** 生成完了 — {'気分: ' + st.session_state.buzz_mood if st.session_state.buzz_mood else 'おまかせ'}")
         else:
             st.success(f"✅ **通常mode** 生成完了 — {_p0['name'][:35]}　¥{_p0.get('price',0):,}")
-        # Threads preview コメントアウト（TikTokに移行）
-        # if st.session_state.threads_script:
-        #     _th_prev = st.session_state.threads_script.get("captions", {}).get("threads", "")
-        #     if _th_prev:
-        #         st.caption(f"🧵 Threads: {_th_prev[:55]}…")
+    with _col_dl:
+        _dl_banner = {
+            "generated_at": datetime.now(tz=JST).isoformat(),
+            "mode": _mode,
+            "posts": st.session_state.posts,
+            "scripts": st.session_state.scripts,
+        }
+        st.download_button(
+            "📥 保存",
+            data=_json_dl.dumps(_dl_banner, ensure_ascii=False, indent=2),
+            file_name=f"babyboo_{datetime.now(tz=JST).strftime('%Y%m%d')}.json",
+            mime="application/json",
+            use_container_width=True,
+            help="リロードで消えます。JSONに保存しておくと安心です。",
+        )
     with _col_btn:
         if st.button("🔄 再生成", use_container_width=True):
             _reset_session()
@@ -578,30 +601,6 @@ else:
     )
 
 
-# ── セッション保存（リロード対策）
-import json as _json_dl
-_dl_data = {
-    "generated_at": datetime.now(tz=JST).isoformat(),
-    "mode": _mode,
-    "posts": posts,
-    "scripts": scripts,
-}
-_dl_c1, _dl_c2 = st.columns([1, 3])
-with _dl_c1:
-    st.download_button(
-        "📥 JSONで保存",
-        data=_json_dl.dumps(_dl_data, ensure_ascii=False, indent=2),
-        file_name=f"babyboo_{today}.json",
-        mime="application/json",
-        use_container_width=True,
-        help="ページをリロードすると内容が消えます。JSONに保存しておくと安心です。",
-    )
-with _dl_c2:
-    st.caption("⚠️ ページをリロードすると生成内容は消えます。左のボタンでJSONバックアップができます。")
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-
 # ──────────────────────────────────────────────────────
 # TAB: プロンプト
 # ──────────────────────────────────────────────────────
@@ -611,6 +610,15 @@ with tab_prompt:
         st.stop()
 
     p = posts[0]
+
+    st.markdown("""
+    <div style="background:#F3E5F5; border-radius:12px; padding:0.6rem 1rem;
+                margin-bottom:1rem; border-left:4px solid #9C27B0;">
+        <span style="font-weight:800; color:#6A1B9A; font-size:0.95rem;">
+            📸 STEP 1 — ChatGPT・Kling AI 用プロンプト
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── 楽天ROOM紹介文（通常modeのみ）
     if not _is_buzz:
@@ -696,7 +704,14 @@ with tab_prompt:
                 continue
             captions = s.get("captions", {})
 
-            st.divider()
+            st.markdown("""
+            <div style="background:#E3F2FD; border-radius:12px; padding:0.6rem 1rem;
+                        margin: 1.5rem 0 1rem; border-left:4px solid #1976D2;">
+                <span style="font-weight:800; color:#0D47A1; font-size:0.95rem;">
+                    📝 STEP 2 — SNSキャプション
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
 
             # ── Hook / BGM情報
             _hook = s.get("hook", "")
@@ -808,7 +823,8 @@ with tab_post:
     st.markdown("""
     <div style="background:linear-gradient(135deg,#F3E5F5,#EDE7F6); border-radius:16px;
                 padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #CE93D8;">
-        <div style="font-size:1.05rem; font-weight:800; color:#6A1B9A; margin-bottom:0.3rem;">☁️ 動画アップロード</div>
+        <div style="font-size:0.75rem; font-weight:700; color:#AB47BC; letter-spacing:0.08em; margin-bottom:0.2rem;">STEP 1</div>
+        <div style="font-size:1.05rem; font-weight:800; color:#6A1B9A; margin-bottom:0.3rem;">☁️ 動画をアップロード</div>
         <div style="font-size:0.85rem; color:#7B1FA2;">Kling AIで生成した動画（MP4）をCloudinaryにアップロードします</div>
     </div>
     """, unsafe_allow_html=True)
@@ -836,14 +852,14 @@ with tab_post:
     st.markdown("""
     <div style="background:linear-gradient(135deg,#FFF0F8,#FFE8EF); border-radius:16px;
                 padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #FFB6C1;">
-        <div style="font-size:1.05rem; font-weight:800; color:#C2185B; margin-bottom:0.3rem;">📱 Instagram Reel 投稿</div>
-        <div style="font-size:0.85rem; color:#AD1457;">動画必須 / 上でアップロードしてから投稿</div>
+        <div style="font-size:0.75rem; font-weight:700; color:#F06292; letter-spacing:0.08em; margin-bottom:0.2rem;">STEP 2</div>
+        <div style="font-size:1.05rem; font-weight:800; color:#C2185B; margin-bottom:0.3rem;">📱 Instagram Reel に投稿</div>
+        <div style="font-size:0.85rem; color:#AD1457;">STEP 1 完了後に有効になります</div>
     </div>
     """, unsafe_allow_html=True)
 
     if st.session_state.instagram_posted:
-        _ig_sched = st.session_state.get("ig_scheduled_at", "")
-        _ig_disp  = _ig_sched if _ig_sched else f"{_t3}頃"
+        _ig_disp = _fmt_sched(st.session_state.get("ig_scheduled_at", ""), f"{_t3}頃")
         st.success("✅ Instagram Reel 予約完了")
         _igc1, _igc2 = st.columns(2)
         with _igc1: st.info(f"📅 投稿予定: {_ig_disp}")
@@ -877,14 +893,14 @@ with tab_post:
     st.markdown("""
     <div style="background:linear-gradient(135deg,#FFF3E0,#FFE0B2); border-radius:16px;
                 padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #FFB74D;">
-        <div style="font-size:1.05rem; font-weight:800; color:#E65100; margin-bottom:0.3rem;">▶️ YouTube Shorts 投稿</div>
-        <div style="font-size:0.85rem; color:#BF360C;">動画必須 / Bufferにチャンネル連携済みが前提</div>
+        <div style="font-size:0.75rem; font-weight:700; color:#FFA726; letter-spacing:0.08em; margin-bottom:0.2rem;">STEP 3</div>
+        <div style="font-size:1.05rem; font-weight:800; color:#E65100; margin-bottom:0.3rem;">▶️ YouTube Shorts に投稿</div>
+        <div style="font-size:0.85rem; color:#BF360C;">STEP 1 完了後に有効になります / Bufferにチャンネル連携済みが前提</div>
     </div>
     """, unsafe_allow_html=True)
 
     if st.session_state.youtube_posted:
-        _yt_sched = st.session_state.get("yt_scheduled_at", "")
-        _yt_disp  = _yt_sched if _yt_sched else f"{_t3}頃"
+        _yt_disp = _fmt_sched(st.session_state.get("yt_scheduled_at", ""), f"{_t3}頃")
         st.success("✅ YouTube Shorts 予約完了")
         _ytc1, _ytc2 = st.columns(2)
         with _ytc1: st.info(f"📅 投稿予定: {_yt_disp}")
@@ -966,8 +982,9 @@ with tab_post:
     st.markdown("""
     <div style="background:linear-gradient(135deg,#1a1a2e,#2d2d44); border-radius:16px;
                 padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #444;">
-        <div style="font-size:1.05rem; font-weight:800; color:#fff; margin-bottom:0.3rem;">🎵 TikTok 投稿（動画）</div>
-        <div style="font-size:0.85rem; color:#aaa;">動画URLをアップロード後に投稿できます</div>
+        <div style="font-size:0.75rem; font-weight:700; color:#aaa; letter-spacing:0.08em; margin-bottom:0.2rem;">STEP 4</div>
+        <div style="font-size:1.05rem; font-weight:800; color:#fff; margin-bottom:0.3rem;">🎵 TikTok に投稿</div>
+        <div style="font-size:0.85rem; color:#aaa;">STEP 1 完了後に有効になります</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -982,8 +999,7 @@ with tab_post:
     else:
         st.caption(f"投稿内容: {_tt_caption_post[:60]}…")
         if st.session_state.tiktok_posted:
-            _tt_sched = st.session_state.get("tt_scheduled_at", "")
-            _tt_disp  = _tt_sched if _tt_sched else f"{_t3}頃"
+            _tt_disp = _fmt_sched(st.session_state.get("tt_scheduled_at", ""), f"{_t3}頃")
             st.success("✅ TikTok 予約完了")
             _ttc1, _ttc2 = st.columns(2)
             with _ttc1: st.info(f"📅 投稿予定: {_tt_disp}")
