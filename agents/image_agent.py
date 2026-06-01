@@ -1063,29 +1063,77 @@ Output format: PNG / Size: 1024×1024 (square, 1:1) / File size: under 2097152 b
     return message.content[0].text.strip()
 
 
+# ── 商品カテゴリー別 Kling モーション定義
+_PRODUCT_SCENE_MAP = {
+    "sleep": {
+        "keywords": ["布団", "ベビー布団", "寝具", "マットレス", "おくるみ", "スリーパー", "まくら", "枕", "かけ布団", "ねんね", "寝袋"],
+        "motion_en": "tiny chest rises and falls with slow peaceful breathing, lips twitch with small sleepy murmurs, fingers curl and uncurl gently, eyelids flutter briefly then settle back into deep blissful sleep, slow gentle zoom in on the serene sleeping face then softly pull back to reveal the full cozy bedding, seamless 8-second loop",
+        "mood_en": "peaceful, serene, cozy, dreamy",
+        "sound": "nnn... nnn...",
+    },
+    "feeding": {
+        "keywords": ["哺乳瓶", "ミルク", "授乳", "離乳食", "スプーン", "食器", "ビブ", "スタイ", "エプロン", "マグ"],
+        "motion_en": "mouth makes gentle rhythmic sucking or tasting motions, tiny hands reach and grasp contentedly, eyelids grow heavier with milk-drunk satisfaction, small happy sounds, head lolls blissfully",
+        "mood_en": "content, milk-drunk, cozy, satisfied",
+        "sound": "mnh... mnh...",
+    },
+    "toy": {
+        "keywords": ["おもちゃ", "プーメリー", "メリー", "ガラガラ", "知育", "積み木", "ベビージム", "ラトル"],
+        "motion_en": "eyes track the toy with intense curious focus, arms reach and grasp excitedly, legs kick with growing delight, tiny fingers grasp at air, building to an excited squeal",
+        "mood_en": "curious, excited, playful, wonder",
+        "sound": "aah! aah!",
+    },
+    "bath": {
+        "keywords": ["バス", "お風呂", "沐浴", "バスタブ", "タオル", "ベビーソープ", "シャンプー"],
+        "motion_en": "tiny hands splash gently in warm water, eyes wide with delight at the sensation, water droplets catch the light beautifully, whole body relaxes into the warmth",
+        "mood_en": "delighted, relaxed, fresh, playful",
+        "sound": "aah! splash!",
+    },
+}
+
+
+def _detect_product_scene(product: dict) -> dict | None:
+    """商品名・キーワードからKlingプロンプト用の最適シーンを検出する。該当なしはNone。"""
+    text = " ".join([
+        product.get("name", ""),
+        product.get("keyword", ""),
+        product.get("catch_copy", ""),
+    ])
+    for data in _PRODUCT_SCENE_MAP.values():
+        if any(kw in text for kw in data["keywords"]):
+            return data
+    return None
+
+
 def generate_kling_prompt(product: dict) -> str:
     """
     【通常mode】Kling AI（Image to Video）用動画プロンプト（英語）
-    月齢に合った動きで8秒バイラル動画を生成。Positive / Negative Prompt形式で出力。
+    商品カテゴリーを検出して最適なシーン・動きに自動切り替え。
     """
     age_group = _get_age_group(MONTH_AGE)
     age_info = MOTION_BY_AGE_GROUP.get(age_group, MOTION_BY_AGE_GROUP["4-5"])
-    primary_sound = age_info["sounds"][0]
-    motion_en = age_info["motion_en"]
-    mood_en = age_info["mood_en"]
+
+    product_scene = _detect_product_scene(product)
+    if product_scene:
+        motion_en    = product_scene["motion_en"]
+        mood_en      = product_scene["mood_en"]
+        primary_sound = product_scene["sound"]
+    else:
+        motion_en    = age_info["motion_en"]
+        mood_en      = age_info["mood_en"]
+        primary_sound = age_info["sounds"][0]
 
     prompt = f"""
 せなっち（生後{MONTH_AGE}ヶ月）が商品「{product['name'][:40]}」を着ている・使っている静止画を
 Kling AI（Image to Video）でInstagramリール バイラル動画にするプロンプトを英語で作成してください。
 
 【バイラルコンセプト】
-・せなっちが商品を着ている・使っている状態で月齢に合った自然な動きをする
+・せなっちが商品を着ている・使っている状態で、以下の動きを忠実に再現する
 ・主な動き：{motion_en}
 ・月齢({MONTH_AGE}ヶ月)の声のイメージ："{primary_sound}"
 ・「かわいすぎ」「これ何使ってるの？」と思わずコメントしたくなる構成
 ・動画が自然にループする構成（最後のフレームが最初につながる）
 ・動画尺：8秒（Kling AIの設定で8sを選択）
-・8秒で最大インパクトを残す構成（冒頭2秒で掴み、ループで繰り返し見たくなる）
 
 【Kling AIプロンプトのルール】
 ・外見の詳細描写は不要（入力画像から取得するため）

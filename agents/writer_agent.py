@@ -26,16 +26,17 @@ def calc_month_age() -> int:
 
 MONTH_AGE = calc_month_age()
 
-# 必須ハッシュタグ（毎投稿で必ず含める）
-REQUIRED_TAGS = ["#オリジナル写真", f"#生後{MONTH_AGE}ヶ月", "#babyboo", "#育児"]
+
+def _build_required_tags(month_age: int) -> list:
+    return ["#オリジナル写真", f"#生後{month_age}ヶ月", "#babyboo", "#育児"]
 
 
 def ensure_required_tags(description: str) -> str:
     """必須ハッシュタグが含まれていなければ末尾に追加する。#PRは除去する。"""
     import re
-    # #PR タグを確実に除去（単体・末尾スペースあり・改行前後どちらでも）
     description = re.sub(r'\s*#PR\b', '', description)
-    missing = [tag for tag in REQUIRED_TAGS if tag not in description]
+    required = _build_required_tags(MONTH_AGE)
+    missing = [tag for tag in required if tag not in description]
     if missing:
         description = description.rstrip() + "\n" + " ".join(missing)
     return description.strip()
@@ -105,6 +106,8 @@ def generate_description(product: dict, event: str = None) -> str:
 
 def run(products: list) -> list:
     """TOP商品の紹介文を生成して返す"""
+    global MONTH_AGE
+    MONTH_AGE = calc_month_age()
     print(f"✍️  紹介文生成エージェント 起動（生後{MONTH_AGE}ヶ月）")
 
     results = []
