@@ -3,6 +3,7 @@ Buffer投稿エージェント（Webアプリ版）
 Buffer APIを使ってInstagram・TikTok・YouTubeに予約投稿する。
 投稿時刻はプラットフォームごとのピーク時間帯に自動スケジュール。
 枠が重複した場合は次のピーク枠に自動スライド。
+（Threads廃止済み）
 """
 import requests
 import os
@@ -20,24 +21,57 @@ BUFFER_GRAPHQL = "https://api.buffer.com/graphql"
 # ── プラットフォームごとのピーク時間帯（JST, 24h表記）
 PEAK_SLOTS = {
     "instagram": [(7, 0), (12, 0), (19, 0), (21, 0)],
-    "tiktok":    [(7, 0), (12, 0), (19, 0), (21, 0)],
+    "tiktok":    [(6, 0), (9, 0), (12, 0), (15, 0), (18, 0), (19, 0), (21, 0)],
     "youtube":   [(12, 0), (20, 0), (22, 0)],
 }
 
-# ── セッション内で使用済みのスロットを記録（プラットフォームごと）
+# ── 同一セッション内で今回予約したスロットを記録（APIで取れない直後の重複防止）
 _used_slots: dict = {"instagram": [], "tiktok": [], "youtube": []}
 
 
-def _get_next_peak_slot(platform: str) -> datetime:
+def _get_scheduled_slots(channel_id: str) -> list:
+    """Buffer APIから既存の予約済み投稿の時刻一覧を取得する"""
+    query = """
+    query GetPosts($input: PostsInput!) {
+      posts(input: $input) {
+        edges {
+          node {
+            dueAt
+          }
+        }
+      }
+    }
+    """
+    try:
+        response = requests.post(
+            BUFFER_GRAPHQL,
+            json={"query": query, "variables": {"input": {"channelId": channel_id, "status": "scheduled"}}},
+            headers=get_headers(),
+            timeout=10,
+        )
+        edges = response.json().get("data", {}).get("posts", {}).get("edges", [])
+        slots = []
+        for edge in edges:
+            due = edge.get("node", {}).get("dueAt")
+            if due:
+                dt = datetime.fromisoformat(due.replace("Z", "+00:00")).astimezone(JST)
+                slots.append(dt)
+        return slots
+    except Exception:
+        return []
+
+
+def _get_next_peak_slot(platform: str, channel_id: str = None) -> datetime:
     """
     指定プラットフォームの次のピーク枠を返す。
-    - 現在時刻 + 5分より後の枠を探す
+    - Buffer APIの既存予約 + 今セッションで予約済みの枠を両方チェック
     - 使用済み枠と30分以内に重なる場合は次の枠へスライド
     """
     now = datetime.now(tz=JST)
     min_time = now + timedelta(minutes=5)
     slots = PEAK_SLOTS.get(platform, PEAK_SLOTS["instagram"])
-    used = _used_slots.get(platform, [])
+    buffer_used = _get_scheduled_slots(channel_id) if channel_id else []
+    used = _used_slots.get(platform, []) + buffer_used
 
     for day_offset in range(5):
         base = (now + timedelta(days=day_offset)).replace(
@@ -47,7 +81,6 @@ def _get_next_peak_slot(platform: str) -> datetime:
             slot_dt = base.replace(hour=h, minute=m)
             if slot_dt <= min_time:
                 continue
-            # 使用済み枠と30分以内に重なる場合はスキップ
             if any(abs((slot_dt - u).total_seconds()) < 1800 for u in used):
                 continue
             _used_slots[platform].append(slot_dt)
@@ -98,7 +131,7 @@ def schedule_post(
     caption: str,
     scheduled_at: str,
     video_url: str = None,
-    service: str = "threads",
+    service: str = "instagram",
     youtube_title: str = "",
 ) -> dict:
     """Bufferに投稿を予約する"""
@@ -172,7 +205,7 @@ def run(scripts: list, video_url: str = None, platforms: list = None) -> list:
     投稿時刻: プラットフォームごとのピーク枠（PEAK_SLOTS）から
               次の空き枠を自動選択。枠が重なった場合は次の枠へスライド。
 
-    platforms: ["instagram"] / ["threads"] / ["youtube"] / None（全て）
+    platforms: ["instagram"] / ["tiktok"] / ["youtube"] / None（全て）
     video_url: CloudinaryのURL（動画投稿用）
     """
     if not BUFFER_TOKEN:
@@ -198,25 +231,19 @@ def run(scripts: list, video_url: str = None, platforms: list = None) -> list:
         captions = script.get("captions", {})
         post_results = {}
 
-        if ctype == "threads_text":
-            if not (platforms and "threads" not in platforms) and platform_map["threads"]:
-                slot = _fmt(_get_next_peak_slot("threads"))
-                r = schedule_post(platform_map["threads"], captions.get("threads", ""), slot, service="threads")
-                post_results["threads"] = r
-
-        elif ctype == "reel":
+        if ctype == "reel":
             if not (platforms and "instagram" not in platforms) and platform_map["instagram"] and video_url:
-                slot = _fmt(_get_next_peak_slot("instagram"))
+                slot = _fmt(_get_next_peak_slot("instagram", platform_map["instagram"]))
                 r = schedule_post(platform_map["instagram"], captions.get("instagram", ""), slot, video_url=video_url, service="instagram")
                 post_results["instagram"] = r
 
             if not (platforms and "tiktok" not in platforms) and platform_map["tiktok"] and video_url:
-                slot = _fmt(_get_next_peak_slot("tiktok"))
+                slot = _fmt(_get_next_peak_slot("tiktok", platform_map["tiktok"]))
                 r = schedule_post(platform_map["tiktok"], captions.get("tiktok", ""), slot, video_url=video_url, service="tiktok")
                 post_results["tiktok"] = r
 
             if not (platforms and "youtube" not in platforms) and platform_map["youtube"] and video_url:
-                slot = _fmt(_get_next_peak_slot("youtube"))
+                slot = _fmt(_get_next_peak_slot("youtube", platform_map["youtube"]))
                 r = schedule_post(
                     platform_map["youtube"],
                     captions.get("youtube", ""),
