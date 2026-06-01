@@ -63,6 +63,13 @@ def _fmt(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%S+09:00")
 
 
+def get_headers() -> dict:
+    return {
+        "Authorization": f"Bearer {BUFFER_TOKEN}",
+        "Content-Type": "application/json",
+    }
+
+
 def get_profiles() -> list:
     """Bufferに連携されているチャンネル一覧を取得する"""
     query = """
