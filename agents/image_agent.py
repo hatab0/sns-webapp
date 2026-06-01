@@ -280,7 +280,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "overhead angle straight down, face fills 85% of frame, the gravity of the expression as absolute focal point",
             "lighting": "soft even natural window light, no drama — the expression provides everything",
             "background": "clean white/ivory sheet, completely smooth and minimal",
-            "kling_motion": "brow furrows even deeper with each passing moment, one eye narrows fractionally with profound insight, tiny head makes a barely perceptible knowing tilt — this newborn has figured out something important",
+            "kling_motion": "tiny baby lies completely still, brow slowly furrows deeper with intense focus, gentle slow zoom in on the serious tiny face, warm natural window light, seamless loop",
             "is_gag": True,
         },
         # ── ぽかん顔仰向け万歳（バズパターンA+No.1表情）
@@ -391,7 +391,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "overhead angle looking down, arms spread wide as natural part of the composition",
             "lighting": "bright cheerful natural window light, warm and energetic",
             "background": "colorful patterned blanket (animal or fruit print) blurred behind",
-            "kling_motion": "arms conduct with surprising rhythm, legs join in with kicks, whole body moves to an internal beat with total commitment — this baby is absolutely vibing right now",
+            "kling_motion": "baby's tiny arms wave gently in playful rhythm, slow gentle zoom in from above, warm natural window light, seamless loop",
             "is_gag": True,
         },
         # ── ぽかん顔アップ（定番バズ）
@@ -511,7 +511,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "close-up, the expression of betrayal as total focal point, straight-on",
             "lighting": "bright warm natural window light, the injustice fully illuminated",
             "background": "colorful play mat or soft blanket blurred behind",
-            "kling_motion": "eyes go wide with dawning realization of betrayal, mouth opens in silent outrage, empty hands reach forward for the gone toy, brow furrows in deepening accusation — legally actionable",
+            "kling_motion": "baby's eyes go wide with surprise, mouth slowly opens in a small O of outrage, gentle slow zoom in, warm natural window light, seamless loop",
             "is_gag": True,
         },
         # ── バウンサーでぽかん顔（定番バズ）
@@ -631,7 +631,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "straight-on medium shot, the magnificent slow-motion topple as the entire story",
             "lighting": "warm bright natural window light, nothing hidden from the comedy",
             "background": "soft play mat or cream blanket blurred behind",
-            "kling_motion": "body tilts further and further sideways at glacial pace, eyes stay wide open accepting fate, arms do not attempt to catch the fall, lands sideways with complete dignity intact",
+            "kling_motion": "baby gently tilts sideways with wide resigned eyes, slow gentle zoom in, warm natural window light, seamless loop",
             "is_gag": True,
         },
         # ── 仰向けぽかん顔（定番バズ）
@@ -742,7 +742,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "medium shot, capturing the full body-sway and arm wave, slight motion blur on moving arms",
             "lighting": "warm bright natural window light, joyful and energetic",
             "background": "colorful room or play area blurred behind, lively home",
-            "kling_motion": "whole body sways left and right with committed rhythm, arms wave with genuine coordination, head bobs, expression of pure musical joy never breaks — this baby found their groove",
+            "kling_motion": "baby's upper body sways gently side to side with a blissful smile, slow gentle zoom in, warm natural window light, seamless loop",
             "is_gag": True,
         },
         # ── 座ってぽかん顔（定番バズ）
@@ -853,7 +853,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "medium shot, head and body both in frame to show the full bob, slight motion blur on head",
             "lighting": "bright warm natural window light, celebratory",
             "background": "living room or bedroom setting blurred, homey and real",
-            "kling_motion": "head bobs up and down with surprising rhythm, whole body bounces with the movement, arms join in with the beat, the smile never breaks — this baby found their groove and owns it",
+            "kling_motion": "baby's head bobs gently up and down with a small proud smile, slow gentle zoom in, warm natural window light, seamless loop",
             "is_gag": True,
         },
         # ── 仰向け万歳ぽかん（定番バズ）
@@ -964,7 +964,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "medium full-body shot, capturing the full wiggle from head to toe, slight natural motion blur on moving parts",
             "lighting": "bright warm natural window light, celebratory energy",
             "background": "living room or kitchen setting blurred, real family home",
-            "kling_motion": "every part of the body wiggles simultaneously — head, shoulders, hips, knees, arms — in a beautiful and completely unique personal interpretation of rhythm that cannot be taught",
+            "kling_motion": "toddler wiggles and bounces with pure joy, slow gentle zoom in, bright warm natural window light, seamless loop",
             "is_gag": True,
         },
         # ── 何かに気づいたぽかん顔（定番バズ）
@@ -1116,21 +1116,22 @@ BUZZ_BACKGROUND_POOL = [
 
 # バズmode専用：アクセサリープール（PR modeと共用しない）
 BUZZ_ACCESSORY_POOL = [
-    "white satin ribbon headband (thin, minimal)",
-    "bear-ear knit headband (beige, plush)",
-    "rainbow striped knit beanie hat",
-    "cream pom-pom beanie hat",
-    "pale pink ruffled bib",
+    # ━━ スタイ（よだれかけ）━━
+    "pale pink ruffled cotton bib",
     "strawberry-print bib (red and white)",
     "pastel yellow star-print bib",
+    "watermelon-print bib (green and red)",
+    "bear-face terry cloth bib (brown and cream)",
+    "blue whale-print cotton bib",
+    "rainbow dot print bib (colorful dots on white)",
+    "orange carrot-print cotton bib",
+    # ━━ おしゃぶり ━━
     "mint green silicone pacifier with cloud-shaped shield",
     "white round silicone pacifier with small bear-face shield",
-    "tiny blue-and-white striped bucket hat",
-    "duck-yellow knit beanie with a small beak detail",
-    "light purple floral hair clip (minimal, small)",
-    "watermelon-print bib (green and red)",
+    # ━━ なし（コスチュームのみ・約30%の確率）━━
     "no accessory — just the costume and natural expression",
-    "no accessory — just the costume and natural expression",  # 「なし」を2枠入れて30%程度の確率に
+    "no accessory — just the costume and natural expression",
+    "no accessory — just the costume and natural expression",
 ]
 
 
