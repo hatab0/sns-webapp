@@ -190,7 +190,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "extreme close-up, face fills 85% of frame, slight overhead angle, very shallow DOF",
             "lighting": "ultra-soft diffused window light, gentle warm glow, no shadows, skin luminous",
             "background": "blurred soft white or cream muslin fabric, completely clean and minimal",
-            "kling_motion": "tiny chest rises and falls with slow peaceful breathing, lips twitch slightly in sleep, fingers curl and uncurl gently, serene 8-second seamless loop",
+            "kling_motion": "tiny chest rises and falls with slow peaceful breathing, lips twitch slightly in sleep, fingers curl and uncurl gently, serene 7-second seamless loop",
         },
         # ── あくび（大きく体を伸ばす）
         {
@@ -199,7 +199,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "overhead angle directly above, baby centered, capturing full stretch head to toe",
             "lighting": "bright soft morning window light, clean and airy, warm tones",
             "background": "clean white fleece blanket surface, smooth and seamless",
-            "kling_motion": "mouth opens wide in a huge adorable yawn, tiny body stretches to its full length, arms reach up, then whole body settles back with a sleepy sigh, 8-second loop",
+            "kling_motion": "mouth opens wide in a huge adorable yawn, tiny body stretches to its full length, arms reach up, then whole body settles back with a sleepy sigh, 7-second loop",
         },
         # ── むずかる顔（新生児のしかめっ面）
         {
@@ -217,7 +217,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "eye-level side angle to capture the squished cheek perfectly, very shallow DOF",
             "lighting": "warm soft rim lighting from behind, gentle glow on hair and cheek edge",
             "background": "ultra-soft blurred white sherpa texture, cozy and warm",
-            "kling_motion": "slow peaceful breathing makes squished cheek rise and fall, tiny fingers flutter near chin, eyelids flutter briefly then settle, impossibly cozy 8-second loop",
+            "kling_motion": "slow peaceful breathing makes squished cheek rise and fall, tiny fingers flutter near chin, eyelids flutter briefly then settle, impossibly cozy 7-second loop",
         },
         # ── じっとカメラを見つめる（古代の目）
         {
@@ -226,7 +226,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "extreme tight close-up, eyes as absolute focal point, fills 90% of frame",
             "lighting": "soft dramatic single window light catching bright catchlights in wide dark eyes",
             "background": "blurred deep navy or charcoal background for dramatic contrast",
-            "kling_motion": "enormous dark eyes blink slowly and deliberately, tiny head shifts a fraction, eyes re-lock onto camera with unnerving ancient wisdom, 8-second hypnotic loop",
+            "kling_motion": "enormous dark eyes blink slowly and deliberately, tiny head shifts a fraction, eyes re-lock onto camera with unnerving ancient wisdom, 7-second hypnotic loop",
         },
         # ── O字口（ぽかーん）
         {
@@ -253,7 +253,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "tight close-up on face, capturing the repeated micro-expression of each hiccup",
             "lighting": "bright soft window light, warm and clear",
             "background": "clean cream or white bokeh",
-            "kling_motion": "tiny body jolts adorably with each hiccup, eyes go wide and hands flail slightly, expression resets, jolts again rhythmically, irresistibly funny 8-second loop",
+            "kling_motion": "tiny body jolts adorably with each hiccup, eyes go wide and hands flail slightly, expression resets, jolts again rhythmically, irresistibly funny 7-second loop",
         },
         # ── 眠そうに目をこする
         {
@@ -263,6 +263,34 @@ BUZZ_SCENE_BY_AGE = {
             "lighting": "soft warm dim light, like late afternoon or bedtime glow",
             "background": "blurred cozy bedding, warm cream tones",
             "kling_motion": "tiny fist rubs eye in slow circles, head droops forward then bobs back up, eyelids flutter heavy and slow, fighting sleep with every ounce of newborn will",
+        },
+        # ── 新生児ギャン泣き（泣く）
+        {
+            "pose": "lying on back in full newborn cry, mouth open wide in classic square cry-shape, tiny fists raised near cheeks",
+            "expression": "peak newborn wail — mouth open in wide square shape, eyes squeezed tight, face flushed pink-red, completely authentic crying face that every parent has seen at 3am",
+            "camera": "tight close-up, crying face fills 80% of frame, straight-on angle",
+            "lighting": "soft natural window light from the side, warm, gentle — even a crying baby is beautiful in real light",
+            "background": "white/ivory sheets blurred behind, natural home crib or bed setting",
+            "kling_motion": "mouth opens and closes in rhythmic cry waves, tiny fists pump slowly near cheeks, chest heaves between cries, brief pause as small breath is drawn then next wave begins — the most relatable parent moment",
+        },
+        # ── 哲学者モード（ガグ枠）
+        {
+            "pose": "lying completely still on back on white sheets, arms at sides, staring directly at camera with an impossibly serious expression",
+            "expression": "ancient philosopher baby — deeply furrowed brow, lips pressed together thoughtfully, dark eyes carrying centuries of wisdom, absolute gravitas in a 2-month face",
+            "camera": "overhead angle straight down, face fills 85% of frame, the gravity of the expression as absolute focal point",
+            "lighting": "soft even natural window light, no drama — the expression provides everything",
+            "background": "clean white/ivory sheet, completely smooth and minimal",
+            "kling_motion": "brow furrows even deeper with each passing moment, one eye narrows fractionally with profound insight, tiny head makes a barely perceptible knowing tilt — this newborn has figured out something important",
+            "is_gag": True,
+        },
+        # ── ぽかん顔仰向け万歳（バズパターンA+No.1表情）
+        {
+            "pose": "lying on back on light blue bouncer or soft blanket, both arms raised naturally in 'banzai' position, chubby feet visible at the bottom of frame",
+            "expression": "perfect ぽかん face — mouth slightly open in small O, huge round eyes staring directly at camera with gentle wonder and slight surprise — the #1 viral expression on baby_cubo_official",
+            "camera": "overhead angle looking straight down, full body from head to feet, baby centered",
+            "lighting": "soft natural window light from the side, warm golden tone, even across face and body",
+            "background": "light blue bouncer or white/cream blanket, natural home setting, blurred softly",
+            "kling_motion": "eyes blink once slowly with wonder, tiny arms drift slightly up and down, mouth shape shifts as if about to make a sound, then resets to full wonder — hypnotic and completely viral",
         },
     ],
     "3": [
@@ -345,7 +373,35 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "warm close-up on sleepy face and rubbing fist",
             "lighting": "soft dim warm light, bedtime atmosphere",
             "background": "blurred cozy blanket, warm cream tones",
-            "kling_motion": "tiny fist rubs eye in slow deliberate circles, head lolls to one side, eyelids fight gravity and lose, the most relatable sleepy struggle in 8 seconds",
+            "kling_motion": "tiny fist rubs eye in slow deliberate circles, head lolls to one side, eyelids fight gravity and lose, the most relatable sleepy struggle in 7 seconds",
+        },
+        # ── ギャン泣き（3ヶ月）
+        {
+            "pose": "lying on back in full cry, mouth wide open, face deeply flushed, both arms raised up and tense",
+            "expression": "full 3-month meltdown — mouth at maximum aperture, eyes squeezed completely shut, cheeks flushed deep pink-red, real tears forming on chubby cheeks, unmistakably authentic",
+            "camera": "close-up front-on, crying face fills 80% of frame, capturing full emotion",
+            "lighting": "soft warm natural window light — even a crying moment is beautiful in real light",
+            "background": "white/cream sheet or soft blanket blurred behind, natural home",
+            "kling_motion": "cry builds in waves, mouth opens wider, head turns slightly with effort, brief pause then another wave — then the tiniest hiccup of recovery before the next cry begins",
+        },
+        # ── ミニDJポーズ（ガグ枠）
+        {
+            "pose": "lying on back, both arms flailing outward rhythmically as if mixing records or conducting an orchestra with total commitment",
+            "expression": "deep in the music — eyes squeezed shut with total joy, mouth open in delighted O, head tilting to the beat of an internal song nobody else can hear",
+            "camera": "overhead angle looking down, arms spread wide as natural part of the composition",
+            "lighting": "bright cheerful natural window light, warm and energetic",
+            "background": "colorful patterned blanket (animal or fruit print) blurred behind",
+            "kling_motion": "arms conduct with surprising rhythm, legs join in with kicks, whole body moves to an internal beat with total commitment — this baby is absolutely vibing right now",
+            "is_gag": True,
+        },
+        # ── ぽかん顔アップ（定番バズ）
+        {
+            "pose": "lying on back on bouncer or blanket, face centered toward camera, arms relaxed at sides, completely still",
+            "expression": "classic ぽかん — mouth slightly open in small perfect circle, huge round eyes gazing directly at camera with gentle wonder and slight surprise, eyebrows fractionally raised — 3.36M like face",
+            "camera": "overhead angle or slight 俯瞰, face fills 85% of frame, forehead to chin all visible",
+            "lighting": "soft natural window light from slight angle, warm, no harsh shadows, skin glowing with warmth",
+            "background": "light blue bouncer fabric or white sheet, naturally blurred",
+            "kling_motion": "eyes blink once slowly with wonder, mouth shape shifts slightly as if considering making a sound, arms twitch with tiny reflexes — hypnotic and completely viral",
         },
     ],
     "4-5": [
@@ -365,7 +421,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "overhead angle, baby fills 85% of frame, looking up at camera",
             "lighting": "bright soft overhead studio light, clean white fill, celebratory",
             "background": "bright white background, clean and crisp",
-            "kling_motion": "arms pump up and down triumphantly, legs kick in simultaneous joy, whole body radiates excitement, the grin never fades — pure celebratory energy for 8 seconds",
+            "kling_motion": "arms pump up and down triumphantly, legs kick in simultaneous joy, whole body radiates excitement, the grin never fades — pure celebratory energy for 7 seconds",
         },
         # ── 寝返りの途中でびっくり顔
         {
@@ -410,7 +466,7 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "warm close-up on milk-drunk face, intimate and cozy",
             "lighting": "golden warm soft light, evening feeding atmosphere",
             "background": "blurred cozy arms and blanket",
-            "kling_motion": "eyelids droop and flutter, head lolls with milk-drunk satisfaction, lips make tiny sucking motions even when not feeding, the definition of contentment in 8 seconds",
+            "kling_motion": "eyelids droop and flutter, head lolls with milk-drunk satisfaction, lips make tiny sucking motions even when not feeding, the definition of contentment in 7 seconds",
         },
         # ── あくびで体がくにゃっ
         {
@@ -437,7 +493,35 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "tight close-up, the quivering lip as cinematic focal point",
             "lighting": "soft light making welling eyes glisten perfectly",
             "background": "blurred warm background",
-            "kling_motion": "bottom lip begins its dramatic quiver, eyes fill with glossy tears, face crumples in exquisite slow-motion tragedy, then resets and begins again — 8 seconds of pure drama",
+            "kling_motion": "bottom lip begins its dramatic quiver, eyes fill with glossy tears, face crumples in exquisite slow-motion tragedy, then resets and begins again — 7 seconds of pure drama",
+        },
+        # ── ギャン泣き（4-5ヶ月）
+        {
+            "pose": "lying on back in full-volume cry, back slightly arched, both fists raised, legs kicking in genuine distress",
+            "expression": "complete meltdown — mouth at maximum aperture, face deep crimson, real tears streaming down chubby cheeks, eyes squeezed entirely shut, the full honest crying experience",
+            "camera": "close-up capturing the full dramatic crying expression, slight overhead angle",
+            "lighting": "soft natural window light — warm, no harsh flash, genuine home moment",
+            "background": "white/ivory blanket or cream sheet blurred behind, natural home setting",
+            "kling_motion": "cry hits full volume, back arches slightly, fists pump, then one enormous breath in before the next wave crashes — totally authentic and deeply relatable",
+        },
+        # ── おもちゃ没収された顔（ガグ枠）
+        {
+            "pose": "sitting with slight support, hands empty and raised slightly as if something was just taken, frozen in complete betrayal",
+            "expression": "maximum betrayal face — eyebrows raised impossibly high in disbelief, mouth open in outraged O, eyes wide with pure how-could-you energy, absolutely stunned by the injustice",
+            "camera": "close-up, the expression of betrayal as total focal point, straight-on",
+            "lighting": "bright warm natural window light, the injustice fully illuminated",
+            "background": "colorful play mat or soft blanket blurred behind",
+            "kling_motion": "eyes go wide with dawning realization of betrayal, mouth opens in silent outrage, empty hands reach forward for the gone toy, brow furrows in deepening accusation — legally actionable",
+            "is_gag": True,
+        },
+        # ── バウンサーでぽかん顔（定番バズ）
+        {
+            "pose": "reclining naturally on a light blue bouncer, arms relaxed and slightly raised, chubby feet visible at the bottom of frame",
+            "expression": "ultimate bouncer ぽかん — mouth slightly open with gentle wonder, enormous eyes staring directly at camera, completely absorbed in looking at the lens, mild amazement",
+            "camera": "overhead 45-degree angle, face fills 75% of frame, bouncer edges visible naturally",
+            "lighting": "soft natural window light from the side, warm afternoon glow",
+            "background": "light blue bouncer fabric naturally blurred, warm home interior behind",
+            "kling_motion": "eyes track something slightly off-center then snap back to camera with renewed wonder, tiny arms drift slightly, mouth shape changes as if considering making a sound — peak ぽかん",
         },
     ],
     "6-7": [
@@ -531,6 +615,34 @@ BUZZ_SCENE_BY_AGE = {
             "background": "blurred cozy home setting",
             "kling_motion": "fist rubs eye in slow circles while head droops forward, almost touches chin to chest, then bobs back up surprised, rubs eye again — the cutest losing battle with sleep",
         },
+        # ── ギャン泣き（6-7ヶ月）
+        {
+            "pose": "sitting with slight support, full cry in progress, arms reaching out desperately, real tears streaming down chubby cheeks",
+            "expression": "peak separation anxiety cry — mouth wide open, real tears flowing freely, face flushed and crumpled with genuine distress, brows deeply furrowed, arms reaching for comfort",
+            "camera": "medium close-up, face and reaching arms both in frame, straight-on",
+            "lighting": "soft warm natural window light — the tears catch the light beautifully and honestly",
+            "background": "warm cream/beige sofa fabric or blanket blurred behind, home setting",
+            "kling_motion": "arms reach and grasp at air desperately, tears fall with each cry wave, voice catches between cries, then builds again — every parent knows this exact face and moment",
+        },
+        # ── ゆっくり横倒れ（ガグ枠）
+        {
+            "pose": "sitting independently, caught in the process of slowly and inevitably toppling sideways like a statue in slow motion, one arm not even trying to catch the fall",
+            "expression": "complete acceptance of the impending topple — eyes wide, expression perfectly resigned to fate, 'this is happening' face, utterly calm about the fall, no panic whatsoever",
+            "camera": "straight-on medium shot, the magnificent slow-motion topple as the entire story",
+            "lighting": "warm bright natural window light, nothing hidden from the comedy",
+            "background": "soft play mat or cream blanket blurred behind",
+            "kling_motion": "body tilts further and further sideways at glacial pace, eyes stay wide open accepting fate, arms do not attempt to catch the fall, lands sideways with complete dignity intact",
+            "is_gag": True,
+        },
+        # ── 仰向けぽかん顔（定番バズ）
+        {
+            "pose": "lying on back on soft blanket or bouncer, arms slightly raised in natural position, looking directly up at camera",
+            "expression": "pure ぽかん — mouth slightly open with gentle wonder, enormous round eyes staring directly up at the camera, expression of mild amazement at the existence of everything",
+            "camera": "overhead straight-down angle, face fills 80% of frame, forehead to chin all in shot",
+            "lighting": "soft natural window light from the side, warm golden, skin glowing",
+            "background": "paw-print or animal pattern blanket, or clean white sheet — natural home setting",
+            "kling_motion": "eyes blink once slowly, mouth makes a tiny motion, arms drift fractionally, then eyes return to maximum camera-lock — the definition of content",
+        },
     ],
     "8-9": [
         # ── 指差しカメラ目線
@@ -612,7 +724,35 @@ BUZZ_SCENE_BY_AGE = {
             "camera": "close-up on the adorable two-fisted eye-rubbing",
             "lighting": "soft warm dim light",
             "background": "blurred cozy setting",
-            "kling_motion": "both fists rub both eyes vigorously, head droops further with each rub, fighting sleep with everything available, a battle already lost — the most relatable 8 seconds ever",
+            "kling_motion": "both fists rub both eyes vigorously, head droops further with each rub, fighting sleep with everything available, a battle already lost — the most relatable 7 seconds ever",
+        },
+        # ── ギャン泣き（8-9ヶ月）
+        {
+            "pose": "sitting independently mid-full-volume cry, head thrown back slightly, mouth open wide, fists clenched at sides",
+            "expression": "dramatic 8-month tantrum — mouth wide open, face deep red, real tears flowing, head slightly back, the full production of a baby who has opinions and is expressing them",
+            "camera": "medium close-up, face and body both in frame capturing the full tantrum energy",
+            "lighting": "bright natural window light — everything visible, nothing hidden",
+            "background": "colorful play mat or light living room setting blurred behind",
+            "kling_motion": "cry reaches full intensity, head tilts back, fists pump, then pauses to gauge reaction, then resumes if satisfaction is not achieved — a negotiation in real time",
+        },
+        # ── 踊るベビー（ガグ枠）
+        {
+            "pose": "sitting independently, whole upper body swaying dramatically side to side as if deeply moved by music, arms waving with genuine rhythm",
+            "expression": "completely transported by music — eyes half-closed with the groove, small satisfied smile, 100% committed to the internal beat, cannot be interrupted or reasoned with",
+            "camera": "medium shot, capturing the full body-sway and arm wave, slight motion blur on moving arms",
+            "lighting": "warm bright natural window light, joyful and energetic",
+            "background": "colorful room or play area blurred behind, lively home",
+            "kling_motion": "whole body sways left and right with committed rhythm, arms wave with genuine coordination, head bobs, expression of pure musical joy never breaks — this baby found their groove",
+            "is_gag": True,
+        },
+        # ── 座ってぽかん顔（定番バズ）
+        {
+            "pose": "sitting up independently, hands resting on knees or dangling naturally, looking directly at camera",
+            "expression": "sitting ぽかん — mouth slightly open, large eyes staring at camera with wonder, slightly puzzled expression, as if processing the existence of the camera for the first time",
+            "camera": "straight-on eye-level or very slightly above, face fills 75% of frame, bust to head",
+            "lighting": "soft warm natural window light from the side, golden, face evenly and warmly lit",
+            "background": "light blue bouncer or cream/beige sofa fabric blurred, natural home",
+            "kling_motion": "eyes track the camera with growing intensity, head tilts slightly to one side in curiosity, mouth moves as if forming a thought, then resets to full ぽかん mode",
         },
     ],
     "10-12": [
@@ -697,6 +837,34 @@ BUZZ_SCENE_BY_AGE = {
             "background": "cozy home setting",
             "kling_motion": "rubs eyes with theatrical effort, sneaks one eye open to check the audience reaction, sees they're watching, immediately rubs harder for maximum sympathy effect — a performer",
         },
+        # ── 泣き声（10-12ヶ月）
+        {
+            "pose": "sitting or just tumbled to floor, bottom lip out in maximum protest, both arms stretched up in universal 'HOLD ME' gesture",
+            "expression": "milestone-age meltdown — bottom lip jutting out dramatically, eyes welling with real tears, arms stretched up desperately, the complete 'HOLD ME' package that destroys every parent",
+            "camera": "close-up capturing the arms-up plea and the magnificent crying face together",
+            "lighting": "soft warm natural window light, the tears glisten beautifully and honestly",
+            "background": "soft living room floor rug or cream carpet blurred behind, home setting",
+            "kling_motion": "arms stretch upward with increasing desperation, bottom lip trembles before the cry fully breaks, real tears form and overflow, the 'HOLD ME' energy becomes undeniable",
+        },
+        # ── 頭ボブダンス（ガグ枠）
+        {
+            "pose": "sitting or pulling to stand, head bobbing up and down with tremendous enthusiasm to a song only they can hear, arms moving with the beat",
+            "expression": "completely in the zone — eyes half-closed with groove, small satisfied smile, 100% committed to the internal beat that nobody else can hear, cannot be interrupted",
+            "camera": "medium shot, head and body both in frame to show the full bob, slight motion blur on head",
+            "lighting": "bright warm natural window light, celebratory",
+            "background": "living room or bedroom setting blurred, homey and real",
+            "kling_motion": "head bobs up and down with surprising rhythm, whole body bounces with the movement, arms join in with the beat, the smile never breaks — this baby found their groove and owns it",
+            "is_gag": True,
+        },
+        # ── 仰向け万歳ぽかん（定番バズ）
+        {
+            "pose": "lying on back on white sheet or cream blanket, both arms raised in natural 'banzai' position, chubby feet visible at the bottom of frame",
+            "expression": "relaxed ぽかん — mouth slightly open, soft eyes gazing up at camera with total contentment and mild wonder, not quite smiling, not quite serious — perfectly neutral and completely viral",
+            "camera": "overhead straight-down angle, full body from head to feet, baby centered in frame",
+            "lighting": "soft natural window light from the side, warm, golden afternoon quality",
+            "background": "white/ivory cotton sheet, natural home bed or floor setting",
+            "kling_motion": "arms float slightly upward then settle back, tiny fingers open and close, legs kick softly once, eyes blink slowly with contentment — radiating the peace of total existence",
+        },
     ],
     "13+": [
         # ── よちよち歩きで突進
@@ -780,6 +948,34 @@ BUZZ_SCENE_BY_AGE = {
             "background": "clean simple bokeh",
             "kling_motion": "O-mouth opens in stages of growing astonishment, eyes widen in sync, stays frozen in perfect wonder for comedic duration, then snaps back to normal as if nothing happened",
         },
+        # ── 本格的な大泣き（13+ヶ月）
+        {
+            "pose": "sitting or standing, full toddler meltdown — arms rigid at sides, face tilted slightly upward, mouth open at maximum volume",
+            "expression": "toddler tantrum at full power — face deep crimson, mouth wide open, real tears everywhere, the most honest and relatable toddler emotion in pure unapologetic form",
+            "camera": "medium shot capturing the whole theatrical production, face and body both in frame",
+            "lighting": "bright natural window light — the drama is fully visible in beautiful warm light",
+            "background": "living room or play area blurred, natural home setting",
+            "kling_motion": "cry reaches maximum volume, arms stiffen at sides, head tilts back with the full force of it, real tears fall, then one dramatic pause before round 2 begins",
+        },
+        # ── フルボディウィグルダンス（ガグ枠）
+        {
+            "pose": "standing or sitting, entire body wiggling from head to toe with complete abandon — arms up, hips swaying, knees bouncing, total full-body commitment",
+            "expression": "total dance possession — pure unstoppable joy, mouth open in laugh or song, eyes sparkling, this toddler has been claimed by the music and there is absolutely no stopping it",
+            "camera": "medium full-body shot, capturing the full wiggle from head to toe, slight natural motion blur on moving parts",
+            "lighting": "bright warm natural window light, celebratory energy",
+            "background": "living room or kitchen setting blurred, real family home",
+            "kling_motion": "every part of the body wiggles simultaneously — head, shoulders, hips, knees, arms — in a beautiful and completely unique personal interpretation of rhythm that cannot be taught",
+            "is_gag": True,
+        },
+        # ── 何かに気づいたぽかん顔（定番バズ）
+        {
+            "pose": "standing or sitting, frozen completely still, staring directly at camera with total absorbed focus",
+            "expression": "toddler ぽかん at maximum — eyes enormous, mouth slightly open, having just noticed the camera for what it truly is, expression of complete absorbed wonder frozen in time",
+            "camera": "straight-on eye-level tight close-up, face fills 80% of frame",
+            "lighting": "soft warm natural window light, skin luminous and warm-toned",
+            "background": "clean home interior blurred — white wall, cream sofa, natural home setting",
+            "kling_motion": "standing perfectly frozen in wonder, then slowly takes one small deliberate step closer to the camera, eyes never breaking contact, mouth forms a tiny questioning shape",
+        },
     ],
 }
 
@@ -823,6 +1019,14 @@ BUZZ_COSTUME_POOL = [
     "cream sherpa bear-ear hooded zip-up suit",
     "red and white horizontal striped long-sleeve with tiny denim shorts",
     "rainbow striped chunky knit sweater with matching booties",
+    # ━━ 和テイスト（日本人赤ちゃん差別化）━━
+    "soft white onesie with a delicate cherry blossom (sakura) pink floral print, paired with a matching pale pink knit beanie",
+    "ivory romper with a subtle indigo shibori-dye wave pattern, paired with a cream knit hat",
+    "light blue onesie with a small scattered sakura petal print, paired with a soft white pom-pom beanie",
+    "white romper with a tiny wisteria (fuji) floral print in lavender and green, paired with a lavender ribbed hat",
+    "soft pink onesie with a delicate persimmon (kaki) and leaf pattern in warm orange-brown, paired with a beige knit cap",
+    "cream onesie with a small matsu (pine) and tsuru (crane) pattern in soft gold, paired with a white pom-pom hat",
+    "pale mint romper with a scattered hanami confetti print (pink and white petals), paired with a mint knit beanie",
 ]
 
 
@@ -888,80 +1092,158 @@ ChatGPT GPT Image 2で使用する、高品質な画像生成プロンプトを�
 """
 
 
-_last_buzz_scene_pose: str = ""
+_buzz_used_recent: list = []  # 直近6シーンのposeを記録して重複防止
+_buzz_used_extras: dict = {"costume": [], "background": [], "accessory": []}
+
+# バズmode専用：背景プール（自宅・和モダン）
+BUZZ_BACKGROUND_POOL = [
+    # ━━ ベーシック自宅 ━━
+    "soft white cotton sheet with natural wrinkles, natural home bed setting",
+    "cream/ivory muslin blanket surface, soft and lived-in",
+    "light blue bouncer seat fabric (Stokke/Maxi-Cosi style), fresh and clean",
+    "cream/beige sofa cushion fabric, cozy home living room",
+    "paw-print pattern soft blanket (brown paws on cream), warm and playful",
+    "pale gray knit blanket texture, modern minimal home",
+    "white sherpa fleece blanket, ultra-soft and cozy",
+    "colorful patchwork play mat, lively and cheerful",
+    "natural oak wood floor with a thin cream rug, airy Scandinavian home feel",
+    # ━━ 和モダン ━━
+    "soft tatami mat texture (pale yellow-green woven rush grass), warm distinctly Japanese home",
+    "washi paper-toned surface (off-white with subtle fibrous texture), clean and elegant Japanese",
+    "pale hinoki cypress wood floor, warm natural grain, Japanese home atmosphere",
+    "natural linen floor cushion (zabuton) in ivory/beige, serene Japanese living room",
+]
+
+# バズmode専用：アクセサリープール（PR modeと共用しない）
+BUZZ_ACCESSORY_POOL = [
+    "white satin ribbon headband (thin, minimal)",
+    "bear-ear knit headband (beige, plush)",
+    "rainbow striped knit beanie hat",
+    "cream pom-pom beanie hat",
+    "pale pink ruffled bib",
+    "strawberry-print bib (red and white)",
+    "pastel yellow star-print bib",
+    "mint green silicone pacifier with cloud-shaped shield",
+    "white round silicone pacifier with small bear-face shield",
+    "tiny blue-and-white striped bucket hat",
+    "duck-yellow knit beanie with a small beak detail",
+    "light purple floral hair clip (minimal, small)",
+    "watermelon-print bib (green and red)",
+    "no accessory — just the costume and natural expression",
+    "no accessory — just the costume and natural expression",  # 「なし」を2枠入れて30%程度の確率に
+]
 
 
 def _pick_buzz_scene() -> dict:
-    """バズmode：月齢に合ったシーンを1つ選ぶ。直前と同じシーンは除外して連続を防ぐ。"""
-    global _last_buzz_scene_pose
+    """バズmode：月齢に合ったシーンを選ぶ。直近6件を除外。ガグ枠は20%確率で選出。"""
+    global _buzz_used_recent
     age_group = _get_age_group(MONTH_AGE)
     scenes = BUZZ_SCENE_BY_AGE.get(age_group, BUZZ_SCENE_BY_AGE["4-5"])
-    available = [s for s in scenes if s.get("pose") != _last_buzz_scene_pose]
+
+    gag_scenes    = [s for s in scenes if s.get("is_gag")]
+    normal_scenes = [s for s in scenes if not s.get("is_gag")]
+
+    use_gag = bool(gag_scenes) and random.random() < 0.20
+    pool = gag_scenes if use_gag else normal_scenes
+
+    recent_poses = _buzz_used_recent[-6:]
+    available = [s for s in pool if s.get("pose") not in recent_poses]
     if not available:
-        available = scenes
+        available = pool
+
     scene = random.choice(available)
-    _last_buzz_scene_pose = scene.get("pose", "")
+    _buzz_used_recent.append(scene.get("pose", ""))
     return scene
 
 
 def _base_scene_text_buzz(scene: dict) -> str:
     """バズmode：baby_cubo_officialスタイルの月齢特化シーン（参照画像1枚のみ）"""
-    costume = random.choice(BUZZ_COSTUME_POOL)
+    costume    = _pick_no_repeat(BUZZ_COSTUME_POOL,       _buzz_used_extras["costume"],     window=7)
+    background = _pick_no_repeat(BUZZ_BACKGROUND_POOL,   _buzz_used_extras["background"],  window=5)
+    accessory  = _pick_no_repeat(BUZZ_ACCESSORY_POOL,    _buzz_used_extras["accessory"],   window=5)
 
     return f"""
-Create a high-quality image generation prompt for ChatGPT GPT Image 2.
+Create a hyper-realistic image generation prompt for ChatGPT GPT Image 2.
 
-TARGET STYLE: Replicate the exact aesthetic of the viral Instagram account "baby_cubo_official" —
-hyper-realistic, professional infant photography that goes instantly viral because it is
-irresistibly cute, emotionally engaging, and technically flawless.
+TARGET AESTHETIC: Replicate the viral Instagram account "baby_cubo_official."
+Their most-liked posts (3.36M, 2.14M likes) all share one quality:
+they look EXACTLY like a real spontaneous home photo a parent took with their phone.
+Not studio, not AI, not staged. Completely real and alive.
 
 ━━ REFERENCE IMAGE (1 photo provided by user) ━━
 One reference photo of baby "Senacchi" will be provided.
 → Reproduce face, eyes, nose, facial contours, skin tone, and hair EXACTLY from reference.
-→ Costume and background are 100% generated from text instructions below (no second image needed).
+→ Costume and background are 100% generated from text instructions below.
 
-━━ BABY CHARACTER (strictly follow) ━━
+━━ JAPANESE BABY CHARACTER ━━
 • Japanese baby boy, {MONTH_AGE} months old
-• Chubby rounded cheeks, jet-black hair, large round dark brown eyes
-• Male baby boy only — must not look feminine
+• Jet-black hair, large round dark brown eyes, chubby rounded cheeks
+• Skin tone: slightly light/pink-toned — warm Japanese infant complexion, not olive
+• Eyes: single or double eyelid, but lit to appear large and bright and sparkling
+• Male baby boy only — absolutely no feminine features
 
-━━ baby_cubo_official SIGNATURE VISUAL RULES (critical) ━━
-① EYES ARE EVERYTHING: Massive, round, dark brown eyes must be razor-sharp and glistening.
-   Bright white catchlights (specular highlights) MUST be visible in both eyes — this is non-negotiable.
-② FACE FILLS THE FRAME: Baby's face occupies 70–90% of the frame. This is the signature crop.
-③ CHUBBY CHEEKS: Emphasize the softness and roundness of chubby baby cheeks — they are a key feature.
-④ SKIN PERFECTION: Smooth, luminous, soft baby skin. Never plastic, never waxy, never AI-looking.
-⑤ CLEAN SIMPLE BACKGROUND: Solid single-color bokeh only. No busy patterns, no cluttered scenes.
-⑥ EXPRESSION IS VIRAL: The expression must trigger an emotional reaction — adorable, funny, shocking, or heartwarming.
+━━ TOP VIRAL EXPRESSIONS (choose the one matching the scene) ━━
+#1 BLANK/DAZED FACE (ぽかん顔) — 3.36M likes: mouth slightly open, wide eyes staring
+   directly at camera, slightly surprised or wondering expression. This is the top performer.
+#2 BIG OPEN SMILE (満面の笑顔) — 2.14M likes: gum-showing wide open laugh,
+   cheeks pushed up to maximum, eyes crinkled to slits.
+#3 SLEEPY/YAWNING FACE — eyes closing, mouth naturally open mid-yawn, peaceful.
+#4 GRUMPY/FROWN FACE (むすっと顔) — furrowed brow, displeased expression, comedic.
 
-━━ COSTUME (fully generate from text) ━━
+━━ POSE PATTERNS (proven viral) ━━
+Pattern A (ON BACK — most popular): Lying on back on bouncer/bed, full body or bust.
+   "Banzai" pose (arms raised up) is especially popular. Feet visible and chubby.
+Pattern B (FACE CLOSE-UP — highest viral): Face fills 70-90% of frame. Slight overhead
+   or eye-level angle. Forehead to chin all in frame. Left-right symmetry emphasized.
+Pattern C (SITTING — 6+ months): Sitting facing camera, hands on knees or dangling naturally.
+Pattern D (TUMMY TIME): Lying face-down, lifting head toward camera with effort.
+
+━━ COSTUME (mandatory hat + colorful romper) ━━
 {costume}
-→ Reproduce this costume accurately. Scale appropriately for a {MONTH_AGE}-month-old baby size.
+→ HAT IS NEARLY MANDATORY — it appears in almost every viral post. It frames the face.
+→ Romper: colorful fun print (animals, fruit, hearts, stars). NOT plain solid colors.
+→ Slightly lived-in / lightly wrinkled is fine — adds authenticity.
 
-━━ POSE & EXPRESSION for {MONTH_AGE}-month-old ━━
+━━ ACCESSORY ━━
+{accessory}
+→ Add this accessory naturally to the scene. If "no accessory", keep the look clean and minimal.
+
+━━ POSE & EXPRESSION for this scene ━━
 Pose: {scene['pose']}
 Expression: {scene['expression']}
-→ Capture a genuine candid split-second moment — not posed, not stiff. Real and alive.
+→ Capture the genuine split-second candid moment. Real, not posed.
 
-━━ CAMERA & FRAMING ━━
+━━ CAMERA & ANGLE ━━
 {scene['camera']}
-Format: 1:1 square / 85mm portrait lens equivalent / f/1.8 very shallow depth of field
+For lying shots: overhead (true top-down) or 45-degree overhead angle.
+For face close-ups: eye-level or very slightly above.
+Lens: 35-85mm equivalent / f/1.8-2.8 very shallow DOF / 1:1 square
 
 ━━ LIGHTING ━━
 {scene['lighting']}
-MANDATORY: Clear bright catchlights (white sparkle points) in both eyes.
+Natural window light ONLY — soft, directional, warm (orange/gold side). One light source.
+Even illumination across face, no hard shadows. Tiny natural catchlight in each eye.
+NO flash, NO studio equipment, NO ring lights, NO softboxes.
 
-━━ BACKGROUND ━━
-{scene['background']}
-Background fully blurred into clean simple bokeh — baby is the only subject that matters.
+━━ BACKGROUND (home, not studio) ━━
+{background}
+Blurred soft bokeh — baby is the only sharp subject.
+NO solid-color studio backdrop. NO photo studio. Home or wa-modern home setting only.
 
-━━ TECHNICAL QUALITY (non-negotiable) ━━
-• Style: Hyper-realistic professional infant photography, editorial/magazine quality
-• Skin: Smooth, soft, naturally glowing — not plastic, not AI-generated looking
-• Eyes: Tack-sharp, large, alive, wet-looking with bright catchlights
-• Color grade: Warm, soft, slightly golden — like natural window light
-• No text, no watermarks, no logos, no overlays, no feminine hair accessories
-• Final result should look like a photo that would get 100K+ likes on Instagram
+━━ COLOR GRADE ━━
+Warm orange/gold-leaning tones. Low contrast. Slightly lifted shadows.
+Saturation slightly higher than neutral — skin looks rosy and alive.
+Like natural afternoon window light in a Japanese baby's bedroom.
+
+━━ ABSOLUTE PROHIBITIONS ━━
+• No studio backdrop, no professional lighting setup visible
+• No plastic/waxy/CG-looking skin — must look like real soft baby skin
+• No text, watermarks, logos, overlays of any kind
+• No feminine hair accessories (no ribbons, bows, headbands)
+• No overly symmetrical/perfect AI composition
+• FINAL RESULT: must look like a real iPhone photo a parent posted on Instagram
+
+Output format: PNG / Size: 1024×1024 (1:1) / under 2MB
 """
 
 
@@ -1068,7 +1350,7 @@ PRODUCT_SCENE_MAP = {
     "sleep": {
         "label": "😴 寝姿（寝具・おくるみ）",
         "keywords": ["布団", "ベビー布団", "寝具", "マットレス", "おくるみ", "スリーパー", "まくら", "枕", "かけ布団", "ねんね", "寝袋", "ベビー寝具"],
-        "motion_en": "tiny chest rises and falls with slow peaceful breathing, lips twitch with small sleepy murmurs 'nnn...nnn...', fingers curl and uncurl gently, eyelids flutter briefly then settle into deep blissful sleep, slow gentle zoom in on the serene sleeping face then softly pull back to reveal the full cozy bedding, seamless 8-second loop",
+        "motion_en": "tiny chest rises and falls with slow peaceful breathing, lips twitch with small sleepy murmurs 'nnn...nnn...', fingers curl and uncurl gently, eyelids flutter briefly then settle into deep blissful sleep, slow gentle zoom in on the serene sleeping face then softly pull back to reveal the full cozy bedding, seamless 7-second loop",
         "mood_en": "peaceful, serene, cozy, dreamy",
     },
     "feeding": {
@@ -1162,14 +1444,13 @@ def generate_kling_prompt(product: dict) -> str:
     age_info = MOTION_BY_AGE_GROUP.get(age_group, MOTION_BY_AGE_GROUP["4-5"])
 
     product_scene = _detect_product_scene(product)
+    primary_sound = age_info["sounds"][0]
     if product_scene:
-        motion_en    = product_scene["motion_en"]
-        mood_en      = product_scene["mood_en"]
-        primary_sound = product_scene["sound"]
+        motion_en = product_scene["motion_en"]
+        mood_en   = product_scene["mood_en"]
     else:
-        motion_en    = age_info["motion_en"]
-        mood_en      = age_info["mood_en"]
-        primary_sound = age_info["sounds"][0]
+        motion_en = age_info["motion_en"]
+        mood_en   = age_info["mood_en"]
 
     prompt = f"""
 せなっち（生後{MONTH_AGE}ヶ月）が商品「{product['name'][:40]}」を着ている・使っている静止画を
@@ -1180,8 +1461,13 @@ Kling AI（Image to Video）でInstagramリール バイラル動画にするプ
 ・主な動き：{motion_en}
 ・月齢({MONTH_AGE}ヶ月)の声のイメージ："{primary_sound}"
 ・「かわいすぎ」「これ何使ってるの？」と思わずコメントしたくなる構成
-・動画が自然にループする構成（最後のフレームが最初につながる）
-・動画尺：8秒（Kling AIの設定で8sを選択）
+・動画尺：7秒（Kling AIの設定で7sを選択）
+
+【絶対に守るルール】
+・「0-3.5s:」「3.5-7s:」のような時間区切り表現は絶対に使わないこと
+・動きはカットなし・区切りなしの一連のシームレスな流れとして記述すること
+・0秒から7秒まで途切れなくつながった連続した動きで描写すること
+・ループを意識した自然な流れ（最後が最初につながるエンドレスな動き）
 
 【Kling AIプロンプトのルール】
 ・外見の詳細描写は不要（入力画像から取得するため）
@@ -1190,7 +1476,7 @@ Kling AI（Image to Video）でInstagramリール バイラル動画にするプ
 ・箇条書き不要・それぞれ1段落で出力
 
 【カメラワーク・雰囲気】
-・カメラ：slow gentle zoom in, then slowly pull back（8秒自然ループ用）
+・カメラ：gentle slow zoom in flowing into a soft pull back, continuous and seamless
 ・全体的な雰囲気：{mood_en}, warm, cozy, natural, cinematic
 
 【出力形式】以下の形式のみ。前置き不要。
@@ -1232,8 +1518,13 @@ Kling AI（Image to Video）でバイラル動画にするプロンプトを英�
 ・主な動き：{motion_en}
 ・月齢({MONTH_AGE}ヶ月)の声のイメージ："{primary_sound}"
 ・「かわいすぎ」「友達に送りたい」という感情を引き出す
-・動画尺：8秒（Kling AIの設定で8sを選択）
-・8秒で笑いとかわいさを凝縮、自然にループしたくなる余韻を残す
+・動画尺：7秒（Kling AIの設定で7sを選択）
+
+【絶対に守るルール】
+・「0-3.5s:」「3.5-7s:」のような時間区切り表現は絶対に使わないこと
+・動きはカットなし・区切りなしの一連のシームレスな流れとして記述すること
+・0秒から7秒まで途切れなくつながった連続した動きで描写すること
+・ループを意識した自然な流れ（最後が最初につながるエンドレスな動き）
 
 【Kling AIプロンプトのルール】
 ・外見の詳細描写は不要（入力画像から取得するため）
@@ -1242,8 +1533,8 @@ Kling AI（Image to Video）でバイラル動画にするプロンプトを英�
 ・箇条書き不要・それぞれ1段落で出力
 
 【カメラワーク・雰囲気】
-・カメラ：gentle slow zoom in, warm and intimate feel
-・全体的な雰囲気：warm, cute, emotionally engaging, naturally viral
+・カメラ：gentle slow zoom in flowing smoothly and continuously, warm and intimate feel
+・全体的な雰囲気：warm, cute, emotionally engaging, naturally viral, seamless loop
 
 【出力形式】以下の形式のみ。前置き不要。
 Positive Prompt:
