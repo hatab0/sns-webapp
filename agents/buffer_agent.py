@@ -128,11 +128,11 @@ def schedule_post(
     if service == "instagram":
         post_input["metadata"] = {"instagram": {"type": "reel", "shouldShareToFeed": True}}
         if video_url:
-            post_input["assets"] = {"videos": [{"url": video_url}]}
+            post_input["assets"] = {"video": {"url": video_url}}
     elif service == "tiktok":
         post_input["metadata"] = {"tiktok": {"privacy": "PUBLIC_TO_EVERYONE", "disableDuet": False, "disableStitch": False}}
         if video_url:
-            post_input["assets"] = {"videos": [{"url": video_url}]}
+            post_input["assets"] = {"video": {"url": video_url}}
     elif service == "youtube":
         post_input["metadata"] = {"youtube": {
             "title": youtube_title or "Baby Boo 育児vlog",
@@ -141,7 +141,7 @@ def schedule_post(
             "madeForKids": False,
         }}
         if video_url:
-            post_input["assets"] = {"videos": [{"url": video_url}]}
+            post_input["assets"] = {"video": {"url": video_url}}
 
     response = requests.post(
         BUFFER_GRAPHQL,
