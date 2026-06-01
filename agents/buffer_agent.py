@@ -130,7 +130,6 @@ def schedule_post(
         if video_url:
             post_input["assets"] = {"video": {"url": video_url}}
     elif service == "tiktok":
-        post_input["metadata"] = {"tiktok": {"privacy": "PUBLIC_TO_EVERYONE", "disableDuet": False, "disableStitch": False}}
         if video_url:
             post_input["assets"] = {"video": {"url": video_url}}
     elif service == "youtube":
