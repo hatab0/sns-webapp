@@ -1063,43 +1063,91 @@ Output format: PNG / Size: 1024×1024 (square, 1:1) / File size: under 2097152 b
     return message.content[0].text.strip()
 
 
-# ── 商品カテゴリー別 Kling モーション定義
-_PRODUCT_SCENE_MAP = {
+# ── 商品カテゴリー別 Kling モーション定義（11カテゴリー）
+PRODUCT_SCENE_MAP = {
     "sleep": {
-        "keywords": ["布団", "ベビー布団", "寝具", "マットレス", "おくるみ", "スリーパー", "まくら", "枕", "かけ布団", "ねんね", "寝袋"],
-        "motion_en": "tiny chest rises and falls with slow peaceful breathing, lips twitch with small sleepy murmurs, fingers curl and uncurl gently, eyelids flutter briefly then settle back into deep blissful sleep, slow gentle zoom in on the serene sleeping face then softly pull back to reveal the full cozy bedding, seamless 8-second loop",
+        "label": "😴 寝姿（寝具・おくるみ）",
+        "keywords": ["布団", "ベビー布団", "寝具", "マットレス", "おくるみ", "スリーパー", "まくら", "枕", "かけ布団", "ねんね", "寝袋", "ベビー寝具"],
+        "motion_en": "tiny chest rises and falls with slow peaceful breathing, lips twitch with small sleepy murmurs 'nnn...nnn...', fingers curl and uncurl gently, eyelids flutter briefly then settle into deep blissful sleep, slow gentle zoom in on the serene sleeping face then softly pull back to reveal the full cozy bedding, seamless 8-second loop",
         "mood_en": "peaceful, serene, cozy, dreamy",
-        "sound": "nnn... nnn...",
     },
     "feeding": {
-        "keywords": ["哺乳瓶", "ミルク", "授乳", "離乳食", "スプーン", "食器", "ビブ", "スタイ", "エプロン", "マグ"],
-        "motion_en": "mouth makes gentle rhythmic sucking or tasting motions, tiny hands reach and grasp contentedly, eyelids grow heavier with milk-drunk satisfaction, small happy sounds, head lolls blissfully",
+        "label": "🍼 ミルク・食事（哺乳瓶・スタイ）",
+        "keywords": ["哺乳瓶", "ミルク", "授乳", "離乳食", "スプーン", "食器", "ビブ", "スタイ", "エプロン", "マグ", "ストロー", "ベビーフード", "母乳"],
+        "motion_en": "mouth makes gentle rhythmic sucking or tasting motions with pure contentment, tiny hands reach and grasp the item, eyelids grow heavier with milk-drunk satisfaction, small happy 'mnh...' sounds, head lolls blissfully into complete contentment",
         "mood_en": "content, milk-drunk, cozy, satisfied",
-        "sound": "mnh... mnh...",
+    },
+    "clothing": {
+        "label": "👕 服・ファッション（ロンパース・肌着）",
+        "keywords": ["ロンパース", "肌着", "ベビー服", "カバーオール", "レッグウォーマー", "帽子", "ベビーキャップ", "ソックス", "靴下", "ベビーシューズ", "ツーウェイ", "パジャマ"],
+        "motion_en": "lying on back showing off the adorable outfit, tiny legs kicking enthusiastically in pure happiness, arms waving with delight, full body wiggle showcasing every cute detail of the clothing, irresistible fashion moment",
+        "mood_en": "playful, cheerful, fashion-forward, lively",
     },
     "toy": {
-        "keywords": ["おもちゃ", "プーメリー", "メリー", "ガラガラ", "知育", "積み木", "ベビージム", "ラトル"],
-        "motion_en": "eyes track the toy with intense curious focus, arms reach and grasp excitedly, legs kick with growing delight, tiny fingers grasp at air, building to an excited squeal",
-        "mood_en": "curious, excited, playful, wonder",
-        "sound": "aah! aah!",
+        "label": "🧸 おもちゃ（メリー・ガラガラ）",
+        "keywords": ["おもちゃ", "プーメリー", "メリー", "ガラガラ", "知育", "積み木", "ベビージム", "ラトル", "ぬいぐるみ", "絵本", "テザー", "アクティビティ"],
+        "motion_en": "eyes track the toy with laser-focused curiosity, arms reach and grasp with growing excitement, legs kick rhythmically with delight, tiny fingers explore and grip, building to an irresistible excited squeal of discovery",
+        "mood_en": "curious, excited, playful, wonder-filled",
     },
     "bath": {
-        "keywords": ["バス", "お風呂", "沐浴", "バスタブ", "タオル", "ベビーソープ", "シャンプー"],
-        "motion_en": "tiny hands splash gently in warm water, eyes wide with delight at the sensation, water droplets catch the light beautifully, whole body relaxes into the warmth",
-        "mood_en": "delighted, relaxed, fresh, playful",
-        "sound": "aah! splash!",
+        "label": "🛁 お風呂（沐浴・バスグッズ）",
+        "keywords": ["バス", "お風呂", "沐浴", "バスタブ", "バスタオル", "ベビーソープ", "シャンプー", "ガーゼ", "バスチェア", "ベビーバス"],
+        "motion_en": "tiny hands splash gently in warm water, eyes wide with pure sensory delight, water droplets catching the light beautifully, whole body relaxing into the warmth with a content sigh, playful splashing loops perfectly",
+        "mood_en": "delighted, refreshed, squeaky-clean, playful",
+    },
+    "carrier": {
+        "label": "🤗 抱っこ紐・スリング",
+        "keywords": ["抱っこ紐", "スリング", "ベビーキャリア", "ヒップシート", "おんぶ紐", "抱っこひも"],
+        "motion_en": "snuggled safely and warmly against chest, tiny head nuzzling deeper into the cozy embrace, small fists curled near cheeks, breathing slowly and deeply with pure security, eyelids heavy with complete contentment",
+        "mood_en": "secure, snuggly, peaceful, deeply loved",
+    },
+    "bouncer": {
+        "label": "🪑 バウンサー・ハイローチェア",
+        "keywords": ["バウンサー", "ハイローチェア", "ベビーチェア", "ロッキング", "スウィング", "電動ゆりかご", "バウンシング"],
+        "motion_en": "tiny body gently rocks with the rhythmic motion, arms floating up and down with each sway, eyes going wide with delight then drooping with bliss, legs kicking lightly in rhythm, completely surrendering to the gentle bounce",
+        "mood_en": "blissful, gently rocking, dreamy, content",
+    },
+    "teether": {
+        "label": "🦷 歯固め・おしゃぶり",
+        "keywords": ["歯固め", "おしゃぶり", "がらがら", "歯ぐずり", "ティーザー"],
+        "motion_en": "tiny hands bring the teether to mouth with determined focus, vigorous happy chewing with wide satisfied eyes, drool glistens adorably in the soft light, triumphant expression of someone who has solved life's greatest challenge",
+        "mood_en": "determined, satisfied, proudly drooly, victorious",
+    },
+    "stroller": {
+        "label": "🚗 ベビーカー・チャイルドシート",
+        "keywords": ["ベビーカー", "バギー", "チャイルドシート", "カーシート", "抱っこ布団", "ベビーシート"],
+        "motion_en": "seated comfortably and safely, tiny head swiveling with bright curious eyes drinking in the world, arms reaching toward fascinating passing sights, expression cycling through pure wonder at everything in view",
+        "mood_en": "curious, adventurous, wide-eyed, exploratory",
+    },
+    "skincare": {
+        "label": "✨ スキンケア・ローション",
+        "keywords": ["ベビークリーム", "ローション", "ベビーオイル", "保湿", "ベビーパウダー", "日焼け止め", "スキンケア", "ベビーローション"],
+        "motion_en": "lying peacefully after gentle skincare routine, skin visibly glowing with softness, tiny arms stretched wide in total relaxation, small satisfied smile playing on lips, radiating freshness and utter contentment",
+        "mood_en": "fresh, soft, glowing, utterly content",
+    },
+    "blanket": {
+        "label": "🌸 ブランケット・ガーゼケット",
+        "keywords": ["ブランケット", "毛布", "ガーゼケット", "タオルケット", "ガーゼ生地", "おひな巻き", "ひざかけ"],
+        "motion_en": "wrapped snugly in the impossibly soft fabric, tiny face peeking out with huge wondering eyes, small fingers clutching the blanket edge, cheek nuzzling deeper into the softness, the ultimate expression of cozy baby bliss",
+        "mood_en": "cozy, snuggly, soft, wrapped-in-warmth",
     },
 }
 
 
 def _detect_product_scene(product: dict) -> dict | None:
-    """商品名・キーワードからKlingプロンプト用の最適シーンを検出する。該当なしはNone。"""
+    """
+    商品カテゴリーを検出してKlingシーン定義を返す。
+    product["kling_scene_override"] が設定されている場合はそれを優先。
+    """
+    override = product.get("kling_scene_override")
+    if override and override in PRODUCT_SCENE_MAP:
+        return PRODUCT_SCENE_MAP[override]
     text = " ".join([
         product.get("name", ""),
         product.get("keyword", ""),
         product.get("catch_copy", ""),
     ])
-    for data in _PRODUCT_SCENE_MAP.values():
+    for data in PRODUCT_SCENE_MAP.values():
         if any(kw in text for kw in data["keywords"]):
             return data
     return None

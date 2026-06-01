@@ -464,6 +464,7 @@ else:
         _today_event = ""
 
         _mood_selected = ""
+        _kling_scene_key = None
         if _is_buzz:
             _mood_options = [
                 "（おまかせ）",
@@ -479,6 +480,16 @@ else:
                 "😊 今日の気分（インスタ・YouTubeキャプションに反映）",
                 _mood_options,
             )
+        else:
+            from agents.image_agent import PRODUCT_SCENE_MAP as _psm
+            _scene_options = {"🔍 自動検出（推奨）": None}
+            _scene_options.update({v["label"]: k for k, v in _psm.items()})
+            _scene_label = st.selectbox(
+                "🎥 Klingシーン（自動検出 or 手動指定）",
+                list(_scene_options.keys()),
+                help="商品に合った赤ちゃんの動きを選択。自動検出で外れた場合に変更してください。",
+            )
+            _kling_scene_key = _scene_options[_scene_label]
 
         _submitted = st.form_submit_button(
             "🚀 コンテンツを生成する（約30〜60秒）",
@@ -523,6 +534,9 @@ else:
                     st.write(f"   ✅ 商品選出完了：{posts[0]['name'][:30]}")
 
                     st.write("② 画像・動画プロンプトを生成中...")
+                    if _kling_scene_key:
+                        for _p in posts:
+                            _p["kling_scene_override"] = _kling_scene_key
                     posts = image_agent.run(posts)
                     posts = quality_agent.run(posts)
                     st.write("   ✅ GPT Image 2 / Kling AIプロンプト完了")
