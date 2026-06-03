@@ -210,6 +210,7 @@ for k, v in _defaults.items():
 
 # ── イベント検出
 from utils.seasonal_events import get_upcoming_events as _get_events
+from utils.baby_config import calc_month_age
 _upcoming_events = _get_events(days_ahead=7)
 
 
@@ -1229,7 +1230,7 @@ with tab_hashtag:
             _ant_client = _ant.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
             _suggest_prompt = f"""
 あなたは2026年の日本のSNSマーケティング専門家です。
-育児系コンテンツ（AIベビー「せなっち」生後{_calc_age() if '_calc_age' in dir() else '数'}ヶ月の成長記録）に関して、
+育児系コンテンツ（AIベビー「せなっち」生後{calc_month_age()}ヶ月の成長記録）に関して、
 各プラットフォームで現在バズりやすいハッシュタグを提案してください。
 
 【条件】
