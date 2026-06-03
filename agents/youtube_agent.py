@@ -235,16 +235,105 @@ AIベビーキャラ「せなっち」（生後{MONTH_AGE}ヶ月）
     return _parse_json(message.content[0].text.strip())
 
 
+def _run_buzz_pattern_c(instagram_script: dict) -> dict:
+    """バズmodeパターンC：せなっちのかわいさ全振り（「かわいい」コメント誘発）"""
+    hook    = instagram_script.get("hook", "")
+    concept = instagram_script.get("viral_concept", "")
+
+    prompt = f"""
+あなたはバイラル育児系YouTube Shortsのチャンネル運営者です。
+「見た人が思わず再生→保存→コメントしてしまう」かわいい系コンテンツを作ります。
+
+【動画情報】
+AIベビーキャラ「せなっち」（生後{MONTH_AGE}ヶ月）
+フック：{hook}
+コンセプト：{concept}
+
+【タイトルのルール】
+・50〜70文字（短くコンパクトに）
+・「生後{MONTH_AGE}ヶ月」を必ず入れる
+・感情爆発ワードを使う（「かわいすぎた」「泣いた」「ずっと見てられる」「天使すぎた」）
+・例：「生後{MONTH_AGE}ヶ月の赤ちゃんがかわいすぎて泣いた😭 #Shorts」
+・末尾に「 #Shorts」を必ず付ける
+
+【説明文のルール】
+・冒頭にせなっちのかわいさを感情的に表現した文章を2〜3文
+・「このかわいさをみんなに見せたくて動画にしました」のような素直な感情
+・「かわいいと思ったらコメントに🥺を送って」という誘いかけを必ず入れる
+・末尾：{BUZZ_TAGS_STR} #Shorts #生後{MONTH_AGE}ヶ月 #かわいい赤ちゃん #babyvideo
+
+【ピン留めコメント】
+・「せなっちのかわいさを毎日お届け中🍼」から始める
+・チャンネル登録・通知ボタンONを促す1行
+
+【出力形式】JSONのみ。前置き不要。
+{{
+  "title": "YouTubeタイトル（100文字以内）",
+  "description": "説明文テキスト（タグ含む）",
+  "pin_comment": "ピン留めコメントテキスト"
+}}
+"""
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=500,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return _parse_json(message.content[0].text.strip())
+
+
+def _run_milestone(instagram_script: dict) -> dict:
+    """マイルストーム用YouTube Shorts（週1成長記録）"""
+    week_in_month = ((date.today() - BIRTH_DATE).days % 30) // 7 + 1
+    weeks_alive   = (date.today() - BIRTH_DATE).days // 7
+
+    prompt = f"""
+あなたはYouTube Shorts育児チャンネルの運営者です。
+「週1成長記録」動画のコンテンツを生成してください。
+
+【せなっち情報】生後{MONTH_AGE}ヶ月（第{week_in_month}週・生まれてから{weeks_alive}週目）
+
+【タイトルのルール】
+・「生後{MONTH_AGE}ヶ月{week_in_month}週目の記録」を軸にする
+・変化・成長ポイントを感情的に（「大きくなりすぎた」「泣いた」など）
+・例：「生後{MONTH_AGE}ヶ月{week_in_month}週目、先週と全然違う顔してた😭 #Shorts」
+・末尾に「 #Shorts」を必ず付ける
+
+【説明文のルール】
+・今週の月齢{MONTH_AGE}ヶ月らしい成長・変化を3点
+・「同じ月齢のお子さんはどうですか？コメント欄で教えてください！」を入れる
+・末尾：{BUZZ_TAGS_STR} #Shorts #生後{MONTH_AGE}ヶ月 #育児記録 #成長記録
+
+【ピン留めコメント】
+・「毎週せなっちの成長を記録中🍼」から始める
+
+【出力形式】JSONのみ。前置き不要。
+{{
+  "title": "YouTubeタイトル（100文字以内）",
+  "description": "説明文テキスト（タグ含む）",
+  "pin_comment": "ピン留めコメントテキスト"
+}}
+"""
+    message = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=500,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return _parse_json(message.content[0].text.strip())
+
+
 def _run_buzz(instagram_script: dict) -> dict:
-    """バズmode：パターンA/Bをランダム選択（Instagramと同期）"""
-    # Instagramエージェントがパターンをscriptにセットしていればそれに合わせる
-    pattern = instagram_script.get("buzz_caption_pattern") or random.choice(["A", "B"])
-    instagram_script["buzz_caption_pattern"] = pattern
+    """バズmode：パターンA/B/Cを選択（Instagramと同期）"""
+    pattern = instagram_script.get("buzz_caption_pattern")
+    if not pattern:
+        pattern = random.choices(["A", "B", "C"], weights=[25, 25, 50])[0]
+        instagram_script["buzz_caption_pattern"] = pattern
 
     if pattern == "A":
         return _run_buzz_pattern_a(instagram_script)
-    else:
+    elif pattern == "B":
         return _run_buzz_pattern_b(instagram_script)
+    else:
+        return _run_buzz_pattern_c(instagram_script)
 
 
 def _load_tags_from_sheets():
@@ -271,7 +360,10 @@ def run(instagram_script: dict, product: dict = None) -> dict:
     _load_tags_from_sheets()
     is_buzz = product is None
 
-    if is_buzz:
+    if is_buzz and instagram_script.get("is_milestone"):
+        result = _run_milestone(instagram_script)
+        default_title = f"生後{MONTH_AGE}ヶ月の成長記録"
+    elif is_buzz:
         result = _run_buzz(instagram_script)
         default_title = f"生後{MONTH_AGE}ヶ月せなっちが可愛すぎた"
     else:

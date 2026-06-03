@@ -238,33 +238,125 @@ def _generate_buzz_caption_pattern_b(script: dict) -> str:
     return msg.content[0].text.strip()
 
 
-def _generate_buzz_instagram_caption(script: dict, mood: str = "") -> str:
-    """バズmode用Instagramキャプション：気分に応じてパターンA/Bを選択"""
-    # 気分 → パターン対応
+def _generate_buzz_caption_pattern_c(script: dict) -> str:
+    """バズmodeパターンC：せなっちのかわいさ全振り（「かわいい」コメント誘発）"""
+    viral_concept = script.get("viral_concept") or script.get("drama_format") or ""
+
+    prompt = f"""
+あなたは生後{MONTH_AGE}ヶ月の赤ちゃん「せなっち」を育てる育休中のパパです。
+
+「見た人が思わず😭🥺💕とだけコメントしてしまう」Instagramキャプションを書いてください。
+
+動画のコンセプト（参考）：{viral_concept}
+
+【このキャプションの目的】
+・視聴者に「かわいい」「泣いた」「癒された」という感情を引き出す
+・コメントしやすくするために絵文字だけで返せる内容にする
+・パパの育児苦労ではなく、せなっちそのものの可愛さにフォーカス
+
+【ルール】
+・本文は1〜2行・40〜70字（短く感情的に）
+・冒頭に感情爆発ワードを入れる
+  例：「この顔で全部許せる」「存在が罪」「かわいすぎて無理」「見るたびに時間止まれって思う」
+・絵文字は😭🥺💕🍼👶から1〜2個のみ
+・口語体（ですます禁止）
+・本文の後に必ず1行：「かわいいと思ったら絵文字だけでいいからコメントして😭」
+・ハッシュタグは合計5つのみ。次の4つは固定で必ず末尾に含める：{BUZZ_TAGS_STR}
+・残り1つはかわいさ・月齢に合うタグを選ぶ（例：#生後5ヶ月 #newborn #かわいい赤ちゃん）
+
+キャプションテキストのみ出力。前置き不要。
+"""
+    msg = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=300,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return msg.content[0].text.strip()
+
+
+def _generate_milestone_instagram_caption(script: dict) -> str:
+    """マイルストーン用Instagramキャプション（週1成長記録）"""
+    weeks_alive = (date.today() - BIRTH_DATE).days // 7
+    week_in_month = ((date.today() - BIRTH_DATE).days % 30) // 7 + 1
+    speech_info = BABY_SPEECH_BY_MONTH.get(MONTH_AGE, BABY_SPEECH_BY_MONTH[4])
+
+    prompt = f"""
+あなたは生後{MONTH_AGE}ヶ月の赤ちゃん「せなっち」を育てる育休中のパパです。
+
+「今週の成長記録」Instagramキャプションを書いてください。
+
+【せなっち情報】
+・生後{MONTH_AGE}ヶ月（生まれてから{weeks_alive}週目）
+・今月第{week_in_month}週
+・この月齢の発声：{speech_info['desc']}（{' / '.join(speech_info['sounds'])}）
+
+【ルール】
+・冒頭に「生後{MONTH_AGE}ヶ月{week_in_month}週目🍼」を入れる
+・今週できるようになったことや変化を2〜3点（月齢{MONTH_AGE}ヶ月らしい具体的な内容）
+・感動・驚きの感情を1行
+・最後に「同じ月齢のパパママ、コメントで教えて！」
+・絵文字は2〜3個
+・ハッシュタグは合計5つのみ。次の4つは固定：{BUZZ_TAGS_STR}
+・残り1つは月齢タグ（例：#生後{MONTH_AGE}ヶ月）
+
+キャプションテキストのみ出力。前置き不要。
+"""
+    msg = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=350,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return msg.content[0].text.strip()
+
+
+def _generate_milestone_tiktok_caption() -> str:
+    """マイルストーン用TikTokキャプション（週1成長記録）"""
+    week_in_month = ((date.today() - BIRTH_DATE).days % 30) // 7 + 1
+    return (
+        f"生後{MONTH_AGE}ヶ月{week_in_month}週目の成長記録👶\n"
+        f"同じ月齢の子いたらコメントして！\n"
+        f"#赤ちゃん #育児vlog #babyboo #赤ちゃんのいる暮らし #生後{MONTH_AGE}ヶ月"
+    )
+
+
+def _generate_buzz_instagram_caption(script: dict, mood: str = "", is_milestone: bool = False) -> str:
+    """バズmode用Instagramキャプション
+    A：育児あるある悩み / B：アメリカンジョーク / C：かわいい特化（デフォルト50%）
+    """
+    if is_milestone:
+        script["buzz_caption_pattern"] = "milestone"
+        return _generate_milestone_instagram_caption(script)
+
     mood_a = {"😭 疲れた・眠い", "😤 怒り・ムカつく", "😮‍💨 諦めた（開き直り）"}
+    mood_b = {"😊 嬉しい・幸せ", "😂 笑える出来事", "😱 びっくりした", "🥹 感動した"}
     if mood in mood_a:
         pattern = "A"
+    elif mood in mood_b:
+        # 嬉しい・感動系はかわいい特化が自然
+        pattern = random.choice(["B", "C"])
     elif mood:
-        pattern = "B"
+        pattern = "C"
     else:
-        pattern = random.choice(["A", "B"])
-    script["buzz_caption_pattern"] = pattern
+        # おまかせ: C を50%・A/B各25%
+        pattern = random.choices(["A", "B", "C"], weights=[25, 25, 50])[0]
 
-    # 気分コンテキストをscriptに追加
+    script["buzz_caption_pattern"] = pattern
     if mood:
         script["mood_context"] = mood
 
     try:
         if pattern == "A":
             text = _generate_buzz_caption_pattern_a(script)
-        else:
+        elif pattern == "B":
             text = _generate_buzz_caption_pattern_b(script)
+        else:
+            text = _generate_buzz_caption_pattern_c(script)
         if text:
             return text
     except Exception:
         pass
 
-    return f"生後{MONTH_AGE}ヶ月のせなっち、かわいすぎた😭💕 これはフォロー案件じゃない？ {BUZZ_TAGS_STR}"
+    return f"生後{MONTH_AGE}ヶ月のせなっち、かわいすぎた😭💕 かわいいと思ったら絵文字コメントして😭 {BUZZ_TAGS_STR}"
 
 
 def _generate_tiktok_caption(script: dict, product_name: str = "", is_buzz: bool = False) -> str:
@@ -290,8 +382,9 @@ TikTok用のキャプションを書いてください。
 ・本文は1〜2行・40〜60字（短く読ませる）
 ・絵文字1〜2個
 ・口語体（ですます禁止）
-・本文の最後に次回予告または問いかけCTAを1行追加（10〜20字）
-  例：「同じ経験ある人？💬」「来週また来てね！」「フォローして見守ってね🍼」
+・本文の最後に必ず次のどちらかを入れる（かわいい動画の場合は①を優先）
+  ①「かわいいと思ったらコメントして🥺」
+  ②「同じ経験ある人？💬」「フォローして見守ってね🍼」
 ・末尾に必ず次の5つのハッシュタグを全て入れる（追加・変更禁止）：{TIKTOK_FIXED_TAGS_STR}
 
 キャプションテキストのみ出力。前置き不要。
@@ -383,9 +476,10 @@ def _generate_seasonal_tiktok_caption(event: dict) -> str:
     return msg.content[0].text.strip()
 
 
-def run_buzz(mood: str = "", event: dict = None) -> dict:
+def run_buzz(mood: str = "", event: dict = None, is_milestone: bool = False) -> dict:
     """バズmode：商品なし Reel スクリプト＋Instagram・TikTokキャプションを生成
-    event が渡された場合はイベント専用キャプションを生成する。
+    event が渡された場合はイベント専用キャプション。
+    is_milestone が True の場合は週1成長記録キャプション。
     """
     global MONTH_AGE, BUZZ_TAGS_STR, TIKTOK_FIXED_TAGS_STR
     MONTH_AGE = calc_month_age()
@@ -405,6 +499,7 @@ def run_buzz(mood: str = "", event: dict = None) -> dict:
     if not script.get("viral_concept"):
         script["viral_concept"] = f"生後{MONTH_AGE}ヶ月のAIベビー「せなっち」のリアルな育児日常"
     script["type"] = "reel"
+    script["is_milestone"] = is_milestone
 
     if event:
         caption_ig = _generate_seasonal_instagram_caption(event)
@@ -412,6 +507,9 @@ def run_buzz(mood: str = "", event: dict = None) -> dict:
             caption_tt = _generate_seasonal_tiktok_caption(event)
         except Exception:
             caption_tt = f"生後{MONTH_AGE}ヶ月の{event['label']}😭 {event.get('hashtags', TIKTOK_FIXED_TAGS_STR)}"
+    elif is_milestone:
+        caption_ig = _generate_milestone_instagram_caption(script)
+        caption_tt = _generate_milestone_tiktok_caption()
     else:
         caption_ig = _generate_buzz_instagram_caption(script, mood=mood)
         try:

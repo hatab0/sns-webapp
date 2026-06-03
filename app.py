@@ -480,6 +480,7 @@ else:
         _mood_selected = ""
         _kling_scene_key = None
         _event_for_gen = None
+        _is_milestone = False
         if _is_buzz:
             _mood_options = [
                 "（おまかせ）",
@@ -494,6 +495,11 @@ else:
             _mood_selected = st.selectbox(
                 "😊 今日の気分（インスタ・YouTubeキャプションに反映）",
                 _mood_options,
+            )
+
+            _is_milestone = st.checkbox(
+                "📅 今週の成長記録にする（週1マイルストーム投稿）",
+                help="チェックすると「生後○ヶ月○週目」形式の成長記録キャプションが生成されます",
             )
 
             # ── イベントバナー
@@ -604,7 +610,7 @@ else:
                     st.write("   ✅ プロンプト完了")
 
                     st.write("② Instagram・YouTube・TikTok キャプションを生成中...")
-                    reel_script = instagram_agent.run_buzz(mood=_buzz_mood, event=_event_for_gen)
+                    reel_script = instagram_agent.run_buzz(mood=_buzz_mood, event=_event_for_gen, is_milestone=_is_milestone)
                     reel_script = youtube_agent.run(instagram_script=reel_script, product=None)
                     st.write("   ✅ キャプション完了")
 
