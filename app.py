@@ -89,7 +89,8 @@ st.markdown("""
 .social-tiktok  { background: linear-gradient(135deg,#010101,#333); box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
 .social-rakuten { background: linear-gradient(135deg,#BF0000,#FF0000); box-shadow: 0 3px 10px rgba(191,0,0,0.3); }
 .social-yt   { background: linear-gradient(135deg,#FF0000,#CC0000); box-shadow: 0 3px 10px rgba(255,0,0,0.3); }
-.social-lit  { background: linear-gradient(135deg,#FF6B6B,#FF8E53); box-shadow: 0 3px 10px rgba(255,107,107,0.3); }
+.social-lit    { background: linear-gradient(135deg,#FF6B6B,#FF8E53); box-shadow: 0 3px 10px rgba(255,107,107,0.3); }
+.social-buffer { background: linear-gradient(135deg,#168eea,#0063d1); box-shadow: 0 3px 10px rgba(22,142,234,0.35); }
 
 /* モードカード */
 .mode-card {
@@ -378,6 +379,9 @@ st.markdown(f"""
         </a>
         <a href="https://lit.link/baby_boo" target="_blank" class="social-lit">
             🔗 lit.link
+        </a>
+        <a href="https://publish.buffer.com/schedule?tab=sent" target="_blank" class="social-buffer">
+            📅 Buffer
         </a>
     </div>
 </div>
