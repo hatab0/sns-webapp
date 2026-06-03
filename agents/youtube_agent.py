@@ -14,19 +14,11 @@ load_dotenv()
 
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-BIRTH_DATE = date(2025, 12, 22)
+from utils.baby_config import BIRTH_DATE, calc_month_age, calc_weeks_alive, calc_week_in_month
 FIXED_TAGS      = ["#babyboo", "#baby", "#PR", "#育児", "#赤ちゃんのいる生活"]
 FIXED_TAGS_STR  = " ".join(FIXED_TAGS)
 BUZZ_TAGS       = ["#babyboo", "#baby", "#育児", "#赤ちゃんのいる生活"]   # #PR なし
 BUZZ_TAGS_STR   = " ".join(BUZZ_TAGS)
-
-
-def calc_month_age() -> int:
-    today = date.today()
-    months = (today.year - BIRTH_DATE.year) * 12 + (today.month - BIRTH_DATE.month)
-    if today.day < BIRTH_DATE.day:
-        months -= 1
-    return max(0, months)
 
 
 MONTH_AGE = calc_month_age()
@@ -283,8 +275,8 @@ AIベビーキャラ「せなっち」（生後{MONTH_AGE}ヶ月）
 
 def _run_milestone(instagram_script: dict) -> dict:
     """マイルストーム用YouTube Shorts（週1成長記録）"""
-    week_in_month = ((date.today() - BIRTH_DATE).days % 30) // 7 + 1
-    weeks_alive   = (date.today() - BIRTH_DATE).days // 7
+    week_in_month = calc_week_in_month()
+    weeks_alive   = calc_weeks_alive()
 
     prompt = f"""
 あなたはYouTube Shorts育児チャンネルの運営者です。

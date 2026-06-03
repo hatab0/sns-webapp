@@ -14,7 +14,7 @@ load_dotenv()
 
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-BIRTH_DATE = date(2025, 12, 22)
+from utils.baby_config import BIRTH_DATE, calc_month_age, calc_weeks_alive, calc_week_in_month
 FIXED_TAGS     = ["#babyboo", "#baby", "#PR", "#育児", "#赤ちゃんのいる生活"]
 FIXED_TAGS_STR = " ".join(FIXED_TAGS)
 BUZZ_TAGS      = ["#babyboo", "#baby", "#育児", "#赤ちゃんのいる生活"]   # #PR なし
@@ -40,14 +40,6 @@ BABY_SPEECH_BY_MONTH = {
     14: {"sounds": ["あっち！", "これ？", "もっと！"], "desc": "指差し＋要求語"},
     15: {"sounds": ["ママ きて", "もっと！", "いやいや"], "desc": "二語文に向かう"},
 }
-
-
-def calc_month_age() -> int:
-    today = date.today()
-    months = (today.year - BIRTH_DATE.year) * 12 + (today.month - BIRTH_DATE.month)
-    if today.day < BIRTH_DATE.day:
-        months -= 1
-    return max(0, months)
 
 
 MONTH_AGE = calc_month_age()
@@ -276,8 +268,8 @@ def _generate_buzz_caption_pattern_c(script: dict) -> str:
 
 def _generate_milestone_instagram_caption(script: dict) -> str:
     """マイルストーン用Instagramキャプション（週1成長記録）"""
-    weeks_alive = (date.today() - BIRTH_DATE).days // 7
-    week_in_month = ((date.today() - BIRTH_DATE).days % 30) // 7 + 1
+    weeks_alive = calc_weeks_alive()
+    week_in_month = calc_week_in_month()
     speech_info = BABY_SPEECH_BY_MONTH.get(MONTH_AGE, BABY_SPEECH_BY_MONTH[4])
 
     prompt = f"""
@@ -311,7 +303,7 @@ def _generate_milestone_instagram_caption(script: dict) -> str:
 
 def _generate_milestone_tiktok_caption() -> str:
     """マイルストーン用TikTokキャプション（週1成長記録）"""
-    week_in_month = ((date.today() - BIRTH_DATE).days % 30) // 7 + 1
+    week_in_month = calc_week_in_month()
     return (
         f"生後{MONTH_AGE}ヶ月{week_in_month}週目の成長記録👶\n"
         f"同じ月齢の子いたらコメントして！\n"

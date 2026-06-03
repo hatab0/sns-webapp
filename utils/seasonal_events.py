@@ -6,8 +6,7 @@
 from datetime import date, timedelta
 from typing import Optional
 
-
-BIRTH_DATE = date(2025, 12, 22)  # せなっちの誕生日（image_agentと同期）
+from utils.baby_config import BIRTH_DATE
 
 
 def _nth_weekday(year: int, month: int, weekday: int, n: int) -> date:

@@ -12,7 +12,7 @@ load_dotenv()
 
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-BIRTH_DATE = date(2025, 12, 22)
+from utils.baby_config import BIRTH_DATE, calc_month_age
 
 # 通常mode（PR）：ポーズプール（15種）
 PR_POSE_POOL = [
@@ -106,14 +106,6 @@ CUTE_ACCESSORIES = [
     "虹色のレインボースタイ（グラデーション）",
     "クラウン型ヘアバンド（ゴールド・ベビーサイズ）",
 ]
-
-
-def calc_month_age() -> int:
-    today = date.today()
-    months = (today.year - BIRTH_DATE.year) * 12 + (today.month - BIRTH_DATE.month)
-    if today.day < BIRTH_DATE.day:
-        months -= 1
-    return max(0, months)
 
 
 MONTH_AGE = calc_month_age()

@@ -11,18 +11,7 @@ load_dotenv()
 
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-# せなっちの誕生日（ここだけ変更すれば月齢が全自動で切り替わる）
-BIRTH_DATE = date(2025, 12, 22)
-
-
-def calc_month_age() -> int:
-    """誕生日から現在の月齢を自動計算する"""
-    today = date.today()
-    months = (today.year - BIRTH_DATE.year) * 12 + (today.month - BIRTH_DATE.month)
-    if today.day < BIRTH_DATE.day:
-        months -= 1
-    return max(0, months)
-
+from utils.baby_config import BIRTH_DATE, calc_month_age
 
 MONTH_AGE = calc_month_age()
 
