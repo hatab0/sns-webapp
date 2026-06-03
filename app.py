@@ -328,6 +328,26 @@ def _prompt_block(key: str, content: str, height: int = 160):
             st.rerun()
 
 
+def _build_post_scripts(scripts: list) -> list:
+    """投稿前にプロンプトタブの編集内容を scripts に反映して返す"""
+    import copy
+    result = copy.deepcopy(scripts)
+    edit_map = [
+        ("ev_ig_caption", "instagram"),
+        ("ev_tt_caption", "tiktok"),
+        ("ev_yt_title",   "youtube_title"),
+        ("ev_yt_desc",    "youtube"),
+        ("ev_yt_pin",     "pin_comment"),
+    ]
+    for s in result:
+        caps = s.setdefault("captions", {})
+        for ev_key, cap_key in edit_map:
+            edited = st.session_state.get(ev_key)
+            if edited is not None:
+                caps[cap_key] = edited
+    return result
+
+
 # ── ヘッダー
 today_str = datetime.now(tz=JST).strftime("%Y年%m月%d日")
 icon_img  = f'<img src="data:image/png;base64,{_icon_b64}" class="header-icon">' if _icon_b64 else '<div style="font-size:4rem;">🍼</div>'
@@ -846,7 +866,7 @@ with tab_post:
         if st.button("📱 Instagram Reel に投稿する", type="primary", use_container_width=True):
             with st.spinner("Bufferに予約中..."):
                 from agents.buffer_agent import run as buf_run
-                results = buf_run([s.copy() for s in scripts], video_url=st.session_state.video_url, platforms=["instagram"])
+                results = buf_run(_build_post_scripts(scripts), video_url=st.session_state.video_url, platforms=["instagram"])
             ok_ig = any(r.get("buffer_posts", {}).get("instagram", {}).get("success") for r in results)
             if ok_ig:
                 st.session_state.instagram_posted = True
@@ -890,7 +910,7 @@ with tab_post:
         if st.button("▶️ YouTube Shorts に投稿する", type="primary", use_container_width=True):
             with st.spinner("Bufferに予約中..."):
                 from agents.buffer_agent import run as buf_run_yt
-                results_yt = buf_run_yt([s.copy() for s in scripts], video_url=st.session_state.video_url, platforms=["youtube"])
+                results_yt = buf_run_yt(_build_post_scripts(scripts), video_url=st.session_state.video_url, platforms=["youtube"])
             ok_yt = any(r.get("buffer_posts", {}).get("youtube", {}).get("success") for r in results_yt)
             if ok_yt:
                 st.session_state.youtube_posted = True
@@ -961,11 +981,12 @@ with tab_post:
     </div>
     """, unsafe_allow_html=True)
 
-    _tt_caption_post = ""
-    for _s in (scripts or []):
-        if _s.get("type") == "reel":
-            _tt_caption_post = _s.get("captions", {}).get("tiktok", "")
-            break
+    _tt_caption_post = st.session_state.get("ev_tt_caption", "")
+    if not _tt_caption_post:
+        for _s in (scripts or []):
+            if _s.get("type") == "reel":
+                _tt_caption_post = _s.get("captions", {}).get("tiktok", "")
+                break
 
     if not _tt_caption_post:
         st.caption("⚠️ TikTokキャプションが未生成です。再生成してください。")
@@ -982,10 +1003,9 @@ with tab_post:
             st.caption("動画アップロード後に有効")
         else:
             if st.button("🎵 TikTokに動画投稿", type="primary", use_container_width=True):
-                _scripts_tt = [s.copy() for s in scripts]
                 with st.spinner("Bufferに予約中..."):
                     from agents.buffer_agent import run as buf_run_tt
-                    results_tt = buf_run_tt(_scripts_tt, video_url=st.session_state.video_url, platforms=["tiktok"])
+                    results_tt = buf_run_tt(_build_post_scripts(scripts), video_url=st.session_state.video_url, platforms=["tiktok"])
                 ok_tt = any(r.get("buffer_posts", {}).get("tiktok", {}).get("success") for r in results_tt)
                 if ok_tt:
                     st.session_state.tiktok_posted = True
