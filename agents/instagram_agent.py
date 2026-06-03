@@ -325,11 +325,70 @@ def run(product: dict) -> dict:
     return script
 
 
-def run_buzz(mood: str = "") -> dict:
-    """バズmode：商品なし Reel スクリプト＋Instagram・TikTokキャプションを生成"""
+def _generate_seasonal_instagram_caption(event: dict) -> str:
+    """イベント専用 Instagram キャプションを生成する"""
+    hashtags = event.get("hashtags", f"#babyboo #赤ちゃんのいる生活 #育児")
+    prompt = f"""
+育休中のパパとして、{event['emoji']}「{event['label']}」の特別なInstagramキャプションを書いてください。
+
+【せなっち情報】生後{MONTH_AGE}ヶ月
+
+【テーマ・雰囲気】
+{event['caption_theme'].format(age=MONTH_AGE)}
+
+【使いたいキーワード（すべて使わなくてもOK）】
+{event['caption_keywords'].format(age=MONTH_AGE)}
+
+【ルール】
+・本文は60〜100字（短く感情的に）
+・口語体（ですます禁止）
+・感情を先に出す（「かわいすぎた」「泣きそう」など）
+・絵文字は1〜2個のみ
+・最後に共感の問いかけまたは感謝の一言を入れる
+・ハッシュタグは必ず最後に: {hashtags}
+
+キャプションテキストのみ出力。前置き不要。
+"""
+    msg = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=300,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return msg.content[0].text.strip()
+
+
+def _generate_seasonal_tiktok_caption(event: dict) -> str:
+    """イベント専用 TikTok キャプションを生成する"""
+    hashtags = event.get("hashtags", f"#babyboo #赤ちゃんのいる生活 #育児").replace("#babyboo", "#赤ちゃん").replace("#赤ちゃんのいる生活", "#育児vlog")
+    prompt = f"""
+育休中のパパとして、{event['emoji']}「{event['label']}」のTikTok向けキャプションを書いてください。
+
+【せなっち情報】生後{MONTH_AGE}ヶ月
+
+【テーマ】{event['caption_theme'].format(age=MONTH_AGE)}
+
+【ルール】
+・冒頭に月齢と感情を入れる（例：「生後{MONTH_AGE}ヶ月の{event['label']}が可愛すぎた」）
+・本文40〜60字（TikTokは超短く）
+・最後に「コメントして」または「フォローして」を自然に入れる
+・ハッシュタグ5つのみ: {hashtags}
+
+キャプションテキストのみ出力。前置き不要。
+"""
+    msg = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=200,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return msg.content[0].text.strip()
+
+
+def run_buzz(mood: str = "", event: dict = None) -> dict:
+    """バズmode：商品なし Reel スクリプト＋Instagram・TikTokキャプションを生成
+    event が渡された場合はイベント専用キャプションを生成する。
+    """
     global MONTH_AGE, BUZZ_TAGS_STR, TIKTOK_FIXED_TAGS_STR
     MONTH_AGE = calc_month_age()
-    # Sheetsに承認済みタグがあれば上書きする
     try:
         from utils.sheets_helper import get_hashtags
         _ig = get_hashtags("instagram_buzz")
@@ -341,16 +400,24 @@ def run_buzz(mood: str = "") -> dict:
     except Exception:
         pass
     script = _generate_buzz_script()
-    # JSON解析失敗時のフォールバック
     if not script.get("hook"):
         script["hook"] = f"生後{MONTH_AGE}ヶ月のせなっちが可愛すぎた瞬間"
     if not script.get("viral_concept"):
         script["viral_concept"] = f"生後{MONTH_AGE}ヶ月のAIベビー「せなっち」のリアルな育児日常"
     script["type"] = "reel"
-    caption_ig = _generate_buzz_instagram_caption(script, mood=mood)
-    try:
-        caption_tt = _generate_tiktok_caption(script, is_buzz=True)
-    except Exception:
-        caption_tt = f"生後{MONTH_AGE}ヶ月のせなっち、かわいすぎた😭 {TIKTOK_FIXED_TAGS_STR}"
+
+    if event:
+        caption_ig = _generate_seasonal_instagram_caption(event)
+        try:
+            caption_tt = _generate_seasonal_tiktok_caption(event)
+        except Exception:
+            caption_tt = f"生後{MONTH_AGE}ヶ月の{event['label']}😭 {event.get('hashtags', TIKTOK_FIXED_TAGS_STR)}"
+    else:
+        caption_ig = _generate_buzz_instagram_caption(script, mood=mood)
+        try:
+            caption_tt = _generate_tiktok_caption(script, is_buzz=True)
+        except Exception:
+            caption_tt = f"生後{MONTH_AGE}ヶ月のせなっち、かわいすぎた😭 {TIKTOK_FIXED_TAGS_STR}"
+
     script["captions"] = {"instagram": caption_ig, "tiktok": caption_tt}
     return script

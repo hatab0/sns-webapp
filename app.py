@@ -201,10 +201,16 @@ _defaults = {
     "tiktok_posted":        False,
     "youtube_posted":       False,
     "buzz_mood":            "",
+    "use_event":            False,
+    "active_event":         None,
 }
 for k, v in _defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
+
+# ── イベント検出
+from utils.seasonal_events import get_upcoming_events as _get_events
+_upcoming_events = _get_events(days_ahead=7)
 
 
 # ──────────────────────────────────────────────────────
@@ -473,6 +479,7 @@ else:
 
         _mood_selected = ""
         _kling_scene_key = None
+        _event_for_gen = None
         if _is_buzz:
             _mood_options = [
                 "（おまかせ）",
@@ -488,6 +495,33 @@ else:
                 "😊 今日の気分（インスタ・YouTubeキャプションに反映）",
                 _mood_options,
             )
+
+            # ── イベントバナー
+            if _upcoming_events:
+                for _ev in _upcoming_events:
+                    _days = _ev["days_until"]
+                    if _days == 0:
+                        _timing = "🎉 今日"
+                    elif _days > 0:
+                        _timing = f"あと{_days}日"
+                    else:
+                        _timing = f"{abs(_days)}日前"
+                    st.markdown(f"""
+<div style="background:linear-gradient(135deg,#FFF8E1,#FFF3CD); border-radius:12px;
+            padding:0.9rem 1.2rem; margin:0.5rem 0; border:1px solid #FFD54F;">
+    <span style="font-size:1.2rem;">{_ev['emoji']}</span>
+    <strong style="color:#E65100;"> {_ev['label']}</strong>
+    <span style="color:#F57F17; font-size:0.9rem;">（{_timing}）</span>
+    <br><span style="font-size:0.82rem; color:#795548;">衣装・背景・キャプションをイベント仕様に自動切替できます</span>
+</div>
+""", unsafe_allow_html=True)
+                    _use_ev = st.checkbox(
+                        f"{_ev['emoji']} {_ev['label']}コンテンツとして生成する",
+                        key=f"use_event_{_ev['key']}",
+                    )
+                    if _use_ev:
+                        _event_for_gen = _ev
+                        break
         else:
             from agents.image_agent import PRODUCT_SCENE_MAP as _psm
             _scene_options = {"🔍 自動検出（推奨）": None}
@@ -563,17 +597,18 @@ else:
                 upsert_product(posts[0])
 
             else:
-                with st.status("🎉 バズmodeコンテンツを生成中...", expanded=True) as status:
-                    st.write("① バズmode 画像・動画プロンプトを生成中...")
-                    buzz_post = image_agent.run_buzz()
+                _ev_label = f" {_event_for_gen['emoji']} {_event_for_gen['label']}" if _event_for_gen else ""
+                with st.status(f"🎉 バズmodeコンテンツを生成中...{_ev_label}", expanded=True) as status:
+                    st.write(f"① バズmode 画像・動画プロンプトを生成中...{_ev_label}")
+                    buzz_post = image_agent.run_buzz(event=_event_for_gen)
                     st.write("   ✅ プロンプト完了")
 
                     st.write("② Instagram・YouTube・TikTok キャプションを生成中...")
-                    reel_script = instagram_agent.run_buzz(mood=_buzz_mood)
+                    reel_script = instagram_agent.run_buzz(mood=_buzz_mood, event=_event_for_gen)
                     reel_script = youtube_agent.run(instagram_script=reel_script, product=None)
                     st.write("   ✅ キャプション完了")
 
-                    status.update(label="🎉 バズmodeコンテンツ生成完了！", state="complete")
+                    status.update(label=f"🎉 バズmodeコンテンツ生成完了！{_ev_label}", state="complete")
 
                 st.session_state.posts          = [buzz_post]
                 st.session_state.scripts        = [reel_script]
