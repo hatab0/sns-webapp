@@ -1224,20 +1224,56 @@ with tab_hashtag:
     }
 
     # ── AI提案ボタン
-    if st.button("🤖 AIでトレンドタグを提案する", type="primary", use_container_width=True):
-        with st.spinner("育児系トレンドハッシュタグを調査中..."):
-            import anthropic as _ant
-            _ant_client = _ant.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-            _suggest_prompt = f"""
-あなたは2026年の日本のSNSマーケティング専門家です。
-育児系コンテンツ（AIベビー「せなっち」生後{calc_month_age()}ヶ月の成長記録）に関して、
-各プラットフォームで現在バズりやすいハッシュタグを提案してください。
+    st.caption("🔍 ウェブを検索して最新トレンドを取得 → Claudeが分析して提案します")
+    if st.button("🌐 最新トレンドをウェブ検索して提案する", type="primary", use_container_width=True):
+        with st.spinner("ウェブで育児系ハッシュタグのトレンドを調査中...（30秒ほどかかります）"):
+            try:
+                from duckduckgo_search import DDGS
+                import anthropic as _ant
+                import json as _json
 
-【条件】
-・日本語ハッシュタグ（#から始まる）
-・育児・赤ちゃん・パパ育児に関連するもの
-・2026年現在トレンドになっているもの優先
-・各プラットフォームの特性に合わせる
+                # ── 検索クエリ（プラットフォーム別）
+                _queries = [
+                    "インスタグラム 育児 ハッシュタグ トレンド 2025 2026 赤ちゃん",
+                    "TikTok 育児 ハッシュタグ 人気 赤ちゃん 育休パパ",
+                    "YouTube Shorts 育児 ハッシュタグ 赤ちゃん 人気",
+                    "instagram baby hashtags trending 2025 2026 japanese",
+                ]
+
+                # ── DuckDuckGoで検索してスニペットを収集
+                _search_results = []
+                with DDGS() as _ddgs:
+                    for _q in _queries:
+                        try:
+                            _results = list(_ddgs.text(_q, max_results=4))
+                            for _r in _results:
+                                _search_results.append(f"【{_q}】\n{_r.get('title','')}: {_r.get('body','')[:200]}")
+                        except Exception:
+                            pass
+
+                _search_text = "\n\n".join(_search_results[:12]) if _search_results else "（検索結果なし）"
+
+                # ── Claude に分析させる
+                _ant_client = _ant.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+                _suggest_prompt = f"""
+あなたは日本のSNSマーケティング専門家です。
+以下のウェブ検索結果をもとに、育児系AIベビーコンテンツに最適なハッシュタグを提案してください。
+
+【コンテンツ情報】
+・AIベビーキャラ「せなっち」生後{calc_month_age()}ヶ月の成長記録
+・育休中のパパ目線の育児日常
+・プラットフォーム：Instagram / TikTok / YouTube Shorts
+
+【ウェブ検索結果】
+{_search_text}
+
+【出力ルール】
+・各プラットフォームの特性に合わせて選ぶ
+・Instagram：保存・発見に強いタグ（ニッチ×人気のバランス）
+・TikTok：短くシンプルなタグ（アルゴリズム重視）
+・YouTube：検索流入に強いキーワード系タグ
+・検索結果に実際に登場したタグを優先する
+・各5個（固定タグの #babyboo は除く）
 
 【出力形式】JSONのみ。前置き不要。
 {{
@@ -1246,19 +1282,20 @@ with tab_hashtag:
   "youtube":        ["#タグ1", "#タグ2", "#タグ3", "#タグ4", "#タグ5"]
 }}
 """
-            try:
                 _res = _ant_client.messages.create(
                     model="claude-sonnet-4-6",
-                    max_tokens=400,
+                    max_tokens=500,
                     messages=[{"role": "user", "content": _suggest_prompt}]
                 )
-                import json as _json
                 _raw = _res.content[0].text.strip()
                 if "```" in _raw:
                     _raw = _raw.split("```json")[-1].split("```")[0].strip() if "```json" in _raw else _raw.split("```")[1].split("```")[0].strip()
                 _suggestions = _json.loads(_raw)
                 st.session_state["_hashtag_suggestions"] = _suggestions
-                st.success("✅ 提案が完了しました！下で確認・承認してください。")
+                st.success(f"✅ ウェブ検索{len(_search_results)}件をもとに提案しました！下で確認・承認してください。")
+
+            except ImportError:
+                st.error("duckduckgo-search パッケージが必要です。`pip install duckduckgo-search` を実行してください。")
             except Exception as _e:
                 st.error(f"提案の取得に失敗しました: {_e}")
 
