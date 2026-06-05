@@ -611,7 +611,7 @@ else:
                     st.write("   ✅ プロンプト完了")
 
                     st.write("② Instagram・YouTube・TikTok キャプションを生成中...")
-                    reel_script = instagram_agent.run_buzz(mood=_buzz_mood, event=_event_for_gen, is_milestone=_is_milestone)
+                    reel_script = instagram_agent.run_buzz(mood=_buzz_mood, event=_event_for_gen, is_milestone=_is_milestone, buzz_post=buzz_post)
                     reel_script = youtube_agent.run(instagram_script=reel_script, product=None)
                     st.write("   ✅ キャプション完了")
 

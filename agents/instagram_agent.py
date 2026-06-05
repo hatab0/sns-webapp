@@ -149,15 +149,29 @@ JSONのみ出力。前置き不要。
     return _parse_json(msg.content[0].text.strip())
 
 
+def _visual_context_line(script: dict) -> str:
+    """動画の視覚的内容を日本語で説明する行を返す（キャプション生成用）"""
+    vc = script.get("visual_context", "")
+    if not vc:
+        return ""
+    return f"""
+【動画の内容（最優先・必ずこれに合ったキャプションを書く）】
+{vc}
+→ 上記の動画シーンを見た人が「かわいい」「この顔！」と感じる表現にすること。
+→ 気分・トーンはこの動画内容に合わせて自然に決める。
+"""
+
+
 def _generate_buzz_caption_pattern_a(script: dict) -> str:
     """バズmodeパターンA：育児あるある悩み＋開き直り絵文字（ダンス・コミカル系）"""
     viral_concept = script.get("viral_concept") or script.get("drama_format") or ""
     mood = script.get("mood_context", "")
     mood_line = f"今日のパパの気分：{mood}（この気分を文章の軸にすること）" if mood else ""
+    visual_line = _visual_context_line(script)
 
     prompt = f"""
 育休中のパパとして、生後{MONTH_AGE}ヶ月の育児あるあるの「悩み・愚痴」を1〜2行で書いてください。
-
+{visual_line}
 【月齢に合わせた悩みの例】
 ・生後0〜2ヶ月：寝てくれない、昼夜逆転
 ・生後3〜4ヶ月：やっと寝かしつけたのにすぐ起きる
@@ -194,9 +208,11 @@ def _generate_buzz_caption_pattern_b(script: dict) -> str:
     viral_concept = script.get("viral_concept") or script.get("drama_format") or ""
     mood = script.get("mood_context", "")
     mood_line = f"今日のパパの気分：{mood}（この気分をジョークの前振りや落差に活かすこと）" if mood else ""
+    visual_line = _visual_context_line(script)
 
     prompt = f"""
 育休中のパパとして、アメリカンジョーク風のInstagramキャプションを書いてください。
+{visual_line}
 {mood_line}
 
 【形式】「パパ今日〇〇した。でもせなっちは〇〇だった。」という落差が笑えるオチ形式
@@ -233,12 +249,13 @@ def _generate_buzz_caption_pattern_b(script: dict) -> str:
 def _generate_buzz_caption_pattern_c(script: dict) -> str:
     """バズmodeパターンC：せなっちのかわいさ全振り（「かわいい」コメント誘発）"""
     viral_concept = script.get("viral_concept") or script.get("drama_format") or ""
+    visual_line = _visual_context_line(script)
 
     prompt = f"""
 あなたは生後{MONTH_AGE}ヶ月の赤ちゃん「せなっち」を育てる育休中のパパです。
 
 「見た人が思わず😭🥺💕とだけコメントしてしまう」Instagramキャプションを書いてください。
-
+{visual_line}
 動画のコンセプト（参考）：{viral_concept}
 
 【このキャプションの目的】
@@ -468,10 +485,11 @@ def _generate_seasonal_tiktok_caption(event: dict) -> str:
     return msg.content[0].text.strip()
 
 
-def run_buzz(mood: str = "", event: dict = None, is_milestone: bool = False) -> dict:
+def run_buzz(mood: str = "", event: dict = None, is_milestone: bool = False, buzz_post: dict = None) -> dict:
     """バズmode：商品なし Reel スクリプト＋Instagram・TikTokキャプションを生成
     event が渡された場合はイベント専用キャプション。
     is_milestone が True の場合は週1成長記録キャプション。
+    buzz_post が渡された場合は動画の視覚的内容をキャプションに反映する。
     """
     global MONTH_AGE, BUZZ_TAGS_STR, TIKTOK_FIXED_TAGS_STR
     MONTH_AGE = calc_month_age()
@@ -492,6 +510,15 @@ def run_buzz(mood: str = "", event: dict = None, is_milestone: bool = False) -> 
         script["viral_concept"] = f"生後{MONTH_AGE}ヶ月のAIベビー「せなっち」のリアルな育児日常"
     script["type"] = "reel"
     script["is_milestone"] = is_milestone
+
+    # 動画の視覚的内容をscriptに格納（キャプション生成で使用）
+    if buzz_post:
+        vp = buzz_post.get("video_prompt", "")
+        if "Positive Prompt:" in vp:
+            visual_context = vp.split("Positive Prompt:")[-1].split("Negative Prompt:")[0].strip()
+        else:
+            visual_context = vp[:400]
+        script["visual_context"] = visual_context
 
     if event:
         caption_ig = _generate_seasonal_instagram_caption(event)
