@@ -115,6 +115,26 @@ def get_last_generated_code(history: dict) -> str:
         return ""
 
 
+def get_posted_affiliate_urls() -> set:
+    """楽天ROOMに投稿済みのアフィリエイトURLセットを返す（URL重複チェック用）"""
+    try:
+        ws = _get_worksheet()
+        if ws is None:
+            return set()
+        _, rows = _all_rows(ws)
+        urls = set()
+        for rec in rows:
+            if int(rec.get("楽天ROOM投稿数", 0) or 0) > 0:
+                url = str(rec.get("アフィリエイトURL", "")).strip()
+                if url:
+                    urls.add(url)
+                    urls.add(url.split("?")[0])  # クエリパラメータなしベースURLも追加
+        return urls
+    except Exception as e:
+        print(f"get_posted_affiliate_urls error: {e}")
+        return set()
+
+
 def get_recent_codes(history: dict, days: int = 7) -> set:
     """直近N日間に生成した item_code のセット（同一商品の連続紹介防止）"""
     cutoff = (datetime.now(tz=JST) - timedelta(days=days)).strftime("%Y-%m-%d")

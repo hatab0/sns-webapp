@@ -50,6 +50,19 @@ def score_product(product: dict) -> float:
     return (review_count * 0.6) + (review_average * 10 * 0.4)
 
 
+def _is_skip_by_url(product: dict, posted_urls: set) -> bool:
+    """楽天ROOM投稿済みURLと一致する商品はTrue（URLベースの重複チェック）"""
+    if not posted_urls:
+        return False
+    for key in _product_keys(product):
+        if key in posted_urls:
+            return True
+        base = key.split("?")[0]
+        if base and base in posted_urls:
+            return True
+    return False
+
+
 def _is_skip(item_code: str, history: dict, recent_codes: set) -> bool:
     """
     - 直近7日間に生成した商品（recent_codes に含まれる）→ True
@@ -64,11 +77,12 @@ def _is_skip(item_code: str, history: dict, recent_codes: set) -> bool:
     return rec.get("生成回数", 0) >= 3
 
 
-def run(products: list = None, history: dict = None, recent_codes: set = None, last_code: str = "") -> list:
+def run(products: list = None, history: dict = None, recent_codes: set = None, posted_urls: set = None, last_code: str = "") -> list:
     """
     商品をスコアリングしてTOP3を返す。
-    history: sheets_helper.get_product_history() の結果（Webアプリ用）
+    history:      sheets_helper.get_product_history() の結果（Webアプリ用）
     recent_codes: 直近7日間に生成した item_code のセット（重複防止）
+    posted_urls:  楽天ROOM投稿済みURLセット（URL照合による重複防止）
     """
     print("📊 市場分析エージェント 起動")
 
@@ -95,13 +109,15 @@ def run(products: list = None, history: dict = None, recent_codes: set = None, l
     if history is not None:
         # Webアプリ: Sheets履歴ベースでフィルタ
         _recent = recent_codes or set()
+        _posted = posted_urls or set()
         filtered = [
             p for p in sorted_products
             if not _is_skip(p.get("item_code", ""), history, _recent)
+            and not _is_skip_by_url(p, _posted)
         ]
         skipped = len(sorted_products) - len(filtered)
         if skipped:
-            print(f"\n  ⏭️  重複スキップ: {skipped} 件（楽天ROOM投稿済み / 直近7日以内 / 生成3回済）")
+            print(f"\n  ⏭️  重複スキップ: {skipped} 件（楽天ROOM投稿済み / URL重複 / 直近7日以内 / 生成3回済）")
     else:
         # CLI用: ローカル skip_list.json
         skip_keys = []

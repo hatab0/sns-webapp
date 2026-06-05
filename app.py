@@ -559,10 +559,12 @@ else:
                     st.write("① 楽天で売れ筋商品を取得中...")
                     from utils.sheets_helper import (
                         get_product_history, get_recent_codes, upsert_product,
+                        get_posted_affiliate_urls,
                     )
-                    history      = get_product_history()
-                    recent_codes = get_recent_codes(history, days=7)
-                    products     = rakuten_agent.run()
+                    history       = get_product_history()
+                    recent_codes  = get_recent_codes(history, days=7)
+                    posted_urls   = get_posted_affiliate_urls()
+                    products      = rakuten_agent.run()
                     try:
                         from agents import amazon_agent
                         if amazon_agent.is_configured():
@@ -571,7 +573,7 @@ else:
                             products = products + amazon_products
                     except Exception:
                         pass
-                    top3 = analyzer_agent.run(products, history=history, recent_codes=recent_codes)
+                    top3 = analyzer_agent.run(products, history=history, recent_codes=recent_codes, posted_urls=posted_urls)
                     if top3:
                         _t0 = top3[0]
                         _t0_code = _t0.get("item_code", "")
