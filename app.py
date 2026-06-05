@@ -572,8 +572,14 @@ else:
                     except Exception:
                         pass
                     top3 = analyzer_agent.run(products, history=history, recent_codes=recent_codes)
-                    if top3 and top3[0].get("item_code") in recent_codes:
-                        st.warning(f"⚠️ 「{top3[0]['name'][:25]}」は直近7日以内に生成済みです。他に候補がなかったため同じ商品が選ばれました。")
+                    if top3:
+                        _t0 = top3[0]
+                        _t0_code = _t0.get("item_code", "")
+                        _t0_hist = history.get(_t0_code, {})
+                        if _t0_hist.get("楽天ROOM投稿数", 0) > 0:
+                            st.warning(f"⚠️ 「{_t0['name'][:25]}」は楽天ROOMに投稿済みです。他に候補がなかったため選ばれました。楽天ROOMへの重複投稿はできません。")
+                        elif _t0_code in recent_codes:
+                            st.warning(f"⚠️ 「{_t0['name'][:25]}」は直近7日以内に生成済みです。他に候補がなかったため同じ商品が選ばれました。")
                     all_scored = sorted(
                         [p for p in products if "score" in p],
                         key=lambda x: x["score"], reverse=True,

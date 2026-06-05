@@ -53,11 +53,14 @@ def score_product(product: dict) -> float:
 def _is_skip(item_code: str, history: dict, recent_codes: set) -> bool:
     """
     - 直近7日間に生成した商品（recent_codes に含まれる）→ True
+    - 楽天ROOMに1件でも投稿済み → True（楽天ROOMは同一商品の重複投稿不可）
     - 生成回数が3回以上 → True
     """
     if item_code and item_code in recent_codes:
         return True
     rec = history.get(item_code, {})
+    if rec.get("楽天ROOM投稿数", 0) > 0:
+        return True
     return rec.get("生成回数", 0) >= 3
 
 
@@ -98,7 +101,7 @@ def run(products: list = None, history: dict = None, recent_codes: set = None, l
         ]
         skipped = len(sorted_products) - len(filtered)
         if skipped:
-            print(f"\n  ⏭️  重複スキップ: {skipped} 件（直近7日以内 or 生成3回済）")
+            print(f"\n  ⏭️  重複スキップ: {skipped} 件（楽天ROOM投稿済み / 直近7日以内 / 生成3回済）")
     else:
         # CLI用: ローカル skip_list.json
         skip_keys = []
