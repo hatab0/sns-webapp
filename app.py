@@ -1183,6 +1183,32 @@ if tab_history:
         st.markdown("### 📊 商品履歴")
         st.caption("商品ごとの生成回数・各プラットフォーム投稿数を管理します（生成3回でその商品はスキップ）")
 
+        # ── スプレッドシート整理ボタン
+        with st.expander("🛠️ スプレッドシートのメンテナンス"):
+            st.caption("""
+現在の仕様（HEADERS）に合わせてスプレッドシートを整理します。
+- 不要な列（Threads投稿数 等）を削除
+- 不足している列を追加
+- 列の順番を統一
+- **既存データは保持されます**
+            """)
+            if st.button("🧹 スプレッドシートを整理する", type="primary", use_container_width=True):
+                with st.spinner("スプレッドシートを整理中..."):
+                    from utils.sheets_helper import cleanup_sheet
+                    result = cleanup_sheet()
+                if "error" in result:
+                    st.error(f"❌ エラー: {result['error']}")
+                else:
+                    st.success(f"✅ 整理完了（{result['migrated_rows']}行を移行）")
+                    if result["dropped_columns"]:
+                        st.info(f"🗑️ 削除した列: {', '.join(result['dropped_columns'])}")
+                    if result["added_columns"]:
+                        st.info(f"➕ 追加した列: {', '.join(result['added_columns'])}")
+                    if not result["dropped_columns"] and not result["added_columns"]:
+                        st.info("すでに最新の仕様になっていました")
+
+        st.divider()
+
         if st.button("🔍 履歴を読み込む", use_container_width=True):
             with st.spinner("Google Sheetsから取得中..."):
                 from utils.sheets_helper import get_history

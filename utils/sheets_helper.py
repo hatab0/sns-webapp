@@ -214,6 +214,64 @@ def increment_count(item_code: str, platform: str) -> bool:
         return False
 
 
+def cleanup_sheet() -> dict:
+    """
+    スプレッドシートを現在の HEADERS 仕様に整理する。
+    - 不要な列（Threads投稿数 等）を削除
+    - 不足列を追加（デフォルト値: 0 or ""）
+    - 列順を HEADERS に合わせて統一
+    - 既存データは保持
+    Returns: {"migrated_rows": int, "dropped_columns": list, "added_columns": list}
+    """
+    try:
+        ws = _get_worksheet()
+        if ws is None:
+            return {"error": "Google Sheets接続失敗"}
+
+        vals = ws.get_all_values()
+
+        # 空シートの場合はヘッダーだけ書く
+        if not vals:
+            ws.update("A1", [HEADERS])
+            return {"migrated_rows": 0, "dropped_columns": [], "added_columns": list(HEADERS)}
+
+        current_headers = vals[0]
+        data_rows       = vals[1:] if len(vals) > 1 else []
+
+        # 変更サマリー
+        dropped = [h for h in current_headers if h and h not in HEADERS]
+        added   = [h for h in HEADERS if h not in current_headers]
+
+        # 既存データを HEADERS 順に変換
+        int_cols = {"生成回数", "楽天ROOM投稿数", "Instagram投稿数", "TikTok投稿数", "YouTube投稿数"}
+
+        def convert_row(row: list) -> list:
+            padded   = row + [""] * max(0, len(current_headers) - len(row))
+            old_dict = {current_headers[i]: padded[i] for i in range(len(current_headers))}
+            new_row  = []
+            for h in HEADERS:
+                if h in old_dict:
+                    new_row.append(old_dict[h])
+                else:
+                    new_row.append(0 if h in int_cols else "")
+            return new_row
+
+        # 空行を除いて変換
+        new_rows = [convert_row(r) for r in data_rows if any(cell.strip() for cell in r)]
+
+        # シートを全消去 → 書き直し
+        ws.clear()
+        ws.update("A1", [HEADERS] + new_rows, value_input_option="USER_ENTERED")
+
+        return {
+            "migrated_rows":  len(new_rows),
+            "dropped_columns": dropped,
+            "added_columns":   added,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 HASHTAG_SHEET_NAME  = "hashtags"
 HASHTAG_PLATFORMS   = ["instagram_fixed", "instagram_buzz", "tiktok", "youtube"]
 PROFILE_SHEET_NAME  = "senacchi_profile"
