@@ -16,7 +16,8 @@ JST = timezone(timedelta(hours=9))
 
 HEADERS = [
     "最終生成日", "item_code", "商品名", "価格", "キーワード",
-    "生成回数", "楽天ROOM投稿数", "Instagram投稿数", "TikTok投稿数", "YouTube投稿数", "アフィリエイトURL", "メモ",
+    "生成回数", "楽天ROOM投稿数", "Instagram投稿数", "TikTok投稿数", "YouTube投稿数",
+    "アフィリエイトURL", "メモ",
 ]
 
 
