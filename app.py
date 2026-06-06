@@ -1031,7 +1031,7 @@ with tab_post:
                 padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #444;">
         <div style="font-size:0.75rem; font-weight:700; color:#aaa; letter-spacing:0.08em; margin-bottom:0.2rem;">STEP 4</div>
         <div style="font-size:1.05rem; font-weight:800; color:#fff; margin-bottom:0.3rem;">🎵 TikTok に投稿</div>
-        <div style="font-size:0.85rem; color:#aaa;">STEP 1 完了後に有効になります</div>
+        <div style="font-size:0.85rem; color:#aaa;">TikTok Studio から直接投稿してください（AI開示ラベル対応のため）</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1042,38 +1042,18 @@ with tab_post:
                 _tt_caption_post = _s.get("captions", {}).get("tiktok", "")
                 break
 
-    if not _tt_caption_post:
-        st.caption("⚠️ TikTokキャプションが未生成です。再生成してください。")
-    else:
-        st.caption(f"投稿内容: {_tt_caption_post[:60]}…")
-        if st.session_state.tiktok_posted:
-            _tt_disp = _fmt_sched(st.session_state.get("tt_scheduled_at", ""), f"{_t3}頃")
-            st.success("✅ TikTok 予約完了")
-            _ttc1, _ttc2 = st.columns(2)
-            with _ttc1: st.info(f"📅 投稿予定: {_tt_disp}")
-            with _ttc2: st.link_button("📋 Bufferで確認", "https://buffer.com")
-        elif not st.session_state.video_url:
-            st.button("🎵 TikTokに動画投稿", use_container_width=True, disabled=True)
-            st.caption("動画アップロード後に有効")
-        else:
-            if st.button("🎵 TikTokに動画投稿", type="primary", use_container_width=True):
-                with st.spinner("Bufferに予約中..."):
-                    from agents.buffer_agent import run as buf_run_tt
-                    results_tt = buf_run_tt(_build_post_scripts(scripts), video_url=st.session_state.video_url, platforms=["tiktok"])
-                ok_tt = any(r.get("buffer_posts", {}).get("tiktok", {}).get("success") for r in results_tt)
-                if ok_tt:
-                    st.session_state.tiktok_posted = True
-                    _ic = (posts or [{}])[0].get("item_code", "")
-                    if _ic:
-                        from utils.sheets_helper import increment_count as _inc_tt
-                        _inc_tt(_ic, "TikTok投稿数")
-                    _tt_res = next((r.get("buffer_posts", {}).get("tiktok", {}) for r in results_tt if r.get("buffer_posts", {}).get("tiktok", {}).get("success")), {})
-                    st.session_state["tt_scheduled_at"] = _tt_res.get("scheduled_at", "")
-                    st.rerun()
-                else:
-                    errs_tt = [r.get("buffer_posts", {}).get("tiktok", {}).get("error", "") for r in results_tt]
-                    st.error(f"❌ TikTok 投稿失敗: {' | '.join(e for e in errs_tt if e) or '不明なエラー'}")
-                    st.link_button("⚙️ Bufferダッシュボードを確認", "https://buffer.com")
+    st.info(
+        "⚠️ Buffer経由のTikTok投稿はAI生成コンテンツの開示ラベルが付かず、削除される場合があります。\n\n"
+        "**手順：**\n"
+        "1. 下のキャプションをコピー\n"
+        "2. Cloudinaryの動画URLを開いてローカルに保存\n"
+        "3. TikTok Studio でアップロード → 「AIによって生成または編集されたコンテンツ」をON → スケジュール投稿"
+    )
+    st.link_button("🎵 TikTok Studio を開く", "https://studio.tiktok.com")
+
+    if _tt_caption_post:
+        st.caption("📋 TikTok キャプション（コピーして使用）")
+        st.code(_tt_caption_post, language=None)
 
 
 # ──────────────────────────────────────────────────────
