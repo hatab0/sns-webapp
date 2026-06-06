@@ -1049,7 +1049,7 @@ with tab_post:
         "2. Cloudinaryの動画URLを開いてローカルに保存\n"
         "3. TikTok Studio でアップロード → 「AIによって生成または編集されたコンテンツ」をON → スケジュール投稿"
     )
-    st.link_button("🎵 TikTok Studio を開く", "https://studio.tiktok.com")
+    st.link_button("🎵 TikTok Studio を開く", "https://www.tiktok.com/tiktokstudio")
 
     if _tt_caption_post:
         st.caption("📋 TikTok キャプション（コピーして使用）")
