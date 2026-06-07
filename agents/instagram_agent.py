@@ -22,6 +22,21 @@ BUZZ_TAGS_STR  = " ".join(BUZZ_TAGS)
 TIKTOK_FIXED_TAGS = ["#赤ちゃん", "#育児vlog", "#babyboo", "#赤ちゃんのいる暮らし", "#育休パパ"]
 TIKTOK_FIXED_TAGS_STR = " ".join(TIKTOK_FIXED_TAGS)
 
+# バズmode Instagram専用（海外向け・baby_cuboスタイル）
+BUZZ_IG_HASHTAGS = "#baby #babyboo #babylove #cutebaby #kawaii"
+BUZZ_IG_ONELINER_POOL = [
+    "Kawaii is a Japanese dad's first language. 🍼✨",
+    "In Japan, we call it kawaii. 🇯🇵💕",
+    "No translation needed. Just kawaii. 🇯🇵✨",
+    "Pure kawaii, straight from Japan. 🇯🇵🍼",
+    "Warning: extreme kawaii from Japan. 🇯🇵✨",
+    "Japanese babies hit different. 🇯🇵💕",
+    "Kawaii unlocked. 🔓🍼",
+    "Made in Japan. Maximum kawaii. 🇯🇵✨",
+    "Japan's secret: everything is more kawaii here. 🍼💕",
+    "Kawaii has no translation. It just is. 🇯🇵🍼",
+]
+
 BABY_SPEECH_BY_MONTH = {
     0:  {"sounds": ["おぎゃー", "ふにゃー"], "desc": "泣き声のみ"},
     1:  {"sounds": ["あー", "うー"], "desc": "クーイング"},
@@ -329,43 +344,16 @@ def _generate_milestone_tiktok_caption() -> str:
 
 
 def _generate_buzz_instagram_caption(script: dict, mood: str = "", is_milestone: bool = False) -> str:
-    """バズmode用Instagramキャプション
-    A：育児あるある悩み / B：アメリカンジョーク / C：かわいい特化（デフォルト50%）
+    """バズmode用Instagramキャプション（baby_cuboスタイル・海外向け）
+    英語一言（kawaii + 日本パパ視点）+ 固定5ハッシュタグのシンプル構成。
     """
     if is_milestone:
         script["buzz_caption_pattern"] = "milestone"
         return _generate_milestone_instagram_caption(script)
 
-    mood_a = {"😭 疲れた・眠い", "😤 怒り・ムカつく", "😮‍💨 諦めた（開き直り）"}
-    mood_b = {"😊 嬉しい・幸せ", "😂 笑える出来事", "😱 びっくりした", "🥹 感動した"}
-    if mood in mood_a:
-        pattern = "A"
-    elif mood in mood_b:
-        # 嬉しい・感動系はかわいい特化が自然
-        pattern = random.choice(["B", "C"])
-    elif mood:
-        pattern = "C"
-    else:
-        # おまかせ: C を50%・A/B各25%
-        pattern = random.choices(["A", "B", "C"], weights=[25, 25, 50])[0]
-
-    script["buzz_caption_pattern"] = pattern
-    if mood:
-        script["mood_context"] = mood
-
-    try:
-        if pattern == "A":
-            text = _generate_buzz_caption_pattern_a(script)
-        elif pattern == "B":
-            text = _generate_buzz_caption_pattern_b(script)
-        else:
-            text = _generate_buzz_caption_pattern_c(script)
-        if text:
-            return text
-    except Exception:
-        pass
-
-    return f"生後{MONTH_AGE}ヶ月のせなっち、かわいすぎた😭💕 かわいいと思ったら絵文字コメントして😭 {BUZZ_TAGS_STR}"
+    oneliner = random.choice(BUZZ_IG_ONELINER_POOL)
+    script["buzz_caption_pattern"] = "kawaii_en"
+    return f"{oneliner}\n{BUZZ_IG_HASHTAGS}"
 
 
 def _generate_tiktok_caption(script: dict, product_name: str = "", is_buzz: bool = False) -> str:
