@@ -631,11 +631,11 @@ scripts = st.session_state.scripts or []
 today   = datetime.now(tz=JST).strftime("%Y%m%d")
 
 if _is_buzz:
-    tab_prompt, tab_post, tab_hashtag = st.tabs(["📋 プロンプト", "📤 投稿", "🏷️ ハッシュタグ"])
+    tab_prompt, tab_post = st.tabs(["📋 プロンプト", "📤 投稿"])
     tab_analysis = tab_history = None
 else:
-    tab_prompt, tab_post, tab_analysis, tab_history, tab_hashtag = st.tabs(
-        ["📋 プロンプト", "📤 投稿", "🔍 商品分析", "📊 商品履歴", "🏷️ ハッシュタグ"]
+    tab_prompt, tab_post, tab_analysis, tab_history = st.tabs(
+        ["📋 プロンプト", "📤 投稿", "🔍 商品分析", "📊 商品履歴"]
     )
 
 
@@ -1160,138 +1160,3 @@ if tab_history:
                 st.caption(f"合計 {len(_hist_df)} 商品")
 
 
-# ──────────────────────────────────────────────────────
-# TAB: ハッシュタグ管理
-# ──────────────────────────────────────────────────────
-with tab_hashtag:
-    st.markdown("### 🏷️ ハッシュタグ管理")
-    st.caption("AIが育児系トレンドタグを提案 → あなたが承認 → 次回の生成から自動で反映されます")
-
-    try:
-        from utils.sheets_helper import get_hashtags, set_hashtags
-    except Exception as _ht_err:
-        st.error(f"ハッシュタグ機能の読み込みに失敗しました: {_ht_err}")
-        st.stop()
-
-    _HASHTAG_PLATFORMS = ["instagram_buzz", "tiktok", "youtube"]
-
-    # ── プラットフォーム定義
-    _platform_meta = {
-        "instagram_buzz":  {"label": "📱 Instagram（バズmode）", "default": ["#babyboo", "#baby", "#育児", "#赤ちゃんのいる生活"]},
-        "tiktok":          {"label": "🎵 TikTok",               "default": ["#赤ちゃん", "#育児vlog", "#babyboo", "#赤ちゃんのいる暮らし", "#育休パパ"]},
-        "youtube":         {"label": "▶️ YouTube Shorts",       "default": ["#babyboo", "#baby", "#PR", "#育児", "#赤ちゃんのいる生活"]},
-    }
-
-    # ── AI提案ボタン
-    st.caption("🔍 ウェブを検索して最新トレンドを取得 → Claudeが分析して提案します")
-    if st.button("🌐 最新トレンドをウェブ検索して提案する", type="primary", use_container_width=True):
-        with st.spinner("ウェブで育児系ハッシュタグのトレンドを調査中...（30秒ほどかかります）"):
-            try:
-                from duckduckgo_search import DDGS
-                import anthropic as _ant
-                import json as _json
-
-                # ── 検索クエリ（プラットフォーム別）
-                _queries = [
-                    "インスタグラム 育児 ハッシュタグ トレンド 2025 2026 赤ちゃん",
-                    "TikTok 育児 ハッシュタグ 人気 赤ちゃん 育休パパ",
-                    "YouTube Shorts 育児 ハッシュタグ 赤ちゃん 人気",
-                    "instagram baby hashtags trending 2025 2026 japanese",
-                ]
-
-                # ── DuckDuckGoで検索してスニペットを収集
-                _search_results = []
-                with DDGS() as _ddgs:
-                    for _q in _queries:
-                        try:
-                            _results = list(_ddgs.text(_q, max_results=4))
-                            for _r in _results:
-                                _search_results.append(f"【{_q}】\n{_r.get('title','')}: {_r.get('body','')[:200]}")
-                        except Exception:
-                            pass
-
-                _search_text = "\n\n".join(_search_results[:12]) if _search_results else "（検索結果なし）"
-
-                # ── Claude に分析させる
-                _ant_client = _ant.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-                _suggest_prompt = f"""
-あなたは日本のSNSマーケティング専門家です。
-以下のウェブ検索結果をもとに、育児系AIベビーコンテンツに最適なハッシュタグを提案してください。
-
-【コンテンツ情報】
-・AIベビーキャラ「せなっち」生後{calc_month_age()}ヶ月の成長記録
-・育休中のパパ目線の育児日常
-・プラットフォーム：Instagram / TikTok / YouTube Shorts
-
-【ウェブ検索結果】
-{_search_text}
-
-【出力ルール】
-・各プラットフォームの特性に合わせて選ぶ
-・Instagram：保存・発見に強いタグ（ニッチ×人気のバランス）
-・TikTok：短くシンプルなタグ（アルゴリズム重視）
-・YouTube：検索流入に強いキーワード系タグ
-・検索結果に実際に登場したタグを優先する
-・各5個（固定タグの #babyboo は除く）
-
-【出力形式】JSONのみ。前置き不要。
-{{
-  "instagram_buzz": ["#タグ1", "#タグ2", "#タグ3", "#タグ4", "#タグ5"],
-  "tiktok":         ["#タグ1", "#タグ2", "#タグ3", "#タグ4", "#タグ5"],
-  "youtube":        ["#タグ1", "#タグ2", "#タグ3", "#タグ4", "#タグ5"]
-}}
-"""
-                _res = _ant_client.messages.create(
-                    model="claude-sonnet-4-6",
-                    max_tokens=500,
-                    messages=[{"role": "user", "content": _suggest_prompt}]
-                )
-                _raw = _res.content[0].text.strip()
-                if "```" in _raw:
-                    _raw = _raw.split("```json")[-1].split("```")[0].strip() if "```json" in _raw else _raw.split("```")[1].split("```")[0].strip()
-                _suggestions = _json.loads(_raw)
-                st.session_state["_hashtag_suggestions"] = _suggestions
-                st.success(f"✅ ウェブ検索{len(_search_results)}件をもとに提案しました！下で確認・承認してください。")
-
-            except ImportError:
-                st.error("duckduckgo-search パッケージが必要です。`pip install duckduckgo-search` を実行してください。")
-            except Exception as _e:
-                st.error(f"提案の取得に失敗しました: {_e}")
-
-    st.divider()
-
-    # ── 各プラットフォームの現在タグ vs 提案タグ
-    _suggestions = st.session_state.get("_hashtag_suggestions", {})
-
-    for _pf, _meta in _platform_meta.items():
-        st.markdown(f"#### {_meta['label']}")
-        _current = get_hashtags(_pf) or _meta["default"]
-        _col_cur, _col_new = st.columns(2)
-
-        with _col_cur:
-            st.caption("現在のタグ")
-            st.code(" ".join(_current))
-
-        with _col_new:
-            st.caption("提案タグ（編集可能）")
-            _suggested = _suggestions.get(_pf, _current)
-            _edited = st.text_area(
-                label=f"{_pf}_edit",
-                value=" ".join(_suggested),
-                height=80,
-                key=f"hashtag_edit_{_pf}",
-                label_visibility="collapsed",
-            )
-
-        if st.button(f"✅ この内容で保存する", key=f"save_hashtag_{_pf}", use_container_width=True):
-            _new_tags = [t.strip() for t in _edited.split() if t.strip().startswith("#")]
-            if _new_tags:
-                if set_hashtags(_pf, _new_tags):
-                    st.success(f"保存しました → 次回生成から反映されます")
-                    st.rerun()
-                else:
-                    st.error("保存に失敗しました（Google Sheets接続を確認）")
-            else:
-                st.warning("#から始まるハッシュタグを入力してください")
-
-        st.divider()

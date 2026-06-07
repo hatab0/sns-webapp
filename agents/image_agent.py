@@ -1234,7 +1234,8 @@ This image is for the {event['label']} celebration!
 """
 
     return f"""
-Create a hyper-realistic image generation prompt for ChatGPT GPT Image 2.
+Create a photographic image generation prompt for ChatGPT GPT Image 2.
+The ONLY acceptable result is something that looks like an unedited candid phone snapshot — NOT AI art, NOT digital rendering, NOT illustration.
 
 TARGET AESTHETIC: Replicate the viral Instagram account "baby_cubo_official."
 Their most-liked posts (3.36M, 2.14M likes) all share one quality:
@@ -1288,6 +1289,7 @@ Expression: {scene['expression']}
 For lying shots: overhead (true top-down) or 45-degree overhead angle.
 For face close-ups: eye-level or very slightly above.
 Lens: 35-85mm equivalent / f/1.8-2.8 very shallow DOF / 1:1 square
+Shot handheld — framing is slightly imperfect, not perfectly centered. Natural snapshot feel.
 
 ━━ LIGHTING ━━
 Soft natural window light from the front-side or slightly angled. Warm golden tone (slightly orange-warm).
@@ -1306,6 +1308,14 @@ Warm orange/gold-leaning tones. Low contrast. Slightly lifted shadows.
 Saturation slightly higher than neutral — skin looks rosy and alive.
 Like natural afternoon window light in a Japanese baby's bedroom.
 
+━━ PHOTO REALISM (critical — fight AI look) ━━
+• Slight natural sensor noise/grain from phone camera — NOT clinical clean
+• Baby skin shows real texture: natural pores visible on cheeks, tiny subtle redness at cheek tips
+• Baby's clothing has natural fabric wrinkles and texture — not perfectly smooth
+• Eyes have real wetness and depth — NOT glassy or rendered
+• Slight natural motion micro-blur if baby is moving
+• The overall image should feel like it was grabbed quickly on an iPhone 15 Pro — real imperfect life
+
 {event_block}
 ━━ ABSOLUTE PROHIBITIONS ━━
 • No studio backdrop, no professional lighting setup visible
@@ -1313,7 +1323,9 @@ Like natural afternoon window light in a Japanese baby's bedroom.
 • No text, watermarks, logos, overlays of any kind
 • No feminine hair accessories (no ribbons, bows, headbands)
 • No overly symmetrical/perfect AI composition
-• FINAL RESULT: must look like a real iPhone photo a parent posted on Instagram
+• No airbrushed or smoothed-over skin — real texture required
+• No "digital art", "3D render", "illustration", or "anime" style whatsoever
+• FINAL RESULT: must look like a real iPhone photo a parent posted on Instagram, indistinguishable from reality
 
 Output format: PNG / Size: 1024×1024 (1:1) / under 2MB
 """
