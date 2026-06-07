@@ -903,29 +903,38 @@ with tab_post:
                 padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #FFB6C1;">
         <div style="font-size:0.75rem; font-weight:700; color:#F06292; letter-spacing:0.08em; margin-bottom:0.2rem;">STEP 2</div>
         <div style="font-size:1.05rem; font-weight:800; color:#C2185B; margin-bottom:0.3rem;">📱 Instagram Reel に投稿</div>
-        <div style="font-size:0.85rem; color:#AD1457;">Meta Business Suite から直接投稿してください（アカウント保護のため）</div>
+        <div style="font-size:0.85rem; color:#AD1457;">STEP 1 完了後に有効になります</div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.info(
-        "⚠️ Buffer経由のInstagram投稿はサードパーティ自動化としてMeta制限のリスクがあります。\n\n"
-        "**手順：**\n"
-        "1. 下のキャプションをコピー\n"
-        "2. Cloudinaryの動画URLを開いてローカルに保存\n"
-        "3. Meta Business Suite でアップロード → キャプション貼り付け → 日時指定してスケジュール投稿"
-    )
-    st.link_button("📱 Meta Business Suite を開く", "https://business.facebook.com")
-
-    if scripts:
-        _ig_caption_post = st.session_state.get("ev_ig_caption", "")
-        if not _ig_caption_post:
-            for _s in (scripts or []):
-                if _s.get("type") == "reel":
-                    _ig_caption_post = _s.get("captions", {}).get("instagram", "")
-                    break
-        if _ig_caption_post:
-            st.caption("📋 Instagram キャプション（コピーして使用）")
-            st.code(_ig_caption_post, language=None)
+    if st.session_state.instagram_posted:
+        _ig_disp = _fmt_sched(st.session_state.get("ig_scheduled_at", ""), f"{_t3}頃")
+        st.success("✅ Instagram Reel 予約完了")
+        _igc1, _igc2 = st.columns(2)
+        with _igc1: st.info(f"📅 投稿予定: {_ig_disp}")
+        with _igc2: st.link_button("📋 Bufferで確認", "https://buffer.com")
+    elif not st.session_state.video_url:
+        st.button("📱 Instagram Reel に投稿する", use_container_width=True, disabled=True)
+        st.caption("⚠️ 先に動画をアップロードしてください")
+    else:
+        if st.button("📱 Instagram Reel に投稿する", type="primary", use_container_width=True):
+            with st.spinner("Bufferに予約中..."):
+                from agents.buffer_agent import run as buf_run
+                results = buf_run(_build_post_scripts(scripts), video_url=st.session_state.video_url, platforms=["instagram"])
+            ok_ig = any(r.get("buffer_posts", {}).get("instagram", {}).get("success") for r in results)
+            if ok_ig:
+                st.session_state.instagram_posted = True
+                _ic = (posts or [{}])[0].get("item_code", "")
+                if _ic:
+                    from utils.sheets_helper import increment_count as _inc
+                    _inc(_ic, "Instagram投稿数")
+                _ig_res = next((r.get("buffer_posts", {}).get("instagram", {}) for r in results if r.get("buffer_posts", {}).get("instagram", {}).get("success")), {})
+                st.session_state["ig_scheduled_at"] = _ig_res.get("scheduled_at", "")
+                st.rerun()
+            else:
+                errs = [r.get("buffer_posts", {}).get("instagram", {}).get("error", "") for r in results]
+                st.error(f"❌ Instagram 投稿失敗: {' | '.join(e for e in errs if e) or '不明なエラー'}")
+                st.link_button("⚙️ Bufferダッシュボードを確認", "https://buffer.com")
 
     st.divider()
 
