@@ -19,8 +19,12 @@ BUFFER_ORG_ID = os.getenv("BUFFER_ORGANIZATION_ID")
 BUFFER_GRAPHQL = "https://api.buffer.com/graphql"
 
 # ── プラットフォームごとのピーク時間帯（JST, 24h表記）
+# Instagram: 北米東海岸（EDT=UTC-4）ピークに合わせた設定
+#   01:00 JST = 12:00 EDT（ランチ）
+#   09:00 JST = 20:00 EDT（ゴールデンタイム）
+#   11:00 JST = 22:00 EDT（夜のピーク）
 PEAK_SLOTS = {
-    "instagram": [(12, 0), (19, 0), (21, 0)],
+    "instagram": [(1, 0), (9, 0), (11, 0)],
     "tiktok":    [(12, 0), (15, 0), (18, 0), (19, 0), (21, 0)],
     "youtube":   [(12, 0), (20, 0), (22, 0)],
 }
