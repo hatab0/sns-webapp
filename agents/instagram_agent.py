@@ -38,6 +38,20 @@ BUZZ_IG_ONELINER_POOL = [
     "Kawaii has no translation. It just is. 🇯🇵🍼",
 ]
 
+# TikTok用英語一言プール（日本語キャプションの末尾に追加）
+TIKTOK_EN_ONELINER_POOL = [
+    "POV: Japanese dad just melted. 🇯🇵🍼",
+    "This is kawaii and I won't explain further. 🇯🇵",
+    "Japanese babies just hit different. 🇯🇵💕",
+    "Kawaii unlocked. 🔓🍼",
+    "No translation needed. Just kawaii. 🇯🇵",
+    "Made in Japan. Maximum kawaii. 🇯🇵✨",
+    "Warning: extreme kawaii incoming. 🇯🇵🍼",
+    "Real baby. AI visuals. Japanese dad energy. 🇯🇵",
+    "The cutest thing you'll see today. 🥺🍼",
+    "Kawaii is a Japanese dad's love language. 🇯🇵💕",
+]
+
 BABY_SPEECH_BY_MONTH = {
     0:  {"sounds": ["おぎゃー", "ふにゃー"], "desc": "泣き声のみ"},
     1:  {"sounds": ["あー", "うー"], "desc": "クーイング"},
@@ -368,22 +382,23 @@ def _generate_buzz_instagram_caption(script: dict, mood: str = "", is_milestone:
 
 def _generate_tiktok_caption(script: dict, product_name: str = "", is_buzz: bool = False) -> str:
     """TikTok専用キャプション生成
-    ・冒頭30文字にキーワードを集中（アルゴリズム対策）
-    ・短め本文（1〜2行）＋固定ハッシュタグ5個
+    ・冒頭30文字にキーワード集中（アルゴリズム対策）
+    ・日本語本文 + 英語一言（プール） + 固定ハッシュタグ
     """
     concept = script.get("viral_concept", "") or script.get("drama_format", "")
     hook = script.get("hook", "")
     product_line = f"商品：{product_name}" if product_name else "商品紹介なし（バズ系コンテンツ）"
+    hashtags = TIKTOK_NORMAL_TAGS_STR if product_name else TIKTOK_FIXED_TAGS_STR
 
     prompt = f"""
 あなたは生後{MONTH_AGE}ヶ月の赤ちゃん「せなっち」を育てる育休中のパパです。
-TikTok用のキャプションを書いてください。
+TikTok用の日本語キャプション本文を書いてください。
 
 動画のコンセプト：{concept}
 フック：{hook}
 {product_line}
 
-【TikTokキャプションのルール】
+【ルール】
 ・1行目（冒頭30文字以内）に必ずキーワードを入れる
   例：「生後{MONTH_AGE}ヶ月の赤ちゃんが〇〇した瞬間」「AIで生み出した赤ちゃんが〇〇」
 ・本文は1〜2行・40〜60字（短く読ませる）
@@ -392,16 +407,18 @@ TikTok用のキャプションを書いてください。
 ・本文の最後に必ず次のどちらかを入れる（かわいい動画の場合は①を優先）
   ①「かわいいと思ったらコメントして🥺」
   ②「同じ経験ある人？💬」「フォローして見守ってね🍼」
-・末尾に必ず次のハッシュタグを全て入れる（追加・変更禁止）：{TIKTOK_NORMAL_TAGS_STR if product_name else TIKTOK_FIXED_TAGS_STR}
+・ハッシュタグは出力しない（後で自動付与される）
 
-キャプションテキストのみ出力。前置き不要。
+日本語本文のみ出力。前置き不要。
 """
     msg = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=300,
+        max_tokens=200,
         messages=[{"role": "user", "content": prompt}]
     )
-    return msg.content[0].text.strip()
+    japanese_body = msg.content[0].text.strip()
+    english_oneliner = random.choice(TIKTOK_EN_ONELINER_POOL)
+    return f"{japanese_body}\n{english_oneliner}\n{hashtags}"
 
 
 def run(product: dict) -> dict:
