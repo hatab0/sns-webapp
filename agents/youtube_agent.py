@@ -70,48 +70,55 @@ def _parse_json(text: str) -> dict:
 
 
 def _run_normal(instagram_script: dict, product: dict) -> dict:
-    """通常mode: English YouTube Shorts caption for product promotion"""
+    """通常mode: バイリンガル YouTube Shorts（英語メイン + 日本語商品説明）"""
     hook = instagram_script.get("hook", "")
     concept = instagram_script.get("viral_concept", "")
 
     prompt = f"""
-You are a YouTube Shorts creator running a baby content channel.
-Generate English content for a product review Short featuring "senacci", a {MONTH_AGE}-month-old baby shown through AI visuals (real baby, privacy protected).
-Channel angle: Japanese dad reviewing baby products.
+You are a bilingual YouTube Shorts creator — a Japanese dad on parental leave with a {MONTH_AGE}-month-old baby.
+Generate bilingual content for a product review Short featuring "senacci" (real baby, shown through AI visuals).
 
 Hook: {hook}
 Concept: {concept}
 Product: {product["name"]}
 
 TITLE RULES:
-- 50-70 characters total (first 40 chars visible in Shorts feed — keyword goes there)
-- Lead with the product benefit or baby reaction
-- Include baby's age or "Japanese baby dad" for context
+- English only, 50-70 characters (first 40 chars visible in Shorts feed — keyword goes first)
+- Lead with product benefit or baby reaction
 - End with " #Shorts"
 - Example: "Japanese dad tested this on his {MONTH_AGE}-month-old 🍼 #Shorts"
 
-DESCRIPTION RULES:
-- 2-3 sentences, natural English, SEO keyword-rich
-- Mention the product name naturally in the first sentence
-- CTA: "Save this for your own baby essentials list! 🙌"
-- Hashtags on a new line: #Shorts #baby #babyboo #PR #babyproducts
-- Max 5 hashtags
+DESCRIPTION RULES — follow this exact structure:
+
+[ENGLISH — 2 sentences]
+- Sentence 1: product context, SEO-friendly, mention product name naturally
+- Sentence 2: CTA ("Save this for your baby essentials list! 🙌")
+
+[blank line]
+
+[JAPANESE — starting with 🇯🇵]
+- Opening: 「🇯🇵 生後{MONTH_AGE}ヶ月のせなっちに[商品名]を試してみました！」
+- 1-2 sentences honest product explanation in Japanese (what it does, baby's reaction)
+- Last line: 「詳しくはプロフのROOMへ▼」
+
+[blank line]
+
+#Shorts #baby #babyboo #PR #babyproducts
 
 PIN COMMENT RULES:
-- 1-2 lines English
-- "🍼 Real baby, AI visuals — a Japanese dad reviewing baby must-haves."
-- Add: "Find the product link in our Rakuten ROOM 👇"
+- Line 1 (English): "🍼 Real baby, AI visuals — a Japanese dad reviewing baby must-haves."
+- Line 2 (Japanese): 「楽天ROOMで商品詳細を確認できます👇」
 
 Output JSON only. No preamble.
 {{
   "title": "YouTube title (under 100 chars)",
-  "description": "description text with hashtags",
-  "pin_comment": "pin comment text"
+  "description": "bilingual description text with hashtags",
+  "pin_comment": "bilingual pin comment text"
 }}
 """
     message = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=500,
+        max_tokens=600,
         messages=[{"role": "user", "content": prompt}]
     )
     return _parse_json(message.content[0].text.strip())

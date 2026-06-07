@@ -106,27 +106,42 @@ JSONのみ出力。前置き不要。
 
 
 def _generate_instagram_caption(script: dict, product_name: str) -> str:
-    """Instagramキャプションをスクリプトと独立して生成（安定性確保）"""
+    """Instagram通常mode: バイリンガルキャプション（英語メイン + 日本語商品説明）"""
     prompt = f"""
-あなたは生後{MONTH_AGE}ヶ月の赤ちゃん「せなっち」を育てる育休中のパパです。
-Instagram Reelのキャプションを書いてください。
+You are a bilingual Instagram creator — a Japanese dad on parental leave with a {MONTH_AGE}-month-old baby.
+Write a bilingual Instagram Reel caption for a product review post.
 
-動画のコンセプト：{script.get('viral_concept', '')}
-フック：{script.get('hook', '')}
-商品：{product_name}
+Video concept: {script.get('viral_concept', '')}
+Hook: {script.get('hook', '')}
+Product: {product_name}
 
-【ルール】
-・150〜200字程度
-・絵文字2〜3個
-・口語体（「ですます調」禁止）
-・「プロフのROOMから」の購入誘導を入れる
-・末尾に必ず以下を全て入れる（追加・変更禁止）：{FIXED_TAGS_STR}
+STRUCTURE (follow this exact order):
 
-キャプションテキストのみ出力。前置き不要。
+[ENGLISH SECTION — 2-3 lines]
+- Lead with the baby reaction or product benefit (emotional, punchy)
+- End with a CTA: "Comment 🥺 if you want to know more!" or "Save this for your baby list! 🙌"
+
+[blank line]
+
+[JAPANESE SECTION — starting with 🇯🇵]
+- Opening: 「🇯🇵 生後{MONTH_AGE}ヶ月のせなっちに[商品名]を使ってみました！」
+- 1-2 sentences of honest product explanation in Japanese (what it does, baby's reaction)
+- Last line: 「プロフのROOMからチェックできます！」
+
+[blank line]
+
+{FIXED_TAGS_STR}
+
+RULES:
+- English section: punchy, emotional, 2-3 lines max
+- Japanese section: conversational tone (口語体, ですます禁止)
+- Do NOT translate the English — Japanese section is an original product explanation
+
+Output caption text only. No preamble.
 """
     msg = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=400,
+        max_tokens=500,
         messages=[{"role": "user", "content": prompt}]
     )
     return msg.content[0].text.strip()
