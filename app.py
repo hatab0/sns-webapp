@@ -825,6 +825,7 @@ with tab_post:
 
     if st.session_state.video_url:
         st.success("✅ 動画アップロード済み")
+        st.video(st.session_state.video_url)
         if st.button("🔄 別の動画に差し替える（キャプションは維持）", use_container_width=True):
             st.session_state.video_url = None
             st.session_state.instagram_posted = False
