@@ -21,6 +21,7 @@ BUZZ_TAGS      = ["#babyboo", "#baby", "#育児", "#赤ちゃんのいる生活"
 BUZZ_TAGS_STR  = " ".join(BUZZ_TAGS)
 TIKTOK_FIXED_TAGS = ["#赤ちゃん", "#育児vlog", "#babyboo", "#赤ちゃんのいる暮らし", "#育休パパ"]
 TIKTOK_FIXED_TAGS_STR = " ".join(TIKTOK_FIXED_TAGS)
+TIKTOK_NORMAL_TAGS_STR = " ".join(TIKTOK_FIXED_TAGS + ["#PR"])  # 通常mode（商品PR）用
 
 # バズmode Instagram専用（海外向け・baby_cuboスタイル）
 BUZZ_IG_HASHTAGS = "#baby #babyboo #babylove #cutebaby #kawaii"
@@ -314,31 +315,25 @@ def _generate_buzz_caption_pattern_c(script: dict) -> str:
 
 
 def _generate_milestone_instagram_caption(script: dict) -> str:
-    """マイルストーン用Instagramキャプション（週1成長記録）"""
+    """マイルストーン用Instagramキャプション（週1成長記録・英語・海外向け）"""
     weeks_alive = calc_weeks_alive()
     week_in_month = calc_week_in_month()
-    speech_info = BABY_SPEECH_BY_MONTH.get(MONTH_AGE, BABY_SPEECH_BY_MONTH[4])
 
     prompt = f"""
-あなたは生後{MONTH_AGE}ヶ月の赤ちゃん「せなっち」を育てる育休中のパパです。
+You are a Japanese dad on parental leave sharing your {MONTH_AGE}-month-old baby's weekly growth on Instagram.
+Write an English weekly growth record caption.
 
-「今週の成長記録」Instagramキャプションを書いてください。
+Baby info: {MONTH_AGE} months old, week {week_in_month} of this month, week {weeks_alive} of life overall.
 
-【せなっち情報】
-・生後{MONTH_AGE}ヶ月（生まれてから{weeks_alive}週目）
-・今月第{week_in_month}週
-・この月齢の発声：{speech_info['desc']}（{' / '.join(speech_info['sounds'])}）
+STRUCTURE:
+- Line 1: "{MONTH_AGE}-month-old — week {week_in_month} update 🍼" (use this exact format)
+- 2-3 bullet points or short lines: realistic milestones for a {MONTH_AGE}-month-old (cooing, smiling, rolling, sitting, crawling, standing, etc.)
+- 1 emotional line (e.g. "Growing too fast 😭", "Can't believe how much changed this week")
+- Last line: "Same age parents — share your baby's progress in the comments! 👇"
+- Emojis: 2-3 max
+- Hashtags on a new line: #baby #babyboo #babymonths #babygrowth #{MONTH_AGE}monthsold
 
-【ルール】
-・冒頭に「生後{MONTH_AGE}ヶ月{week_in_month}週目🍼」を入れる
-・今週できるようになったことや変化を2〜3点（月齢{MONTH_AGE}ヶ月らしい具体的な内容）
-・感動・驚きの感情を1行
-・最後に「同じ月齢のパパママ、コメントで教えて！」
-・絵文字は2〜3個
-・ハッシュタグは合計5つのみ。次の4つは固定：{BUZZ_TAGS_STR}
-・残り1つは月齢タグ（例：#生後{MONTH_AGE}ヶ月）
-
-キャプションテキストのみ出力。前置き不要。
+Output caption text only. No preamble.
 """
     msg = client.messages.create(
         model="claude-sonnet-4-6",
@@ -397,7 +392,7 @@ TikTok用のキャプションを書いてください。
 ・本文の最後に必ず次のどちらかを入れる（かわいい動画の場合は①を優先）
   ①「かわいいと思ったらコメントして🥺」
   ②「同じ経験ある人？💬」「フォローして見守ってね🍼」
-・末尾に必ず次の5つのハッシュタグを全て入れる（追加・変更禁止）：{TIKTOK_FIXED_TAGS_STR}
+・末尾に必ず次のハッシュタグを全て入れる（追加・変更禁止）：{TIKTOK_NORMAL_TAGS_STR if product_name else TIKTOK_FIXED_TAGS_STR}
 
 キャプションテキストのみ出力。前置き不要。
 """
