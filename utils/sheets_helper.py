@@ -382,6 +382,82 @@ def set_reference_photo(month_age: int, url: str) -> bool:
         return False
 
 
+BUZZ_HISTORY_SHEET_NAME = "buzz_history"
+BUZZ_HISTORY_HEADERS = ["type", "value", "selected_at"]
+
+
+def _get_buzz_history_worksheet():
+    """buzz_history シートを取得。なければ自動作成。"""
+    client = _get_client()
+    if client is None:
+        return None
+    sheet_id = os.getenv("GOOGLE_SHEETS_ID", SPREADSHEET_ID)
+    spreadsheet = client.open_by_key(sheet_id)
+    try:
+        return spreadsheet.worksheet(BUZZ_HISTORY_SHEET_NAME)
+    except Exception:
+        ws = spreadsheet.add_worksheet(title=BUZZ_HISTORY_SHEET_NAME, rows=200, cols=3)
+        ws.update("A1", [BUZZ_HISTORY_HEADERS])
+        return ws
+
+
+def get_buzz_history() -> dict:
+    """バズmode選択履歴を返す。{type: [value, ...]} 古い順。"""
+    try:
+        ws = _get_buzz_history_worksheet()
+        if ws is None:
+            return {}
+        records = ws.get_all_records()
+        history: dict = {}
+        for rec in records:
+            t = rec.get("type", "")
+            v = rec.get("value", "")
+            if t and v:
+                history.setdefault(t, []).append(v)
+        return history
+    except Exception as e:
+        print(f"get_buzz_history error: {e}")
+        return {}
+
+
+def save_buzz_selections(selections: dict, max_per_type: int = 10) -> bool:
+    """
+    バズmodeで選ばれた衣装・背景等をSheetsに保存。
+    各typeで最新 max_per_type 件のみ保持し、シートを書き直す。
+    selections: {"costume": "xxx", "background": "yyy", ...}
+    """
+    try:
+        ws = _get_buzz_history_worksheet()
+        if ws is None:
+            return False
+        now = datetime.now(tz=JST).strftime("%Y-%m-%d %H:%M")
+
+        records = ws.get_all_records()
+        history: dict = {}
+        for rec in records:
+            t = rec.get("type", "")
+            v = rec.get("value", "")
+            ts = rec.get("selected_at", "")
+            if t and v:
+                history.setdefault(t, []).append((v, ts))
+
+        for t, v in selections.items():
+            if v:
+                history.setdefault(t, []).append((v, now))
+
+        new_rows: list = [BUZZ_HISTORY_HEADERS]
+        for t, items in history.items():
+            for v, ts in items[-max_per_type:]:
+                new_rows.append([t, v, ts])
+
+        ws.clear()
+        ws.update("A1", new_rows, value_input_option="USER_ENTERED")
+        return True
+    except Exception as e:
+        print(f"save_buzz_selections error: {e}")
+        return False
+
+
 def get_history() -> pd.DataFrame | None:
     """履歴タブ用: 全行を DataFrame で返す"""
     try:
