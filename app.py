@@ -200,7 +200,6 @@ _defaults = {
     "instagram_posted":     False,
     "tiktok_posted":        False,
     "youtube_posted":       False,
-    "buzz_mood":            "",
     "use_event":            False,
     "active_event":         None,
 }
@@ -409,7 +408,7 @@ if st.session_state.generated and st.session_state.posts:
     _col_info, _col_dl, _col_btn = st.columns([4, 1, 1])
     with _col_info:
         if _is_buzz:
-            st.success(f"✅ **バズmode** 生成完了 — {'気分: ' + st.session_state.buzz_mood if st.session_state.buzz_mood else 'おまかせ'}")
+            st.success("✅ **バズmode** 生成完了")
         else:
             st.success(f"✅ **通常mode** 生成完了 — {_p0['name'][:35]}　¥{_p0.get('price',0):,}")
     with _col_dl:
@@ -453,7 +452,6 @@ else:
         if st.button("バズmodeを選ぶ", use_container_width=True,
                      type="primary" if _is_buzz else "secondary", key="sel_buzz"):
             st.session_state.content_mode = "buzz"
-            st.session_state.buzz_mood = ""
             st.rerun()
 
     with _c_normal:
@@ -468,7 +466,6 @@ else:
         if st.button("通常modeを選ぶ", use_container_width=True,
                      type="primary" if not _is_buzz else "secondary", key="sel_normal"):
             st.session_state.content_mode = "normal"
-            st.session_state.buzz_mood = ""
             st.rerun()
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -478,26 +475,10 @@ else:
 
         _today_event = ""
 
-        _mood_selected = ""
         _kling_scene_key = None
         _event_for_gen = None
         _is_milestone = False
         if _is_buzz:
-            _mood_options = [
-                "（おまかせ）",
-                "😭 疲れた・眠い",
-                "😤 怒り・ムカつく",
-                "😊 嬉しい・幸せ",
-                "😂 笑える出来事",
-                "😱 びっくりした",
-                "🥹 感動した",
-                "😮‍💨 諦めた（開き直り）",
-            ]
-            _mood_selected = st.selectbox(
-                "😊 今日の気分（インスタ・YouTubeキャプションに反映）",
-                _mood_options,
-            )
-
             _is_milestone = st.checkbox(
                 "📅 今週の成長記録にする（週1マイルストーム投稿）",
                 help="チェックすると「生後○ヶ月○週目」形式の成長記録キャプションが生成されます",
@@ -547,8 +528,6 @@ else:
         )
 
     if _submitted:
-        _buzz_mood = "" if _mood_selected == "（おまかせ）" else _mood_selected
-        st.session_state.buzz_mood = _buzz_mood
 
         try:
             from agents import image_agent, instagram_agent, youtube_agent
@@ -619,7 +598,7 @@ else:
                     st.write("   ✅ プロンプト完了")
 
                     st.write("② Instagram・YouTube・TikTok キャプションを生成中...")
-                    reel_script = instagram_agent.run_buzz(mood=_buzz_mood, event=_event_for_gen, is_milestone=_is_milestone, buzz_post=buzz_post)
+                    reel_script = instagram_agent.run_buzz(event=_event_for_gen, is_milestone=_is_milestone, buzz_post=buzz_post)
                     reel_script = youtube_agent.run(instagram_script=reel_script, product=None)
                     st.write("   ✅ キャプション完了")
 
@@ -792,40 +771,6 @@ with tab_prompt:
                     _lc1, _lc2 = st.columns(2)
                     with _lc1: st.link_button("📊 Buffer トレンド音源", "https://buffer.com/resources/trending-audio-instagram/")
                     with _lc2: st.link_button("📊 Later トレンド情報", "https://later.com/blog/instagram-reels-trends/")
-
-            # ── バズモード：キャプションパターン表示
-            if _is_buzz:
-                _cap_pattern = s.get("buzz_caption_pattern", "")
-                _mood_label  = st.session_state.get("buzz_mood", "") or "おまかせ（ランダム）"
-                if _cap_pattern == "A":
-                    _pat_bg     = "#FFF8F0"
-                    _pat_border = "#FFB74D"
-                    _pat_hdr    = "#E65100"
-                    _pat_title  = "パターン A ─ 育児あるある悩み＋開き直り"
-                    _pat_icon   = "😇"
-                    _pat_desc   = "育児の悩み・疲れ・諦めを正直に吐き出し、開き直りオチでバズる形式。Instagram・YouTube・TikTok 全媒体でこのトーンを統一。"
-                    _pat_trigger = "😭 疲れた・眠い　/　😤 怒り・ムカつく　/　😮‍💨 諦めた（開き直り）"
-                else:
-                    _pat_bg     = "#F1FFF3"
-                    _pat_border = "#66BB6A"
-                    _pat_hdr    = "#2E7D32"
-                    _pat_title  = "パターン B ─ アメリカンジョーク形式"
-                    _pat_icon   = "😂"
-                    _pat_desc   = "「パパ今日〇〇した。でもせなっちは〇〇だった。」という落差ネタでバズる形式。Instagram・YouTube・TikTok 全媒体でこのトーンを統一。"
-                    _pat_trigger = "😊 嬉しい・幸せ　/　😂 笑える出来事　/　😱 びっくり　/　🥹 感動"
-                st.markdown(f"""
-                <div style="background:{_pat_bg}; border-radius:14px; padding:1rem 1.3rem;
-                            margin-bottom:1rem; border:2px solid {_pat_border};">
-                    <div style="font-size:1rem; font-weight:800; color:{_pat_hdr}; margin-bottom:0.25rem;">
-                        {_pat_icon} キャプションパターン：{_pat_title}
-                    </div>
-                    <div style="font-size:0.83rem; color:#444; margin-bottom:0.4rem;">{_pat_desc}</div>
-                    <div style="font-size:0.78rem; color:#777;">
-                        <b>このパターンが選ばれる気分：</b>{_pat_trigger}<br>
-                        <b>今回の気分：</b>{_mood_label}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
 
             # ── Instagram キャプション
             st.markdown("#### 📱 Instagram Reel キャプション")
