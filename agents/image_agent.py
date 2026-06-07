@@ -973,6 +973,18 @@ BUZZ_SCENE_BY_AGE = {
 
 # バズmode：コスチュームプール（baby_cubo_official スタイル）
 BUZZ_COSTUME_POOL = [
+    # ━━ baby_cubo_official スタイル：動物・フルーツ・ハート柄ロンパース ━━
+    # (分析結果：オレンジ・ブラック・イエロー・ブルー・グリーンが頻出)
+    "orange short-sleeve romper with small white star and heart print, paired with a cream knit beanie",
+    "black short-sleeve onesie with white heart and dot print, paired with a white pom-pom knit hat",
+    "yellow short-sleeve romper with scattered duck and chick print, paired with a mustard yellow knit beanie",
+    "bright blue short-sleeve onesie with whale and fish print, paired with a sky blue striped knit hat",
+    "green short-sleeve romper with frog and leaf print, paired with a mint green pom-pom beanie",
+    "white short-sleeve onesie with colorful animal print (bears, elephants, giraffes), paired with a pastel rainbow knit beanie",
+    "coral pink short-sleeve romper with strawberry and cherry print, paired with a soft pink knit hat",
+    "navy blue short-sleeve onesie with white bear and star print, paired with a navy pom-pom beanie",
+    "lemon yellow short-sleeve romper with pastel rainbow and cloud print, paired with a white chunky knit hat",
+    "peach short-sleeve onesie with small bunny and carrot print, paired with a peach ribbed knit beanie",
     # ━━ baby_cubo_official シグネチャー：シンプルオールインワン＋ニットビーニー ━━
     # (最もバズる組み合わせ - 毎投稿に近い頻度で使用)
     "solid soft pink onesie with a tiny white chunky-knit beanie hat",
@@ -1153,17 +1165,33 @@ BUZZ_ACCESSORY_POOL = [
 ]
 
 
+def _is_pokan_scene(scene: dict) -> bool:
+    """シーンがぽかん顔系（blank/dazed/stare）かどうかを判定する"""
+    text = (scene.get("expression", "") + scene.get("pose", "")).lower()
+    return any(kw in text for kw in (
+        "ぽかん", "blank", "dazed", "staring directly", "stares directly",
+        "stares gently", "wide innocent eyes", "wonder", "absorbed focus",
+    ))
+
+
 def _pick_buzz_scene() -> dict:
-    """バズmode：月齢に合ったシーンを選ぶ。直近6件を除外。ガグ枠は20%確率で選出。"""
+    """バズmode：月齢に合ったシーンを選ぶ。直近6件を除外。
+    ガグ枠20%・ぽかん顔40%・その他40%の確率で選出。"""
     global _buzz_used_recent
     age_group = _get_age_group(MONTH_AGE)
     scenes = BUZZ_SCENE_BY_AGE.get(age_group, BUZZ_SCENE_BY_AGE["4-5"])
 
     gag_scenes    = [s for s in scenes if s.get("is_gag")]
     normal_scenes = [s for s in scenes if not s.get("is_gag")]
+    pokan_scenes  = [s for s in normal_scenes if _is_pokan_scene(s)]
 
-    use_gag = bool(gag_scenes) and random.random() < 0.20
-    pool = gag_scenes if use_gag else normal_scenes
+    r = random.random()
+    if gag_scenes and r < 0.20:
+        pool = gag_scenes
+    elif pokan_scenes and r < 0.60:  # 20%〜60% → ぽかん顔優先（実質40%）
+        pool = pokan_scenes
+    else:
+        pool = normal_scenes
 
     recent_poses = _buzz_used_recent[-6:]
     available = [s for s in pool if s.get("pose") not in recent_poses]
@@ -1262,10 +1290,11 @@ For face close-ups: eye-level or very slightly above.
 Lens: 35-85mm equivalent / f/1.8-2.8 very shallow DOF / 1:1 square
 
 ━━ LIGHTING ━━
-{scene['lighting']}
-Natural window light ONLY — soft, directional, warm (orange/gold side). One light source.
-Even illumination across face, no hard shadows. Tiny natural catchlight in each eye.
-NO flash, NO studio equipment, NO ring lights, NO softboxes.
+Soft natural window light from the front-side or slightly angled. Warm golden tone (slightly orange-warm).
+Bright and airy overall exposure. Low contrast with lifted shadows.
+Skin luminous, rosy, and glowing — every chubby cheek detail visible.
+Tiny natural catchlight sparkling in each eye. No harsh shadows on the face.
+NO flash, NO studio equipment, NO ring lights, NO softboxes. ONE natural light source only.
 
 ━━ BACKGROUND (home, not studio) ━━
 {background}
