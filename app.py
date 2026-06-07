@@ -823,10 +823,18 @@ with tab_post:
     </div>
     """, unsafe_allow_html=True)
 
-    video_file = st.file_uploader("動画ファイルを選択（MP4 / MOV）", type=["mp4", "mov"], key="vid_uploader")
-    if video_file:
-        st.video(video_file)
-        if not st.session_state.video_url:
+    if st.session_state.video_url:
+        st.success("✅ 動画アップロード済み")
+        if st.button("🔄 別の動画に差し替える（キャプションは維持）", use_container_width=True):
+            st.session_state.video_url = None
+            st.session_state.instagram_posted = False
+            st.session_state.youtube_posted  = False
+            st.session_state.tiktok_posted   = False
+            st.rerun()
+    else:
+        video_file = st.file_uploader("動画ファイルを選択（MP4 / MOV）", type=["mp4", "mov"], key="vid_uploader")
+        if video_file:
+            st.video(video_file)
             if st.button("☁️ Cloudinaryにアップロード", type="primary", use_container_width=True):
                 with st.spinner("アップロード中..."):
                     from utils.cloudinary_helper import upload_bytes
@@ -837,8 +845,6 @@ with tab_post:
                     st.rerun()
                 else:
                     st.error("アップロードに失敗しました。Cloudinaryの設定を確認してください。")
-        else:
-            st.success("✅ 動画アップロード済み")
 
     st.divider()
 
