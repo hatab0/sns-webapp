@@ -394,6 +394,40 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 
+# ── 楽天マラソンアラート
+try:
+    from utils.rakuten_calendar import get_marathon_alert, get_next_marathon
+    _marathon = get_marathon_alert(days_before=3)
+    _next_m   = None if _marathon else get_next_marathon()
+
+    if _marathon:
+        if _marathon["is_active"]:
+            _days_left = (_marathon["end"] - datetime.now(tz=JST).date()).days
+            st.markdown(f"""
+<div style="background:linear-gradient(135deg,#BF0000,#FF0000);border-radius:16px;padding:1rem 1.4rem;margin-bottom:1rem;color:white;display:flex;align-items:center;gap:12px;">
+  <span style="font-size:2rem;">🛒</span>
+  <div>
+    <div style="font-weight:800;font-size:1.05rem;">{_marathon['label']} 開催中！</div>
+    <div style="font-size:0.85rem;opacity:0.9;">終了まであと {_days_left} 日 — 今すぐ通常modeで商品投稿を！</div>
+  </div>
+</div>""", unsafe_allow_html=True)
+        else:
+            _d = _marathon["days_until_start"]
+            _conf = "" if _marathon["confirmed"] else "（予想）"
+            st.markdown(f"""
+<div style="background:linear-gradient(135deg,#E65100,#FF6D00);border-radius:16px;padding:1rem 1.4rem;margin-bottom:1rem;color:white;display:flex;align-items:center;gap:12px;">
+  <span style="font-size:2rem;">⚡</span>
+  <div>
+    <div style="font-weight:800;font-size:1.05rem;">{_marathon['label']} まであと {_d} 日{_conf}</div>
+    <div style="font-size:0.85rem;opacity:0.9;">{_marathon['start'].strftime('%m/%d')} 〜 {_marathon['end'].strftime('%m/%d')} — 通常modeの投稿を今から仕込みましょう！</div>
+  </div>
+</div>""", unsafe_allow_html=True)
+    elif _next_m:
+        _conf = "" if _next_m["confirmed"] else "（予想）"
+        st.caption(f"📅 次回楽天イベント: {_next_m['emoji']} {_next_m['label']} {_next_m['start'].strftime('%m/%d')}〜{_next_m['end'].strftime('%m/%d')} （あと {_next_m['days_until_start']} 日）{_conf}")
+except Exception:
+    pass
+
 # ══════════════════════════════════════════════════════════════
 # SECTION A: モード選択 ＋ コンテンツ生成（タブの外）
 # ══════════════════════════════════════════════════════════════
