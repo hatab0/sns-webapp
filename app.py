@@ -442,75 +442,6 @@ try:
 except Exception:
     pass
 
-# ── HARMランキングセクション（マラソン7日以内 or 開催中に表示）
-try:
-    from utils.rakuten_calendar import get_marathon_alert, get_next_marathon as _get_next_m
-    from utils.harm_ranking import HARM_CATEGORIES
-    _m_check = get_marathon_alert(days_before=7) or (
-        _get_next_m() if (_get_next_m() or {}).get("days_until_start", 99) <= 7 else None
-    )
-    if _m_check and st.session_state.get("content_mode") == "normal":
-        with st.expander("🛍️ HARM別 売れ筋商品リサーチ（マラソン向け商品を探す）", expanded=False):
-            st.caption("楽天ランキング上位商品をHARMカテゴリ別に取得します。通常modeで使いたい商品を選んでください。")
-
-            _harm_tabs = st.tabs([
-                f"{v['emoji']} {k}" for k, v in HARM_CATEGORIES.items()
-            ])
-
-            for _hi, (_hkey, _hcat) in enumerate(HARM_CATEGORIES.items()):
-                with _harm_tabs[_hi]:
-                    st.markdown(f"**{_hcat['label']}** — {_hcat['description']}")
-
-                    if st.button(f"🔍 {_hkey}カテゴリのランキングを取得", key=f"harm_fetch_{_hkey}", use_container_width=True):
-                        with st.spinner("楽天APIからランキング取得中...（20〜30秒かかります）"):
-                            from utils.harm_ranking import fetch_harm_ranking
-                            _ranked = fetch_harm_ranking(_hkey, top_n=5)
-                            st.session_state[f"harm_products_{_hkey}"] = _ranked
-
-                    _ranked_products = st.session_state.get(f"harm_products_{_hkey}", [])
-                    if _ranked_products:
-                        st.markdown(f"**上位 {len(_ranked_products)} 件**")
-                        for _ri, _rp in enumerate(_ranked_products, 1):
-                            with st.container(border=True):
-                                _rc1, _rc2 = st.columns([3, 1])
-                                with _rc1:
-                                    st.markdown(f"**{_ri}. {_rp['name'][:50]}{'…' if len(_rp['name']) > 50 else ''}**")
-                                    st.caption(
-                                        f"¥{_rp['price']:,}  |  "
-                                        f"⭐ {_rp.get('review_average', 0):.1f}  |  "
-                                        f"レビュー {_rp.get('review_count', 0):,}件  |  "
-                                        f"{_rp.get('shop_name', '')}"
-                                    )
-                                    if _rp.get("catch_copy"):
-                                        st.caption(f"💬 {_rp['catch_copy'][:60]}")
-                                with _rc2:
-                                    st.link_button("🛒 楽天で確認", _rp["affiliate_url"], use_container_width=True)
-                                    if st.button("✏️ この商品で投稿生成", key=f"harm_use_{_hkey}_{_ri}", use_container_width=True, type="primary"):
-                                        st.session_state.content_mode = "normal"
-                                        st.session_state["harm_selected_product"] = {
-                                            "name":          _rp["name"],
-                                            "price":         _rp["price"],
-                                            "catch_copy":    _rp.get("catch_copy", ""),
-                                            "affiliate_url": _rp["affiliate_url"],
-                                            "image_url":     _rp.get("image_url", ""),
-                                        }
-                                        st.success(f"✅ 「{_rp['name'][:30]}…」を選択しました。下の通常modeで生成してください。")
-                                        st.rerun()
-                    elif st.session_state.get(f"harm_products_{_hkey}") is not None:
-                        st.warning("商品が取得できませんでした。キーワードを変えて再試行してください。")
-except Exception:
-    pass
-
-# ── HARM選択商品のインフォバー
-if st.session_state.get("harm_selected_product") and st.session_state.get("content_mode") == "normal":
-    _hsp = st.session_state["harm_selected_product"]
-    _hcol1, _hcol2 = st.columns([5, 1])
-    with _hcol1:
-        st.info(f"🛍️ 選択中の商品: **{_hsp['name'][:40]}{'…' if len(_hsp['name']) > 40 else ''}** — ¥{_hsp['price']:,}")
-    with _hcol2:
-        if st.button("✕ 解除", key="harm_clear"):
-            del st.session_state["harm_selected_product"]
-            st.rerun()
 
 # ══════════════════════════════════════════════════════════════
 # SECTION A: モード選択 ＋ コンテンツ生成（タブの外）
@@ -588,7 +519,125 @@ else:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── STEP 2: 入力フォーム（モードごと）
+    # ── STEP 2a: シーン・商品選択UI（通常modeのみ・フォームの外）
+    if not _is_buzz:
+        from agents.image_agent import PRODUCT_SCENE_MAP as _psm
+        from utils.harm_ranking import HARM_CATEGORIES, SCENE_KEYWORDS
+
+        with st.expander("🎥 Klingシーン・商品選択（ランキング取得）", expanded=not st.session_state.get("_kling_scene_key_sel") and not st.session_state.get("harm_selected_product")):
+            _tab_scene, _tab_harm = st.tabs(["🎬 シーンから選ぶ", "📊 HARMカテゴリから選ぶ"])
+
+            # ── タブ1: シーンから選ぶ
+            with _tab_scene:
+                st.caption("シーンを選ぶとそのカテゴリの楽天売れ筋ランキングを取得できます。")
+                _scene_keys   = list(_psm.keys())
+                _scene_labels = [_psm[k]["label"] for k in _scene_keys]
+                _cur_scene_idx = 0
+                _cur_scene = st.session_state.get("_kling_scene_key_sel")
+                if _cur_scene and _cur_scene in _scene_keys:
+                    _cur_scene_idx = _scene_keys.index(_cur_scene)
+
+                _sel_scene_label = st.selectbox(
+                    "シーンを選択",
+                    _scene_labels,
+                    index=_cur_scene_idx,
+                    key="scene_selectbox",
+                )
+                _sel_scene_key = _scene_keys[_scene_labels.index(_sel_scene_label)]
+
+                _scol1, _scol2 = st.columns([1, 1])
+                with _scol1:
+                    if st.button("✅ このシーンに決定", key="scene_confirm", use_container_width=True, type="primary"):
+                        st.session_state["_kling_scene_key_sel"] = _sel_scene_key
+                        st.rerun()
+                with _scol2:
+                    if st.button(f"🔍 「{_sel_scene_label}」のランキングを取得", key="scene_rank_fetch", use_container_width=True):
+                        with st.spinner("楽天APIからランキング取得中...（20〜30秒）"):
+                            from utils.harm_ranking import fetch_scene_ranking
+                            st.session_state[f"scene_products_{_sel_scene_key}"] = fetch_scene_ranking(_sel_scene_key, top_n=5)
+                        st.session_state["_kling_scene_key_sel"] = _sel_scene_key
+                        st.rerun()
+
+                _scene_products = st.session_state.get(f"scene_products_{_sel_scene_key}", [])
+                if _scene_products:
+                    st.markdown(f"**「{_sel_scene_label}」売れ筋ランキング 上位{len(_scene_products)}件**")
+                    for _si, _sp in enumerate(_scene_products, 1):
+                        with st.container(border=True):
+                            _sc1, _sc2 = st.columns([3, 1])
+                            with _sc1:
+                                st.markdown(f"**{_si}. {_sp['name'][:50]}{'…' if len(_sp['name'])>50 else ''}**")
+                                st.caption(f"¥{_sp['price']:,}  |  ⭐{_sp.get('review_average',0):.1f}  |  レビュー{_sp.get('review_count',0):,}件")
+                                if _sp.get("catch_copy"):
+                                    st.caption(f"💬 {_sp['catch_copy'][:60]}")
+                            with _sc2:
+                                st.link_button("🛒 楽天", _sp["affiliate_url"], use_container_width=True)
+                                if st.button("✏️ この商品で生成", key=f"scene_use_{_sel_scene_key}_{_si}", use_container_width=True, type="primary"):
+                                    st.session_state["harm_selected_product"] = {
+                                        "name": _sp["name"], "price": _sp["price"],
+                                        "catch_copy": _sp.get("catch_copy",""),
+                                        "affiliate_url": _sp["affiliate_url"],
+                                        "image_url": _sp.get("image_url",""),
+                                    }
+                                    st.session_state["_kling_scene_key_sel"] = _sel_scene_key
+                                    st.rerun()
+
+            # ── タブ2: HARMカテゴリから選ぶ
+            with _tab_harm:
+                st.caption("HARMカテゴリから売れ筋商品を探してシーンも自動設定されます。")
+                _htabs = st.tabs([f"{v['emoji']} {k}" for k, v in HARM_CATEGORIES.items()])
+                for _hi, (_hkey, _hcat) in enumerate(HARM_CATEGORIES.items()):
+                    with _htabs[_hi]:
+                        st.markdown(f"**{_hcat['label']}** — {_hcat['description']}")
+                        if st.button(f"🔍 ランキングを取得", key=f"harm_fetch_{_hkey}", use_container_width=True):
+                            with st.spinner("楽天APIからランキング取得中...（20〜30秒）"):
+                                from utils.harm_ranking import fetch_harm_ranking
+                                st.session_state[f"harm_products_{_hkey}"] = fetch_harm_ranking(_hkey, top_n=5)
+                            st.rerun()
+
+                        _hprods = st.session_state.get(f"harm_products_{_hkey}", [])
+                        if _hprods:
+                            for _ri, _rp in enumerate(_hprods, 1):
+                                with st.container(border=True):
+                                    _hc1, _hc2 = st.columns([3, 1])
+                                    with _hc1:
+                                        st.markdown(f"**{_ri}. {_rp['name'][:50]}{'…' if len(_rp['name'])>50 else ''}**")
+                                        st.caption(f"¥{_rp['price']:,}  |  ⭐{_rp.get('review_average',0):.1f}  |  レビュー{_rp.get('review_count',0):,}件")
+                                        if _rp.get("catch_copy"):
+                                            st.caption(f"💬 {_rp['catch_copy'][:60]}")
+                                    with _hc2:
+                                        st.link_button("🛒 楽天", _rp["affiliate_url"], use_container_width=True)
+                                        if st.button("✏️ この商品で生成", key=f"harm_use_{_hkey}_{_ri}", use_container_width=True, type="primary"):
+                                            st.session_state["harm_selected_product"] = {
+                                                "name": _rp["name"], "price": _rp["price"],
+                                                "catch_copy": _rp.get("catch_copy",""),
+                                                "affiliate_url": _rp["affiliate_url"],
+                                                "image_url": _rp.get("image_url",""),
+                                            }
+                                            st.session_state.pop("_kling_scene_key_sel", None)
+                                            st.rerun()
+                        elif st.session_state.get(f"harm_products_{_hkey}") is not None:
+                            st.warning("商品が取得できませんでした。再試行してください。")
+
+        # ── 選択状態サマリー
+        _sel_scene = st.session_state.get("_kling_scene_key_sel")
+        _sel_prod  = st.session_state.get("harm_selected_product")
+        if _sel_scene or _sel_prod:
+            _sum_cols = st.columns([4, 4, 1])
+            with _sum_cols[0]:
+                _scene_disp = _psm[_sel_scene]["label"] if _sel_scene else "自動検出"
+                st.success(f"🎥 シーン: **{_scene_disp}**")
+            with _sum_cols[1]:
+                if _sel_prod:
+                    st.success(f"🛍️ 商品: **{_sel_prod['name'][:25]}…**")
+                else:
+                    st.info("🛍️ 商品: 楽天APIから自動選出")
+            with _sum_cols[2]:
+                if st.button("✕ リセット", key="sel_reset"):
+                    st.session_state.pop("_kling_scene_key_sel", None)
+                    st.session_state.pop("harm_selected_product", None)
+                    st.rerun()
+
+    # ── STEP 2b: 入力フォーム（モードごと）
     with st.form("generation_form", clear_on_submit=False):
 
         _today_event = ""
@@ -629,15 +678,16 @@ else:
                         _event_for_gen = _ev
                         break
         else:
-            from agents.image_agent import PRODUCT_SCENE_MAP as _psm
-            _scene_options = {"🔍 自動検出（推奨）": None}
-            _scene_options.update({v["label"]: k for k, v in _psm.items()})
-            _scene_label = st.selectbox(
-                "🎥 Klingシーン（自動検出 or 手動指定）",
-                list(_scene_options.keys()),
-                help="商品に合った赤ちゃんの動きを選択。自動検出で外れた場合に変更してください。",
-            )
-            _kling_scene_key = _scene_options[_scene_label]
+            # 選択済みの値を session_state から読む
+            _kling_scene_key  = st.session_state.get("_kling_scene_key_sel")
+            _harm_picked = st.session_state.get("harm_selected_product")
+            if _kling_scene_key or _harm_picked:
+                from agents.image_agent import PRODUCT_SCENE_MAP as _psm_r
+                _scene_name = _psm_r[_kling_scene_key]["label"] if _kling_scene_key else "自動検出"
+                _prod_name  = f"  ／  🛍️ {_harm_picked['name'][:30]}…" if _harm_picked else ""
+                st.info(f"🎥 シーン: **{_scene_name}**{_prod_name}　　（上の選択UIで変更できます）")
+            else:
+                st.caption("🎥 Klingシーン・商品は上の「シーン・商品選択」から選んでください。未選択の場合は自動検出されます。")
 
         _submitted = st.form_submit_button(
             "🚀 コンテンツを生成する（約30〜60秒）",

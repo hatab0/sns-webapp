@@ -1,7 +1,7 @@
 """
 HARM × Baby Boo ランキング取得
-楽天APIを使ってHARMカテゴリ別の売れ筋商品を取得する。
-マラソン前の通常mode商品選定に使用。
+楽天APIを使ってHARMカテゴリ別・Klingシーン別の売れ筋商品を取得する。
+通常mode の商品選定に使用。
 """
 import time
 from agents.rakuten_agent import fetch_products
@@ -19,8 +19,6 @@ HARM_CATEGORIES = {
             "ベビーフード オーガニック 離乳食",
             "赤ちゃん 日焼け止め",
         ],
-        "min_price": 800,
-        "max_price": 8000,
     },
     "A": {
         "label": "A — 撮影・パパ活",
@@ -33,8 +31,6 @@ HARM_CATEGORIES = {
             "赤ちゃん 撮影 小道具",
             "ベビーフォト 小物 セット",
         ],
-        "min_price": 500,
-        "max_price": 8000,
     },
     "R": {
         "label": "R — 育児・おもちゃ",
@@ -48,8 +44,6 @@ HARM_CATEGORIES = {
             "スリーパー ガーゼ ベビー",
             "おしゃぶり 新生児",
         ],
-        "min_price": 1000,
-        "max_price": 15000,
     },
     "M": {
         "label": "M — 節約・消耗品",
@@ -62,41 +56,47 @@ HARM_CATEGORIES = {
             "ベビー ウェットティッシュ まとめ",
             "哺乳瓶 消毒 コスパ",
         ],
-        "min_price": 500,
-        "max_price": 6000,
     },
 }
 
+# Klingシーンキー → 楽天検索キーワード
+SCENE_KEYWORDS = {
+    "sleep":    ["スリーパー ベビー ガーゼ", "おくるみ 新生児 人気", "ベビー布団 洗える"],
+    "feeding":  ["哺乳瓶 消毒 セット", "離乳食 食器 セット 赤ちゃん", "スタイ ビブ 防水 赤ちゃん"],
+    "clothing": ["ベビー ロンパース 新生児", "ベビー 肌着 セット 新生児", "カバーオール 赤ちゃん 人気"],
+    "toy":      ["知育玩具 0歳 赤ちゃん", "ガラガラ 歯固め 赤ちゃん", "絵本 赤ちゃん 布"],
+    "bath":     ["ベビーバス 新生児 沐浴", "ベビーソープ 泡 赤ちゃん", "バスタオル 赤ちゃん ガーゼ"],
+    "carrier":  ["抱っこ紐 新生児 メッシュ", "ヒップシート 抱っこ紐 人気"],
+    "bouncer":  ["バウンサー ベビー 人気", "ハイローチェア 電動 赤ちゃん"],
+    "teether":  ["歯固め 赤ちゃん 安全", "おしゃぶり 新生児 人気"],
+    "stroller": ["ベビーカー 軽量 折りたたみ", "チャイルドシート 新生児 回転式"],
+    "skincare": ["ベビー 保湿クリーム 全身", "ベビーローション 低刺激", "赤ちゃん 日焼け止め"],
+    "blanket":  ["おくるみ ガーゼ 赤ちゃん", "スリーパー ガーゼ ベビー", "ブランケット ベビー 洗える"],
+}
 
-def fetch_harm_ranking(harm_key: str, top_n: int = 3) -> list:
-    """
-    指定HARMカテゴリの売れ筋上位商品を返す。
-    複数キーワードで検索し、レビュー数でソートして上位top_nを返す。
-    """
-    cat = HARM_CATEGORIES.get(harm_key)
-    if not cat:
-        return []
 
+def _fetch_ranking(keywords: list, top_n: int = 3) -> list:
+    """複数キーワードで検索してレビュー数順に上位top_nを返す共通ロジック"""
     all_products = []
     seen_names = set()
-
-    for i, keyword in enumerate(cat["keywords"]):
+    for i, keyword in enumerate(keywords):
         if i > 0:
             time.sleep(1.0)
-        products = fetch_products(keyword, hits=3)
-        for p in products:
+        for p in fetch_products(keyword, hits=3):
             if p["name"] not in seen_names:
                 seen_names.add(p["name"])
                 all_products.append(p)
-
     all_products.sort(key=lambda x: x.get("review_count", 0), reverse=True)
     return all_products[:top_n]
 
 
-def fetch_all_harm_rankings(top_n: int = 3) -> dict:
-    """全HARMカテゴリのランキングを返す。{harm_key: [products]}"""
-    result = {}
-    for key in HARM_CATEGORIES:
-        result[key] = fetch_harm_ranking(key, top_n=top_n)
-        time.sleep(0.5)
-    return result
+def fetch_harm_ranking(harm_key: str, top_n: int = 3) -> list:
+    """指定HARMカテゴリの売れ筋上位商品を返す"""
+    cat = HARM_CATEGORIES.get(harm_key)
+    return _fetch_ranking(cat["keywords"], top_n) if cat else []
+
+
+def fetch_scene_ranking(scene_key: str, top_n: int = 3) -> list:
+    """指定Klingシーンの売れ筋上位商品を返す"""
+    keywords = SCENE_KEYWORDS.get(scene_key)
+    return _fetch_ranking(keywords, top_n) if keywords else []
