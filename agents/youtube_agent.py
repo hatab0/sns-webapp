@@ -244,7 +244,14 @@ def run(instagram_script: dict, product: dict = None) -> dict:
     instagram_script.setdefault("captions", {})
     instagram_script["captions"]["youtube_title"] = result.get("title", default_title)
     description = result.get("description", "")
-    instagram_script["captions"]["youtube"] = description + "\n" + get_fixed_footer()
+
+    if not is_buzz and product and product.get("affiliate_url"):
+        _src_label = "📦 Amazon" if product.get("source") == "amazon" else "🛒 楽天"
+        _link_block = f"\n\n🛍️ Shop this / 商品はこちら:\n{_src_label} → {product['affiliate_url']}\n"
+        instagram_script["captions"]["youtube"] = description + _link_block + "\n" + get_fixed_footer()
+    else:
+        instagram_script["captions"]["youtube"] = description + "\n" + get_fixed_footer()
+
     instagram_script["captions"]["pin_comment"] = result.get("pin_comment", "")
 
     return instagram_script
