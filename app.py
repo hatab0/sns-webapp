@@ -629,6 +629,11 @@ else:
                                         "catch_copy": _sp.get("catch_copy",""),
                                         "affiliate_url": _sp["affiliate_url"],
                                         "image_url": _sp.get("image_url",""),
+                                        "item_code": _sp.get("item_code",""),
+                                        "keyword": _sp.get("keyword","harm_selected"),
+                                        "shop_name": _sp.get("shop_name",""),
+                                        "review_count": _sp.get("review_count",0),
+                                        "review_average": _sp.get("review_average",0.0),
                                     }
                                     st.session_state["_kling_scene_key_sel"] = _sel_scene_key
                                     st.rerun()
@@ -664,6 +669,11 @@ else:
                                                 "catch_copy": _rp.get("catch_copy",""),
                                                 "affiliate_url": _rp["affiliate_url"],
                                                 "image_url": _rp.get("image_url",""),
+                                                "item_code": _rp.get("item_code",""),
+                                                "keyword": _rp.get("keyword","harm_selected"),
+                                                "shop_name": _rp.get("shop_name",""),
+                                                "review_count": _rp.get("review_count",0),
+                                                "review_average": _rp.get("review_average",0.0),
                                             }
                                             st.session_state.pop("_kling_scene_key_sel", None)
                                             st.rerun()
@@ -770,11 +780,11 @@ else:
                             "affiliate_url": _harm_pick.get("affiliate_url", ""),
                             "image_url":     _harm_pick.get("image_url", ""),
                             "description":   "",
-                            "review_count":  0,
-                            "review_average": 0.0,
-                            "shop_name":     "",
-                            "item_code":     "",
-                            "keyword":       "harm_selected",
+                            "review_count":  _harm_pick.get("review_count", 0),
+                            "review_average": _harm_pick.get("review_average", 0.0),
+                            "shop_name":     _harm_pick.get("shop_name", ""),
+                            "item_code":     _harm_pick.get("item_code", ""),
+                            "keyword":       _harm_pick.get("keyword", "harm_selected"),
                         }
                         posts      = writer_agent.run([_harm_base])
                         all_scored = []
