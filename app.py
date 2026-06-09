@@ -449,7 +449,7 @@ try:
     _m_check = get_marathon_alert(days_before=7) or (
         _get_next_m() if (_get_next_m() or {}).get("days_until_start", 99) <= 7 else None
     )
-    if _m_check:
+    if _m_check and st.session_state.get("content_mode") == "normal":
         with st.expander("🛍️ HARM別 売れ筋商品リサーチ（マラソン向け商品を探す）", expanded=False):
             st.caption("楽天ランキング上位商品をHARMカテゴリ別に取得します。通常modeで使いたい商品を選んでください。")
 
@@ -502,7 +502,7 @@ except Exception:
     pass
 
 # ── HARM選択商品のインフォバー
-if st.session_state.get("harm_selected_product"):
+if st.session_state.get("harm_selected_product") and st.session_state.get("content_mode") == "normal":
     _hsp = st.session_state["harm_selected_product"]
     _hcol1, _hcol2 = st.columns([5, 1])
     with _hcol1:
