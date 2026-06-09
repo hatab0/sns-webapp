@@ -1,15 +1,15 @@
 """
-Amazon Creators API エージェント（PA-API v5廃止対応）
+Amazon アソシエイト商品検索エージェント（PA-API v5）
 ベビー商品を検索してアフィリエイトリンク付きで返す。
 rakuten_agent と同一フォーマットのリストを返すため analyzer_agent に直接渡せる。
 
 必要な環境変数:
-  AMAZON_ACCESS_KEY   : Creators API アクセスキー
-  AMAZON_SECRET_KEY   : Creators API シークレットキー
-  AMAZON_PARTNER_TAG  : アソシエイト トラッキングID（例: yoursite-22）
+  AMAZON_ACCESS_KEY   : PA-API アクセスキー
+  AMAZON_SECRET_KEY   : PA-API シークレットキー
+  AMAZON_PARTNER_TAG  : アソシエイト トラッキングID（例: babyboo0e4-22）
 
 注意:
-  - Amazon Creators API は30日間売上ゼロだとAPIアクセスが停止される
+  - PA-API は30日間売上ゼロだとAPIアクセスが停止される
   - FEリージョン（日本）は credential_version="2.3" が必須
   - pip install amazon-creatorsapi-python-sdk が必要
 """
@@ -54,7 +54,7 @@ def run(keywords: list = None, max_per_keyword: int = 3) -> list:
         print("⚠️  amazon-creatorsapi-python-sdk が未インストール（pip install amazon-creatorsapi-python-sdk）")
         return []
 
-    from utils.moshimo_helper import wrap_amazon
+    _partner_tag = os.getenv("AMAZON_PARTNER_TAG", "")
 
     api = AmazonCreatorsApi(
         access_key=os.getenv("AMAZON_ACCESS_KEY"),
@@ -114,9 +114,13 @@ def run(keywords: list = None, max_per_keyword: int = 3) -> list:
                 except Exception:
                     pass
 
-                # アフィリエイトURL（もしもでラップ）
+                # アフィリエイトURL（Amazonアソシエイト直接リンク）
+                asin = item.asin or ""
                 base_url = item.detail_page_url or ""
-                affiliate_url = wrap_amazon(base_url) if base_url else ""
+                if asin and _partner_tag:
+                    affiliate_url = f"https://www.amazon.co.jp/dp/{asin}?tag={_partner_tag}"
+                else:
+                    affiliate_url = base_url
 
                 products.append({
                     "name": (item.item_info.title.display_value

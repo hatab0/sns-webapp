@@ -91,12 +91,44 @@ def _fetch_ranking(keywords: list, top_n: int = 3) -> list:
 
 
 def fetch_harm_ranking(harm_key: str, top_n: int = 3) -> list:
-    """指定HARMカテゴリの売れ筋上位商品を返す"""
+    """指定HARMカテゴリの楽天売れ筋上位商品を返す"""
     cat = HARM_CATEGORIES.get(harm_key)
     return _fetch_ranking(cat["keywords"], top_n) if cat else []
 
 
 def fetch_scene_ranking(scene_key: str, top_n: int = 3) -> list:
-    """指定Klingシーンの売れ筋上位商品を返す"""
+    """指定Klingシーンの楽天売れ筋上位商品を返す"""
     keywords = SCENE_KEYWORDS.get(scene_key)
     return _fetch_ranking(keywords, top_n) if keywords else []
+
+
+def _fetch_ranking_amazon(keywords: list, top_n: int = 3) -> list:
+    """AmazonでキーワードごとにPA-API検索してレビュー数順に上位top_nを返す"""
+    try:
+        from agents.amazon_agent import run as _amz_run, is_configured as _amz_ok
+        if not _amz_ok():
+            return []
+        all_products = _amz_run(keywords=keywords, max_per_keyword=3)
+        seen = set()
+        deduped = []
+        for p in all_products:
+            key = p.get("item_code", p["name"])
+            if key not in seen:
+                seen.add(key)
+                deduped.append(p)
+        deduped.sort(key=lambda x: x.get("review_count", 0), reverse=True)
+        return deduped[:top_n]
+    except Exception:
+        return []
+
+
+def fetch_harm_ranking_amazon(harm_key: str, top_n: int = 3) -> list:
+    """指定HARMカテゴリのAmazon売れ筋上位商品を返す"""
+    cat = HARM_CATEGORIES.get(harm_key)
+    return _fetch_ranking_amazon(cat["keywords"], top_n) if cat else []
+
+
+def fetch_scene_ranking_amazon(scene_key: str, top_n: int = 3) -> list:
+    """指定KlingシーンのAmazon売れ筋上位商品を返す"""
+    keywords = SCENE_KEYWORDS.get(scene_key)
+    return _fetch_ranking_amazon(keywords, top_n) if keywords else []
