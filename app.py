@@ -302,6 +302,48 @@ with st.sidebar:
                     _ng_msg = f"（{_cl_ng}件失敗）" if _cl_ng else ""
                     st.success(f"✅ {_cl_ok}件削除完了 {_ng_msg}")
 
+    # ── 画像圧縮（楽天ROOM用）
+    st.markdown("---")
+    with st.expander("🗜️ 画像圧縮（楽天ROOM用）"):
+        st.caption("ChatGPTで生成した画像が2MB超の場合はここで圧縮してください")
+        _img_file = st.file_uploader("画像をアップロード", type=["png", "jpg", "jpeg"], key="compress_upload")
+        if _img_file:
+            _img_bytes = _img_file.read()
+            _orig_kb = len(_img_bytes) / 1024
+            st.caption(f"元のサイズ: **{_orig_kb:.0f} KB**")
+            _quality = st.slider("JPEG品質（高いほど画質が良い）", 60, 95, 82, key="compress_quality")
+            if st.button("🗜️ 圧縮する", use_container_width=True, key="compress_run"):
+                import io
+                from PIL import Image as _PILImage
+                _pil = _PILImage.open(io.BytesIO(_img_bytes)).convert("RGB")
+                _out = io.BytesIO()
+                _pil.save(_out, format="JPEG", quality=_quality, optimize=True)
+                _out_bytes = _out.getvalue()
+                _comp_kb = len(_out_bytes) / 1024
+                _ratio = (1 - _comp_kb / _orig_kb) * 100
+                st.session_state["_compress_result"] = {
+                    "bytes": _out_bytes,
+                    "comp_kb": _comp_kb,
+                    "ratio": _ratio,
+                    "stem": _img_file.name.rsplit(".", 1)[0],
+                }
+            _cr = st.session_state.get("_compress_result")
+            if _cr:
+                _comp_kb = _cr["comp_kb"]
+                _ratio = _cr["ratio"]
+                if _comp_kb > 2048:
+                    st.warning(f"⚠️ {_comp_kb:.0f} KB — まだ2MB超。品質を下げて再圧縮してください")
+                else:
+                    st.success(f"✅ {_comp_kb:.0f} KB（{_ratio:.0f}%削減）→ 楽天ROOMにアップロード可能")
+                st.download_button(
+                    "⬇️ 圧縮画像をダウンロード",
+                    data=_cr["bytes"],
+                    file_name=f"{_cr['stem']}_compressed.jpg",
+                    mime="image/jpeg",
+                    use_container_width=True,
+                    key="compress_dl",
+                )
+
 
 def _reset_session():
     """再生成時にセッション状態をリセット"""
