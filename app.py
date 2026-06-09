@@ -158,6 +158,23 @@ st.markdown("""
     box-shadow: none !important;
 }
 
+/* コンパクトSTEPバナー */
+.post-step {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0.45rem 1rem; border-radius: 10px;
+    margin-bottom: 0.7rem; border-left: 4px solid transparent;
+}
+.post-step .step-num {
+    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.1em;
+    opacity: 0.65; white-space: nowrap;
+}
+.post-step .step-title { font-size: 0.95rem; font-weight: 800; }
+.post-step-purple { background:#F3E5F5; border-left-color:#9C27B0; color:#6A1B9A; }
+.post-step-pink   { background:#FFF0F8; border-left-color:#F48FB1; color:#C2185B; }
+.post-step-blue   { background:#E3F2FD; border-left-color:#1976D2; color:#0D47A1; }
+.post-step-orange { background:#FFF3E0; border-left-color:#FFB74D; color:#E65100; }
+.post-step-dark   { background:#1e1e2e; border-left-color:#555;    color:#bbb;    }
+
 /* その他 */
 .stAlert { border-radius: 12px !important; }
 hr { border-color: #FFD6E7 !important; }
@@ -251,17 +268,11 @@ with st.sidebar:
                 else:
                     st.error("アップロードに失敗しました")
 
-        st.markdown("---")
-        st.caption(
-            "💡 月齢が上がったら新しい写真を登録してください。\n"
-            "登録した写真を毎回 ChatGPT の参照画像として使うことで、\n"
-            "せなっちの顔が一定に保たれます。"
-        )
+        st.caption("💡 月齢が上がったら写真を更新してください（ChatGPTの参照画像に使用）")
     except Exception as _e:
         st.caption(f"基準写真機能 読み込みエラー: {_e}")
 
     # ── Cloudinaryクリーンアップ
-    st.markdown("---")
     with st.expander("🗑️ Cloudinaryクリーンアップ"):
         st.caption("古い動画・画像ファイルをまとめて削除します")
         _cl_days = st.number_input("削除対象の経過日数", min_value=7, max_value=365, value=30, step=7, key="cl_days")
@@ -303,7 +314,6 @@ with st.sidebar:
                     st.success(f"✅ {_cl_ok}件削除完了 {_ng_msg}")
 
     # ── 画像圧縮（楽天ROOM用）
-    st.markdown("---")
     with st.expander("🗜️ 画像圧縮（楽天ROOM用）"):
         st.caption("ChatGPTで生成した画像が2MB超の場合はここで圧縮してください")
         _img_file = st.file_uploader("画像をアップロード", type=["png", "jpg", "jpeg"], key="compress_upload")
@@ -881,21 +891,13 @@ with tab_prompt:
 
     p = posts[0]
 
-    st.markdown("""
-    <div style="background:#F3E5F5; border-radius:12px; padding:0.6rem 1rem;
-                margin-bottom:1rem; border-left:4px solid #9C27B0;">
-        <span style="font-weight:800; color:#6A1B9A; font-size:0.95rem;">
-            📸 STEP 1 — ChatGPT・Kling AI 用プロンプト
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="post-step post-step-purple"><span class="step-num">STEP 1</span><span class="step-title">📸 ChatGPT・Kling AI 用プロンプト</span></div>', unsafe_allow_html=True)
 
     # ── 楽天ROOM紹介文（通常modeのみ）
     if not _is_buzz:
         st.markdown("#### 🛍️ 楽天ROOM 紹介文")
         _room_col1, _room_col2 = st.columns([3, 2])
         with _room_col1:
-            st.caption("📱 楽天ROOMアプリから手動投稿してください")
             st.link_button("🏠 楽天ROOMを開く", "https://room.rakuten.co.jp/room_3b6e1ab198/items")
         with _room_col2:
             _room_key = f"room_posted_{p.get('item_code','')}"
@@ -917,22 +919,14 @@ with tab_prompt:
         st.caption(f"せなっち写真＋商品写真を添付 → `{today}.png` として保存")
         st.link_button("🤖 ChatGPTを開く", "https://chatgpt.com")
         _prompt_block("gpt_img_txt", p.get("gpt_image_prompt", ""), height=220)
-        st.divider()
 
     # ── GPT Image プロンプト（動画用 / バズmode）
     if _is_buzz:
         st.markdown("#### 🎉 GPT Image プロンプト（バズmode・コスチューム）")
-        st.markdown("""
-        <div style="background:#FFF8E7; border-radius:10px; padding:0.7rem 1rem;
-                    border:1px solid #FFCC80; font-size:0.84rem; margin-bottom:0.5rem;">
-            📎 <b>ChatGPTへ添付する画像は1枚だけ</b>　— せなっちの写真のみ<br>
-            コスチューム・背景はプロンプトが自動生成します。生成のたびにコスチュームが変わります。
-        </div>
-        """, unsafe_allow_html=True)
-        st.caption(f"生成後 `{today}_buzz.png` として保存 → Kling AIで動画化")
+        st.caption(f"📎 添付はせなっちの写真1枚のみ。生成後 `{today}_buzz.png` として保存 → Kling AIで動画化")
     else:
         st.markdown("#### 🎬 GPT Image プロンプト（文字なし・動画用）")
-        st.caption(f"せなっち写真＋商品写真を添付 → `{today}_video.png` として保存 → Kling AIで動画化")
+        st.caption(f"せなっち写真＋商品写真を添付 → `{today}_video.png` → Kling AI動画化")
 
     # ── 基準写真リマインダー
     try:
@@ -960,11 +954,8 @@ with tab_prompt:
 
     st.link_button("🤖 ChatGPTを開く ", "https://chatgpt.com")
     _prompt_block("gpt_img_notxt", p.get("gpt_image_prompt_notxt", ""), height=220)
-    st.divider()
-
     # ── Kling AI 動画プロンプト
     st.markdown("#### 🎥 Kling AI 動画プロンプト")
-    st.caption("上記で生成した画像をKling AIにアップロード → Image to Video で使用")
     st.link_button("🎬 Kling AIを開く", "https://klingai.com")
     _prompt_block("video_prompt", p.get("video_prompt", ""), height=220)
 
@@ -974,14 +965,7 @@ with tab_prompt:
                 continue
             captions = s.get("captions", {})
 
-            st.markdown("""
-            <div style="background:#E3F2FD; border-radius:12px; padding:0.6rem 1rem;
-                        margin: 1.5rem 0 1rem; border-left:4px solid #1976D2;">
-                <span style="font-weight:800; color:#0D47A1; font-size:0.95rem;">
-                    📝 STEP 2 — SNSキャプション
-                </span>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown('<div class="post-step post-step-blue" style="margin-top:1rem;"><span class="step-num">STEP 2</span><span class="step-title">📝 SNSキャプション</span></div>', unsafe_allow_html=True)
 
             # ── Hook / BGM情報
             _hook = s.get("hook", "")
@@ -1007,17 +991,14 @@ with tab_prompt:
             # ── Instagram キャプション
             st.markdown("#### 📱 Instagram Reel キャプション")
             _prompt_block("ig_caption", captions.get("instagram", ""), height=160)
-            st.divider()
 
             # ── TikTok キャプション
             _tt_caption = captions.get("tiktok", "")
             st.markdown("#### 🎵 TikTok キャプション")
-            st.caption("冒頭30文字にキーワード集中・ハッシュタグ5個固定")
             if _tt_caption:
                 _prompt_block("tt_caption", _tt_caption, height=140)
             else:
                 st.warning("TikTokキャプションが生成されませんでした。再生成してください。")
-            st.divider()
 
             # ── YouTube Shorts
             st.markdown("#### ▶️ YouTube Shorts")
@@ -1046,14 +1027,7 @@ with tab_post:
     _t3  = (_now + timedelta(minutes=3)).strftime("%H:%M")
     _t48 = (_now + timedelta(minutes=48)).strftime("%H:%M")
     # ① 動画アップロード
-    st.markdown("""
-    <div style="background:linear-gradient(135deg,#F3E5F5,#EDE7F6); border-radius:16px;
-                padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #CE93D8;">
-        <div style="font-size:0.75rem; font-weight:700; color:#AB47BC; letter-spacing:0.08em; margin-bottom:0.2rem;">STEP 1</div>
-        <div style="font-size:1.05rem; font-weight:800; color:#6A1B9A; margin-bottom:0.3rem;">☁️ 動画をアップロード</div>
-        <div style="font-size:0.85rem; color:#7B1FA2;">Kling AIで生成した動画（MP4）をCloudinaryにアップロードします</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="post-step post-step-purple"><span class="step-num">STEP 1</span><span class="step-title">☁️ 動画をアップロード</span></div>', unsafe_allow_html=True)
 
     if st.session_state.video_url:
         st.success("✅ 動画アップロード済み")
@@ -1082,14 +1056,7 @@ with tab_post:
     st.divider()
 
     # ② Instagram Reel
-    st.markdown("""
-    <div style="background:linear-gradient(135deg,#FFF0F8,#FFE8EF); border-radius:16px;
-                padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #FFB6C1;">
-        <div style="font-size:0.75rem; font-weight:700; color:#F06292; letter-spacing:0.08em; margin-bottom:0.2rem;">STEP 2</div>
-        <div style="font-size:1.05rem; font-weight:800; color:#C2185B; margin-bottom:0.3rem;">📱 Instagram Reel に投稿</div>
-        <div style="font-size:0.85rem; color:#AD1457;">STEP 1 完了後に有効になります</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="post-step post-step-pink"><span class="step-num">STEP 2</span><span class="step-title">📱 Instagram Reel に投稿</span></div>', unsafe_allow_html=True)
 
     if st.session_state.instagram_posted:
         _ig_disp = _fmt_sched(st.session_state.get("ig_scheduled_at", ""), f"{_t3}頃")
@@ -1123,14 +1090,8 @@ with tab_post:
     st.divider()
 
     # ③ YouTube Shorts
-    st.markdown("""
-    <div style="background:linear-gradient(135deg,#FFF3E0,#FFE0B2); border-radius:16px;
-                padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #FFB74D;">
-        <div style="font-size:0.75rem; font-weight:700; color:#FFA726; letter-spacing:0.08em; margin-bottom:0.2rem;">STEP 3</div>
-        <div style="font-size:1.05rem; font-weight:800; color:#E65100; margin-bottom:0.3rem;">▶️ YouTube Shorts に投稿</div>
-        <div style="font-size:0.85rem; color:#BF360C;">STEP 1 完了後に有効になります / Bufferにチャンネル連携済みが前提</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="post-step post-step-orange"><span class="step-num">STEP 3</span><span class="step-title">▶️ YouTube Shorts に投稿</span></div>', unsafe_allow_html=True)
+    st.caption("Bufferにチャンネル連携済みであること、動画アップロード後に有効")
 
     if st.session_state.youtube_posted:
         _yt_disp = _fmt_sched(st.session_state.get("yt_scheduled_at", ""), f"{_t3}頃")
@@ -1210,14 +1171,7 @@ with tab_post:
     st.divider()
 
     # ④ TikTok
-    st.markdown("""
-    <div style="background:linear-gradient(135deg,#1a1a2e,#2d2d44); border-radius:16px;
-                padding:1.2rem 1.4rem; margin-bottom:0.8rem; border:1px solid #444;">
-        <div style="font-size:0.75rem; font-weight:700; color:#aaa; letter-spacing:0.08em; margin-bottom:0.2rem;">STEP 4</div>
-        <div style="font-size:1.05rem; font-weight:800; color:#fff; margin-bottom:0.3rem;">🎵 TikTok に投稿</div>
-        <div style="font-size:0.85rem; color:#aaa;">TikTok Studio から直接投稿してください（AI開示ラベル対応のため）</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="post-step post-step-dark"><span class="step-num">STEP 4</span><span class="step-title">🎵 TikTok に投稿</span></div>', unsafe_allow_html=True)
 
     _tt_caption_post = st.session_state.get("ev_tt_caption", "")
     if not _tt_caption_post:
@@ -1226,13 +1180,7 @@ with tab_post:
                 _tt_caption_post = _s.get("captions", {}).get("tiktok", "")
                 break
 
-    st.info(
-        "⚠️ Buffer経由のTikTok投稿はAI生成コンテンツの開示ラベルが付かず、削除される場合があります。\n\n"
-        "**手順：**\n"
-        "1. 下のキャプションをコピー\n"
-        "2. Cloudinaryの動画URLを開いてローカルに保存\n"
-        "3. TikTok Studio でアップロード → 「AIによって生成または編集されたコンテンツ」をON → スケジュール投稿"
-    )
+    st.info("⚠️ **Buffer非対応** — TikTok Studioで直接アップロードし「AIによって生成または編集されたコンテンツ」をONにしてスケジュール投稿してください。")
     st.link_button("🎵 TikTok Studio を開く", "https://www.tiktok.com/tiktokstudio")
 
     if _tt_caption_post:
