@@ -442,6 +442,76 @@ try:
 except Exception:
     pass
 
+# ── HARMランキングセクション（マラソン7日以内 or 開催中に表示）
+try:
+    from utils.rakuten_calendar import get_marathon_alert, get_next_marathon as _get_next_m
+    from utils.harm_ranking import HARM_CATEGORIES
+    _m_check = get_marathon_alert(days_before=7) or (
+        _get_next_m() if (_get_next_m() or {}).get("days_until_start", 99) <= 7 else None
+    )
+    if _m_check:
+        with st.expander("🛍️ HARM別 売れ筋商品リサーチ（マラソン向け商品を探す）", expanded=False):
+            st.caption("楽天ランキング上位商品をHARMカテゴリ別に取得します。通常modeで使いたい商品を選んでください。")
+
+            _harm_tabs = st.tabs([
+                f"{v['emoji']} {k}" for k, v in HARM_CATEGORIES.items()
+            ])
+
+            for _hi, (_hkey, _hcat) in enumerate(HARM_CATEGORIES.items()):
+                with _harm_tabs[_hi]:
+                    st.markdown(f"**{_hcat['label']}** — {_hcat['description']}")
+
+                    if st.button(f"🔍 {_hkey}カテゴリのランキングを取得", key=f"harm_fetch_{_hkey}", use_container_width=True):
+                        with st.spinner("楽天APIからランキング取得中...（20〜30秒かかります）"):
+                            from utils.harm_ranking import fetch_harm_ranking
+                            _ranked = fetch_harm_ranking(_hkey, top_n=5)
+                            st.session_state[f"harm_products_{_hkey}"] = _ranked
+
+                    _ranked_products = st.session_state.get(f"harm_products_{_hkey}", [])
+                    if _ranked_products:
+                        st.markdown(f"**上位 {len(_ranked_products)} 件**")
+                        for _ri, _rp in enumerate(_ranked_products, 1):
+                            with st.container(border=True):
+                                _rc1, _rc2 = st.columns([3, 1])
+                                with _rc1:
+                                    st.markdown(f"**{_ri}. {_rp['name'][:50]}{'…' if len(_rp['name']) > 50 else ''}**")
+                                    st.caption(
+                                        f"¥{_rp['price']:,}  |  "
+                                        f"⭐ {_rp.get('review_average', 0):.1f}  |  "
+                                        f"レビュー {_rp.get('review_count', 0):,}件  |  "
+                                        f"{_rp.get('shop_name', '')}"
+                                    )
+                                    if _rp.get("catch_copy"):
+                                        st.caption(f"💬 {_rp['catch_copy'][:60]}")
+                                with _rc2:
+                                    st.link_button("🛒 楽天で確認", _rp["affiliate_url"], use_container_width=True)
+                                    if st.button("✏️ この商品で投稿生成", key=f"harm_use_{_hkey}_{_ri}", use_container_width=True, type="primary"):
+                                        st.session_state.content_mode = "normal"
+                                        st.session_state["harm_selected_product"] = {
+                                            "name":          _rp["name"],
+                                            "price":         _rp["price"],
+                                            "catch_copy":    _rp.get("catch_copy", ""),
+                                            "affiliate_url": _rp["affiliate_url"],
+                                            "image_url":     _rp.get("image_url", ""),
+                                        }
+                                        st.success(f"✅ 「{_rp['name'][:30]}…」を選択しました。下の通常modeで生成してください。")
+                                        st.rerun()
+                    elif st.session_state.get(f"harm_products_{_hkey}") is not None:
+                        st.warning("商品が取得できませんでした。キーワードを変えて再試行してください。")
+except Exception:
+    pass
+
+# ── HARM選択商品のインフォバー
+if st.session_state.get("harm_selected_product"):
+    _hsp = st.session_state["harm_selected_product"]
+    _hcol1, _hcol2 = st.columns([5, 1])
+    with _hcol1:
+        st.info(f"🛍️ 選択中の商品: **{_hsp['name'][:40]}{'…' if len(_hsp['name']) > 40 else ''}** — ¥{_hsp['price']:,}")
+    with _hcol2:
+        if st.button("✕ 解除", key="harm_clear"):
+            del st.session_state["harm_selected_product"]
+            st.rerun()
+
 # ══════════════════════════════════════════════════════════════
 # SECTION A: モード選択 ＋ コンテンツ生成（タブの外）
 # ══════════════════════════════════════════════════════════════
@@ -583,37 +653,59 @@ else:
             if not _is_buzz:
                 from agents import rakuten_agent, analyzer_agent, writer_agent, quality_agent
                 with st.status("🍼 コンテンツを生成中...", expanded=True) as status:
-                    st.write("① 楽天で売れ筋商品を取得中...")
                     from utils.sheets_helper import (
                         get_product_history, get_recent_codes, upsert_product,
                         get_posted_affiliate_urls,
                     )
-                    history       = get_product_history()
-                    recent_codes  = get_recent_codes(history, days=7)
-                    posted_urls   = get_posted_affiliate_urls()
-                    products      = rakuten_agent.run()
-                    try:
-                        from agents import amazon_agent
-                        if amazon_agent.is_configured():
-                            st.write("   Amazon商品も取得中...")
-                            amazon_products = amazon_agent.run(max_per_keyword=2)
-                            products = products + amazon_products
-                    except Exception:
-                        pass
-                    top3 = analyzer_agent.run(products, history=history, recent_codes=recent_codes, posted_urls=posted_urls)
-                    if top3:
-                        _t0 = top3[0]
-                        _t0_code = _t0.get("item_code", "")
-                        _t0_hist = history.get(_t0_code, {})
-                        if _t0_hist.get("楽天ROOM投稿数", 0) > 0:
-                            st.warning(f"⚠️ 「{_t0['name'][:25]}」は楽天ROOMに投稿済みです。他に候補がなかったため選ばれました。楽天ROOMへの重複投稿はできません。")
-                        elif _t0_code in recent_codes:
-                            st.warning(f"⚠️ 「{_t0['name'][:25]}」は直近7日以内に生成済みです。他に候補がなかったため同じ商品が選ばれました。")
-                    all_scored = sorted(
-                        [p for p in products if "score" in p],
-                        key=lambda x: x["score"], reverse=True,
-                    )
-                    posts = writer_agent.run(top3)
+
+                    _harm_pick = st.session_state.get("harm_selected_product")
+                    if _harm_pick:
+                        st.write(f"① HARMランキング選択商品を使用: {_harm_pick['name'][:30]}…")
+                        _harm_base = {
+                            "name":          _harm_pick["name"],
+                            "price":         _harm_pick["price"],
+                            "catch_copy":    _harm_pick.get("catch_copy", ""),
+                            "affiliate_url": _harm_pick.get("affiliate_url", ""),
+                            "image_url":     _harm_pick.get("image_url", ""),
+                            "description":   "",
+                            "review_count":  0,
+                            "review_average": 0.0,
+                            "shop_name":     "",
+                            "item_code":     "",
+                            "keyword":       "harm_selected",
+                        }
+                        posts      = writer_agent.run([_harm_base])
+                        all_scored = []
+                        st.session_state.pop("harm_selected_product", None)
+                    else:
+                        st.write("① 楽天で売れ筋商品を取得中...")
+                        history      = get_product_history()
+                        recent_codes = get_recent_codes(history, days=7)
+                        posted_urls  = get_posted_affiliate_urls()
+                        products     = rakuten_agent.run()
+                        try:
+                            from agents import amazon_agent
+                            if amazon_agent.is_configured():
+                                st.write("   Amazon商品も取得中...")
+                                amazon_products = amazon_agent.run(max_per_keyword=2)
+                                products = products + amazon_products
+                        except Exception:
+                            pass
+                        top3 = analyzer_agent.run(products, history=history, recent_codes=recent_codes, posted_urls=posted_urls)
+                        if top3:
+                            _t0      = top3[0]
+                            _t0_code = _t0.get("item_code", "")
+                            _t0_hist = history.get(_t0_code, {})
+                            if _t0_hist.get("楽天ROOM投稿数", 0) > 0:
+                                st.warning(f"⚠️ 「{_t0['name'][:25]}」は楽天ROOMに投稿済みです。他に候補がなかったため選ばれました。楽天ROOMへの重複投稿はできません。")
+                            elif _t0_code in recent_codes:
+                                st.warning(f"⚠️ 「{_t0['name'][:25]}」は直近7日以内に生成済みです。他に候補がなかったため同じ商品が選ばれました。")
+                        all_scored = sorted(
+                            [p for p in products if "score" in p],
+                            key=lambda x: x["score"], reverse=True,
+                        )
+                        posts = writer_agent.run(top3)
+
                     st.write(f"   ✅ 商品選出完了：{posts[0]['name'][:30]}")
 
                     st.write("② 画像・動画プロンプトを生成中...")
