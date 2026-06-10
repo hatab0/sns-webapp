@@ -1447,13 +1447,21 @@ Output format: PNG / Size: 1024×1024 (square, 1:1) / File size: under 2097152 b
     return header + generated
 
 
-def generate_image_prompt_notxt_buzz(scene: dict, event: dict = None) -> str:
+def generate_image_prompt_notxt_buzz(scene: dict, event: dict = None, today_scene: str = "") -> str:
     """
     【動画用・バズmode】文字なし画像プロンプト（英語）
     scene は _pick_buzz_scene() で取得したものを渡す。
     保存ファイル名: YYYYMMDD_buzz.png
     """
-    prompt = _base_scene_text_buzz(scene, event=event) + """
+    _today_block = ""
+    if today_scene:
+        _today_block = f"""
+━━ TODAY'S SCENE (PRIORITY INSTRUCTION) ━━
+Today, the baby is: {today_scene}
+→ Adjust the pose and expression to naturally reflect this specific moment.
+→ Costume, background, and hat remain exactly as described above — do not change them.
+"""
+    prompt = _base_scene_text_buzz(scene, event=event) + _today_block + """
 【テキスト（Kling AI動画用・文字なし版）】
 ・テキスト・文字・手書き文字は一切入れない
 ・No text, no handwriting, no captions, no watermarks, no logos, no overlays of any kind
@@ -1626,7 +1634,7 @@ Negative Prompt:
     return result.strip()
 
 
-def generate_kling_prompt_buzz(scene: dict, event: dict = None) -> str:
+def generate_kling_prompt_buzz(scene: dict, event: dict = None, today_scene: str = "") -> str:
     """
     【バズmode】Kling AI（Image to Video）用動画プロンプト（英語）
     scene は _pick_buzz_scene() で取得したものを渡す（画像プロンプトと同じシーン）。
@@ -1637,12 +1645,14 @@ def generate_kling_prompt_buzz(scene: dict, event: dict = None) -> str:
     primary_sound = age_info["sounds"][0]
     motion_en = scene.get("kling_motion", age_info["motion_en"])
     event_line = f"・イベント：{event['emoji']} {event['label']}（衣装・背景がイベント仕様。雰囲気もお祝い感を出す）" if event else ""
+    today_scene_line = f"・今日のシーン（最優先）：{today_scene}（この動作・シーンを動画のメインの動きにすること）" if today_scene else ""
 
     prompt = f"""
 せなっち（生後{MONTH_AGE}ヶ月）の静止画を
 Kling AI（Image to Video）でバイラル動画にするプロンプトを英語で作成してください。
 
 【シーンの動き（画像と必ず一致させること）】
+{today_scene_line}
 ・主な動き：{motion_en}
 ・月齢({MONTH_AGE}ヶ月)の声のイメージ："{primary_sound}"
 ・「かわいすぎ」「友達に送りたい」という感情を引き出す
@@ -1709,9 +1719,10 @@ def run(products: list) -> list:
     return results
 
 
-def run_buzz(event: dict = None) -> dict:
+def run_buzz(event: dict = None, today_scene: str = "") -> dict:
     """バズmode：商品なしの画像・動画プロンプトを生成して返す。
     event が渡された場合はイベント専用の衣装・背景・キャプションテーマを使用する。
+    today_scene が渡された場合はそのシーンを画像・動画プロンプトに反映する。
     """
     global MONTH_AGE
     MONTH_AGE = calc_month_age()
@@ -1726,8 +1737,8 @@ def run_buzz(event: dict = None) -> dict:
         "affiliate_url": "",
         "item_code": "",
         "gpt_image_prompt": "",
-        "gpt_image_prompt_notxt": generate_image_prompt_notxt_buzz(scene, event=event),
-        "video_prompt": generate_kling_prompt_buzz(scene, event=event),
+        "gpt_image_prompt_notxt": generate_image_prompt_notxt_buzz(scene, event=event, today_scene=today_scene),
+        "video_prompt": generate_kling_prompt_buzz(scene, event=event, today_scene=today_scene),
         "room_description": "",
         "score": 0,
         "is_buzz_mode": True,

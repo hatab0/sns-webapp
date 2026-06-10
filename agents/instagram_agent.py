@@ -370,17 +370,31 @@ def _generate_milestone_tiktok_caption() -> str:
 def _generate_buzz_instagram_caption(script: dict, mood: str = "", is_milestone: bool = False) -> str:
     """バズmode用Instagramキャプション（baby_cuboスタイル・海外向け）
     英語一言（kawaii + 日本パパ視点）+ 固定5ハッシュタグのシンプル構成。
+    mood（今日のシーン）が渡された場合はシーンに合ったワンライナーをClaude生成。
     """
     if is_milestone:
         script["buzz_caption_pattern"] = "milestone"
         return _generate_milestone_instagram_caption(script)
 
-    oneliner = random.choice(BUZZ_IG_ONELINER_POOL)
-    script["buzz_caption_pattern"] = "kawaii_en"
+    if mood:
+        msg = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=80,
+            messages=[{"role": "user", "content": (
+                f"Write ONE kawaii English Instagram one-liner caption about a {MONTH_AGE}-month-old Japanese baby: \"{mood}\".\n"
+                "Style: short, warm, kawaii angle. Example: \"That pacifier is doing all the work. 🍼✨\"\n"
+                "Japanese dad sharing baby moments with the world. Under 15 words. English only. No hashtags. Output the one-liner only."
+            )}]
+        )
+        oneliner = msg.content[0].text.strip().strip('"')
+        script["buzz_caption_pattern"] = "kawaii_en_scene"
+    else:
+        oneliner = random.choice(BUZZ_IG_ONELINER_POOL)
+        script["buzz_caption_pattern"] = "kawaii_en"
     return f"{oneliner}\n{BUZZ_IG_HASHTAGS}"
 
 
-def _generate_tiktok_caption(script: dict, product_name: str = "", is_buzz: bool = False) -> str:
+def _generate_tiktok_caption(script: dict, product_name: str = "", is_buzz: bool = False, mood: str = "") -> str:
     """TikTok専用キャプション生成
     ・冒頭30文字にキーワード集中（アルゴリズム対策）
     ・日本語本文 + 英語一言（プール） + 固定ハッシュタグ
@@ -389,11 +403,13 @@ def _generate_tiktok_caption(script: dict, product_name: str = "", is_buzz: bool
     hook = script.get("hook", "")
     product_line = f"商品：{product_name}" if product_name else "商品紹介なし（バズ系コンテンツ）"
     hashtags = TIKTOK_NORMAL_TAGS_STR if product_name else TIKTOK_FIXED_TAGS_STR
+    mood_line = f"今日のシーン（最優先）：{mood}（1行目のキーワードとして必ずこのシーンを使うこと）" if mood else ""
 
     prompt = f"""
 あなたは生後{MONTH_AGE}ヶ月の赤ちゃん「せなっち」を育てる育休中のパパです。
 TikTok用の日本語キャプション本文を書いてください。
 
+{mood_line}
 動画のコンセプト：{concept}
 フック：{hook}
 {product_line}
@@ -547,7 +563,7 @@ def run_buzz(mood: str = "", event: dict = None, is_milestone: bool = False, buz
     else:
         caption_ig = _generate_buzz_instagram_caption(script, mood=mood)
         try:
-            caption_tt = _generate_tiktok_caption(script, is_buzz=True)
+            caption_tt = _generate_tiktok_caption(script, is_buzz=True, mood=mood)
         except Exception:
             caption_tt = f"生後{MONTH_AGE}ヶ月のせなっち、かわいすぎた😭 {TIKTOK_FIXED_TAGS_STR}"
 

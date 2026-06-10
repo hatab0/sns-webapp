@@ -672,10 +672,16 @@ else:
         _kling_scene_key = None
         _event_for_gen = None
         _is_milestone = False
+        _today_scene = ""
         if _is_buzz:
             _is_milestone = st.checkbox(
                 "📅 今週の成長記録にする（週1マイルストーム投稿）",
                 help="チェックすると「生後○ヶ月○週目」形式の成長記録キャプションが生成されます",
+            )
+            _today_scene = st.text_input(
+                "今日のせなっち（任意）",
+                placeholder="例：おしゃぶりしている / ミルクを飲んでいる / 眠そうにしている",
+                help="入力するとGPT Image・Kling・全キャプションにこのシーンが反映されます",
             )
 
             # ── イベントバナー
@@ -811,11 +817,11 @@ else:
                 _ev_label = f" {_event_for_gen['emoji']} {_event_for_gen['label']}" if _event_for_gen else ""
                 with st.status(f"🎉 バズmodeコンテンツを生成中...{_ev_label}", expanded=True) as status:
                     st.write(f"① バズmode 画像・動画プロンプトを生成中...{_ev_label}")
-                    buzz_post = image_agent.run_buzz(event=_event_for_gen)
+                    buzz_post = image_agent.run_buzz(event=_event_for_gen, today_scene=_today_scene)
                     st.write("   ✅ プロンプト完了")
 
                     st.write("② Instagram・YouTube・TikTok キャプションを生成中...")
-                    reel_script = instagram_agent.run_buzz(event=_event_for_gen, is_milestone=_is_milestone, buzz_post=buzz_post)
+                    reel_script = instagram_agent.run_buzz(event=_event_for_gen, is_milestone=_is_milestone, buzz_post=buzz_post, mood=_today_scene)
                     reel_script = youtube_agent.run(instagram_script=reel_script, product=None)
                     st.write("   ✅ キャプション完了")
 
