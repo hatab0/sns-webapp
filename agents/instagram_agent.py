@@ -40,7 +40,7 @@ BUZZ_IG_ONELINER_POOL = [
 
 # TikTok用英語一言プール（日本語キャプションの末尾に追加）
 TIKTOK_EN_ONELINER_POOL = [
-    "POV: Japanese dad just melted. 🇯🇵🍼",
+    "Japanese dad just melted. 🇯🇵🍼",
     "This is kawaii and I won't explain further. 🇯🇵",
     "Japanese babies just hit different. 🇯🇵💕",
     "Kawaii unlocked. 🔓🍼",
