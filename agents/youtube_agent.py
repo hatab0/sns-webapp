@@ -125,41 +125,45 @@ Output JSON only. No preamble.
 
 
 def _run_buzz_en(instagram_script: dict) -> dict:
-    """バズmode: English YouTube Shorts — kawaii + Japanese dad angle"""
-    hook = instagram_script.get("hook", "")
-    concept = instagram_script.get("viral_concept", "")
+    """バズmode: English YouTube Shorts — scene-specific kawaii + Japanese dad angle"""
+    visual_context = instagram_script.get("visual_context", "")
+    today_scene = instagram_script.get("today_scene", "")
+
+    if today_scene:
+        scene_line = f"Today's specific moment: {today_scene}"
+    elif visual_context:
+        scene_line = f"Video scene: {visual_context[:300]}"
+    else:
+        scene_line = f"A {MONTH_AGE}-month-old Japanese baby's candid kawaii moment."
 
     prompt = f"""
 You are a viral YouTube Shorts creator running a baby content channel.
 Generate English content for a Short featuring "senacci", a {MONTH_AGE}-month-old baby shown through AI visuals (real baby, privacy protected).
 Channel angle: Japanese dad sharing kawaii moments with the world. 🇯🇵
 
-Hook: {hook}
-Concept: {concept}
+{scene_line}
 
 TITLE RULES:
-- 50-70 characters total (first 40 chars visible in Shorts feed — keyword goes first)
-- Lead with emotion or curiosity. Use one of these angles:
-  • "This Japanese baby is too kawaii [emoji] #Shorts"
-  • "POV: you just met the cutest Japanese baby 🍼 #Shorts"
-  • "Can't stop watching this Japanese baby [emoji] #Shorts"
-  • "This baby's face just healed my whole week #Shorts"
-  • "Japanese dad's baby [action] and it's the cutest thing #Shorts"
-- Include "kawaii" or "Japanese" to differentiate
+- 50-70 characters total (first 40 chars visible in Shorts feed)
+- Write a title that describes THIS SPECIFIC SCENE — not a generic "kawaii" filler
+- Lead with the emotion or action happening in the scene
+- Include "Japanese" or "Japanese dad" or "{MONTH_AGE}-month-old" to differentiate
 - End with " #Shorts"
+- Make it feel relatable or irresistible to share
+- Do NOT use generic phrases like "too kawaii" as a standalone title — anchor it to the scene
 
 DESCRIPTION RULES:
-- 2-3 sentences, natural English, keyword-rich for SEO
-- Sentence 1: context ("A Japanese dad sharing his baby's cutest moments through AI visuals. 🇯🇵")
-- Sentence 2: emotional CTA hook ("Comment 🥺 if this healed your whole day!")
+- 2-3 sentences, natural English, specific to the scene above
+- Sentence 1: describe what's happening (reference the scene — make the viewer feel like they know exactly what to expect)
+- Sentence 2: emotional CTA that fits the scene's mood
 - Hashtags on a new line: #Shorts #cutebaby #kawaii #baby #babyboo
 - Max 5 hashtags
 
 PIN COMMENT RULES:
 - 1-2 lines English
-- Start with: "🍼 Real baby, AI visuals —"
-- Add a warm one-liner about the channel angle
-- End with subscribe CTA ("Subscribe to watch her grow 👶")
+- Start with "🍼 Real baby, AI visuals —"
+- Add a warm one-liner about this specific moment (not generic channel description)
+- End with subscribe CTA
 
 Output JSON only. No preamble.
 {{
@@ -236,7 +240,7 @@ def run(instagram_script: dict, product: dict = None) -> dict:
         default_title = f"{MONTH_AGE}-month-old baby growth record 🍼 #Shorts"
     elif is_buzz:
         result = _run_buzz_en(instagram_script)
-        default_title = f"This Japanese baby is too kawaii 🥺 #Shorts"
+        default_title = f"This {MONTH_AGE}-month-old Japanese baby 🥺 #Shorts"
     else:
         result = _run_normal(instagram_script, product)
         default_title = f"Japanese dad tested this on his {MONTH_AGE}-month-old 🍼 #Shorts"

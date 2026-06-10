@@ -550,6 +550,8 @@ def run_buzz(mood: str = "", event: dict = None, is_milestone: bool = False, buz
         else:
             visual_context = vp[:400]
         script["visual_context"] = visual_context
+    if mood:
+        script["today_scene"] = mood
 
     if event:
         caption_ig = _generate_seasonal_instagram_caption(event)
