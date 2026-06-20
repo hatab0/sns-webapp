@@ -459,28 +459,23 @@ def run(product: dict) -> dict:
 
 
 def _generate_seasonal_instagram_caption(event: dict) -> str:
-    """イベント専用 Instagram キャプションを生成する"""
-    hashtags = event.get("hashtags", f"#babyboo #赤ちゃんのいる生活 #育児")
+    """イベント専用 Instagram キャプションを生成する（バズmodeは英語・海外向け）"""
     prompt = f"""
-育休中のパパとして、{event['emoji']}「{event['label']}」の特別なInstagramキャプションを書いてください。
+You are a Japanese dad on parental leave sharing your {MONTH_AGE}-month-old baby on Instagram for an overseas (North American) audience.
+Write a short, warm, kawaii English caption celebrating this Japanese seasonal occasion: {event['emoji']} "{event['label']}".
 
-【せなっち情報】生後{MONTH_AGE}ヶ月
-
-【テーマ・雰囲気】
+Theme / mood (translate the feeling into natural English, do NOT output Japanese):
 {event['caption_theme'].format(age=MONTH_AGE)}
 
-【使いたいキーワード（すべて使わなくてもOK）】
-{event['caption_keywords'].format(age=MONTH_AGE)}
+RULES:
+- English only. No Japanese text in the body — refer to the occasion by its natural English name (e.g. Father's Day, Tanabata / Star Festival).
+- 1-2 short emotional lines, kawaii angle (e.g. "Too cute to handle 😭").
+- Lead with the emotion; mention it's the baby's first time celebrating if it fits.
+- 1-2 emojis max.
+- End with a warm question or thank-you to invite comments.
+- Hashtags on a new line: {BUZZ_IG_HASHTAGS}
 
-【ルール】
-・本文は60〜100字（短く感情的に）
-・口語体（ですます禁止）
-・感情を先に出す（「かわいすぎた」「泣きそう」など）
-・絵文字は1〜2個のみ
-・最後に共感の問いかけまたは感謝の一言を入れる
-・ハッシュタグは必ず最後に: {hashtags}
-
-キャプションテキストのみ出力。前置き不要。
+Output caption text only. No preamble.
 """
     msg = client.messages.create(
         model="claude-sonnet-4-6",
