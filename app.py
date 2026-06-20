@@ -521,7 +521,7 @@ if st.session_state.generated and st.session_state.posts:
         }
         st.download_button(
             "📥 保存",
-            data=_json_dl.dumps(_dl_banner, ensure_ascii=False, indent=2),
+            data=_json_dl.dumps(_dl_banner, ensure_ascii=False, indent=2, default=str),
             file_name=f"babyboo_{datetime.now(tz=JST).strftime('%Y%m%d')}.json",
             mime="application/json",
             use_container_width=True,
