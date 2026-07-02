@@ -51,6 +51,24 @@ PR_EXPRESSION_POOL = [
 
 # 直近使用履歴（重複防止）
 _pr_used_recent: dict = {"pose": [], "accessory": [], "expression": []}
+_pr_history_loaded = False
+
+
+def _load_pr_history():
+    """Sheetsから通常mode選択履歴を読み込む（初回のみ）。再起動後も重複防止を維持するため"""
+    global _pr_history_loaded
+    if _pr_history_loaded:
+        return
+    _pr_history_loaded = True
+    try:
+        from utils.sheets_helper import get_buzz_history
+        history = get_buzz_history()
+        for key in ("pose", "accessory", "expression"):
+            if f"pr_{key}" in history:
+                _pr_used_recent[key] = list(history[f"pr_{key}"])
+        print(f"✅ 通常mode履歴をSheetsから読み込み: { {k: len(v) for k, v in _pr_used_recent.items()} }")
+    except Exception as e:
+        print(f"通常mode履歴の読み込みに失敗（メモリのみ使用）: {e}")
 
 
 def _pick_no_repeat(pool: list, used: list, window: int) -> str:
@@ -1697,6 +1715,9 @@ Negative Prompt:
 
 def run(products: list) -> list:
     """通常mode：商品ありの画像・動画プロンプトを生成して返す"""
+    global MONTH_AGE
+    MONTH_AGE = calc_month_age()
+    _load_pr_history()
     print("画像・動画プロンプト生成エージェント 起動")
     results = []
     for i, product in enumerate(products):
@@ -1704,6 +1725,11 @@ def run(products: list) -> list:
         acc = _pick_no_repeat(CUTE_ACCESSORIES, _pr_used_recent["accessory"], window=5)
         pose = _pick_no_repeat(PR_POSE_POOL, _pr_used_recent["pose"], window=5)
         expression = _pick_no_repeat(PR_EXPRESSION_POOL, _pr_used_recent["expression"], window=4)
+        try:
+            from utils.sheets_helper import save_buzz_selections
+            save_buzz_selections({"pr_pose": pose, "pr_accessory": acc, "pr_expression": expression})
+        except Exception:
+            pass
         print(f"    アクセサリー: {acc}")
         print(f"    ポーズ: {pose[:50]}...")
         print(f"    表情: {expression[:50]}...")
