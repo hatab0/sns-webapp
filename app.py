@@ -407,6 +407,26 @@ def _build_post_scripts(scripts: list) -> list:
     return result
 
 
+def _log_post_metric(platform: str):
+    """post_metricsシートへ投稿メタデータを記録（成果の数字は後から手入力）"""
+    try:
+        from utils.sheets_helper import log_post_meta
+        p = (st.session_state.posts or [{}])[0]
+        if p.get("is_buzz_mode"):
+            mode = "マイルストーン" if st.session_state.get("gen_is_milestone") else "バズ"
+            scene = p.get("buzz_scene", "")
+            costume = (p.get("buzz_selections") or {}).get("costume", "")
+            pname = ""
+        else:
+            mode = "通常"
+            scene = p.get("selected_pose", "")
+            costume = p.get("selected_costume", "")
+            pname = p.get("name", "")
+        log_post_meta(platform=platform, mode=mode, scene=scene, costume=costume, product_name=pname)
+    except Exception:
+        pass
+
+
 # ── ヘッダー
 today_str = datetime.now(tz=JST).strftime("%Y年%m月%d日")
 icon_img  = f'<img src="data:image/png;base64,{_icon_b64}" class="header-icon">' if _icon_b64 else '<div style="font-size:4rem;">🍼</div>'
@@ -832,6 +852,7 @@ else:
                 st.session_state.all_products   = []
                 st.session_state.generated      = True
                 st.session_state.tiktok_posted  = False
+                st.session_state["gen_is_milestone"] = _is_milestone
 
             st.balloons()
             st.rerun()
@@ -839,6 +860,97 @@ else:
         except Exception as e:
             st.error(f"エラーが発生しました: {e}")
             raise
+
+
+# ══════════════════════════════════════════════════════════════
+# SECTION: 成果計測（生成の有無に関わらず常時利用可）
+# ══════════════════════════════════════════════════════════════
+with st.expander("📈 成果計測 — 投稿の数字・フォロワー推移を記録する"):
+    import pandas as _pd_m
+    _m_tab1, _m_tab2 = st.tabs(["📊 投稿の成果入力", "👥 フォロワー推移"])
+
+    with _m_tab1:
+        st.caption("Buffer予約・TikTok投稿時に自動で行が追加されます。週1回、各SNSの数字を入力→保存してください。")
+        if st.button("🔍 投稿一覧を読み込む", use_container_width=True, key="metrics_load"):
+            with st.spinner("Google Sheetsから取得中..."):
+                from utils.sheets_helper import get_post_metrics_df
+                st.session_state["_metrics_df"] = get_post_metrics_df()
+
+        _mdf = st.session_state.get("_metrics_df")
+        if _mdf is None:
+            pass
+        elif _mdf.empty:
+            st.info("📭 まだ投稿記録がありません。投稿すると自動で行が追加されます。")
+        else:
+            _edited_mdf = st.data_editor(
+                _mdf,
+                use_container_width=True,
+                hide_index=True,
+                num_rows="fixed",
+                disabled=["post_id", "投稿日", "媒体", "mode", "シーン", "衣装", "商品名", "計測日"],
+                column_config={
+                    "再生数":   st.column_config.NumberColumn("再生数", min_value=0, step=1),
+                    "いいね":   st.column_config.NumberColumn("いいね", min_value=0, step=1),
+                    "コメント": st.column_config.NumberColumn("コメント", min_value=0, step=1),
+                    "保存":     st.column_config.NumberColumn("保存", min_value=0, step=1),
+                    "シーン":   st.column_config.TextColumn("シーン", width="medium"),
+                    "衣装":     st.column_config.TextColumn("衣装", width="medium"),
+                },
+                key="metrics_editor",
+            )
+            if st.button("💾 成果を保存する", type="primary", use_container_width=True, key="metrics_save"):
+                with st.spinner("保存中..."):
+                    from utils.sheets_helper import save_post_metrics_df
+                    _ok_m = save_post_metrics_df(_edited_mdf)
+                if _ok_m:
+                    st.session_state["_metrics_df"] = None
+                    st.success("✅ 保存しました")
+                else:
+                    st.error("❌ 保存に失敗しました")
+
+            # 傾向サマリー: 何がバズるかを可視化
+            try:
+                _sm = _edited_mdf.copy()
+                _sm["再生数"] = _pd_m.to_numeric(_sm["再生数"], errors="coerce")
+                _sm = _sm.dropna(subset=["再生数"])
+                if not _sm.empty:
+                    st.markdown("##### 💡 媒体 × mode 平均再生数")
+                    _agg = (_sm.groupby(["媒体", "mode"])["再生数"]
+                            .agg(平均再生数="mean", 投稿数="count").round(0).reset_index())
+                    st.dataframe(_agg, hide_index=True, use_container_width=True)
+                    _top = _sm.nlargest(3, "再生数")[["投稿日", "媒体", "シーン", "衣装", "再生数"]]
+                    st.markdown("##### 🏆 再生数トップ3")
+                    st.dataframe(_top, hide_index=True, use_container_width=True)
+            except Exception:
+                pass
+
+    with _m_tab2:
+        st.caption("週1回（毎週同じ曜日推奨）、各SNSの現在フォロワー数を記録してください。目標: TikTok 1,000人でShop申請🎯")
+        _fc1, _fc2, _fc3 = st.columns(3)
+        _fol_ig = _fc1.number_input("Instagram", min_value=0, step=1, key="fol_ig")
+        _fol_tt = _fc2.number_input("TikTok", min_value=0, step=1, key="fol_tt")
+        _fol_yt = _fc3.number_input("YouTube", min_value=0, step=1, key="fol_yt")
+        if st.button("📌 今日のフォロワー数を記録する", type="primary", use_container_width=True, key="fol_save"):
+            with st.spinner("保存中..."):
+                from utils.sheets_helper import save_follower_snapshot
+                _ok_f = save_follower_snapshot(_fol_ig, _fol_tt, _fol_yt)
+            st.success("✅ 記録しました") if _ok_f else st.error("❌ 記録に失敗しました")
+
+        if st.button("📈 推移を表示する", use_container_width=True, key="fol_show"):
+            with st.spinner("読み込み中..."):
+                from utils.sheets_helper import get_follower_history_df
+                st.session_state["_follower_df"] = get_follower_history_df()
+        _fdf = st.session_state.get("_follower_df")
+        if _fdf is not None:
+            if _fdf.empty:
+                st.info("📭 まだ記録がありません。")
+            else:
+                st.line_chart(_fdf.set_index("日付")[["Instagram", "TikTok", "YouTube"]])
+                _latest = _fdf.iloc[-1]
+                _g1, _g2, _g3 = st.columns(3)
+                _g1.metric("Instagram", int(_latest["Instagram"]))
+                _g2.metric("TikTok", f'{int(_latest["TikTok"])} / 1000', f'あと{max(0, 1000 - int(_latest["TikTok"]))}人でShop申請')
+                _g3.metric("YouTube", int(_latest["YouTube"]))
 
 
 # ══════════════════════════════════════════════════════════════
@@ -1056,6 +1168,7 @@ with tab_post:
             ok_ig = any(r.get("buffer_posts", {}).get("instagram", {}).get("success") for r in results)
             if ok_ig:
                 st.session_state.instagram_posted = True
+                _log_post_metric("Instagram")
                 _ic = (posts or [{}])[0].get("item_code", "")
                 if _ic:
                     from utils.sheets_helper import increment_count as _inc
@@ -1094,6 +1207,7 @@ with tab_post:
             ok_yt = any(r.get("buffer_posts", {}).get("youtube", {}).get("success") for r in results_yt)
             if ok_yt:
                 st.session_state.youtube_posted = True
+                _log_post_metric("YouTube")
                 _yt_ic = (posts or [{}])[0].get("item_code", "")
                 if _yt_ic:
                     from utils.sheets_helper import increment_count as _inc_yt
@@ -1167,6 +1281,18 @@ with tab_post:
     if _tt_caption_post:
         st.caption("📋 TikTok キャプション（コピーして使用）")
         st.code(_tt_caption_post, language=None)
+
+    if st.session_state.tiktok_posted:
+        st.success("✅ TikTok 投稿記録済み")
+    else:
+        if st.button("✅ TikTokに投稿した（成果計測に記録）", use_container_width=True):
+            st.session_state.tiktok_posted = True
+            _log_post_metric("TikTok")
+            _tt_ic = (posts or [{}])[0].get("item_code", "")
+            if _tt_ic:
+                from utils.sheets_helper import increment_count as _inc_tt
+                _inc_tt(_tt_ic, "TikTok投稿数")
+            st.rerun()
 
 
 # ──────────────────────────────────────────────────────

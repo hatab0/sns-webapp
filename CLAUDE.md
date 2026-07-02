@@ -85,6 +85,8 @@ utils/
 | `buzz_history` | バズmode衣装/背景/ポーズの選択履歴（重複防止）|
 | `hashtags` | ハッシュタグ管理（現在未使用・コードに直書き）|
 | `senacchi_profile` | せなっちの基準写真URL（月齢別）|
+| `post_metrics` | 投稿ごとの成果記録（投稿時に自動で行追加、数字は週1手入力）|
+| `follower_history` | フォロワー数の推移（週1手入力、同日は上書き）|
 
 ## 開発ルール
 - バズmodeへの変更は `image_agent.py` と `instagram_agent.py` のバズmode関連のみ

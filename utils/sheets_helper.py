@@ -474,3 +474,145 @@ def get_history() -> pd.DataFrame | None:
     except Exception as e:
         print(f"Sheets読み込みエラー: {e}")
         return None
+
+
+# ══════════════════════════════════════════════════════════════
+# 成果計測（post_metrics / follower_history）
+# ══════════════════════════════════════════════════════════════
+METRICS_SHEET_NAME = "post_metrics"
+METRICS_HEADERS = [
+    "post_id", "投稿日", "媒体", "mode", "シーン", "衣装", "商品名",
+    "再生数", "いいね", "コメント", "保存", "計測日",
+]
+METRIC_VALUE_COLS = ["再生数", "いいね", "コメント", "保存"]
+
+FOLLOWER_SHEET_NAME = "follower_history"
+FOLLOWER_HEADERS = ["日付", "Instagram", "TikTok", "YouTube"]
+
+
+def _get_named_worksheet(name: str, headers: list, rows: int = 500):
+    """名前指定でシートを取得。なければヘッダー付きで自動作成。"""
+    client = _get_client()
+    if client is None:
+        return None
+    sheet_id = os.getenv("GOOGLE_SHEETS_ID", SPREADSHEET_ID)
+    spreadsheet = client.open_by_key(sheet_id)
+    try:
+        return spreadsheet.worksheet(name)
+    except Exception:
+        ws = spreadsheet.add_worksheet(title=name, rows=rows, cols=len(headers))
+        ws.update("A1", [headers])
+        return ws
+
+
+def log_post_meta(platform: str, mode: str, scene: str = "", costume: str = "", product_name: str = "") -> bool:
+    """投稿時にメタデータを1行追加する。成果の数字は後から手入力。"""
+    try:
+        ws = _get_named_worksheet(METRICS_SHEET_NAME, METRICS_HEADERS)
+        if ws is None:
+            return False
+        now = datetime.now(tz=JST)
+        post_id = now.strftime("%Y%m%d-%H%M%S-") + platform[:2].lower()
+        ws.append_row(
+            [post_id, now.strftime("%Y-%m-%d"), platform, mode,
+             scene[:80], costume[:80], product_name[:60], "", "", "", "", ""],
+            value_input_option="USER_ENTERED",
+        )
+        return True
+    except Exception as e:
+        print(f"log_post_meta error: {e}")
+        return False
+
+
+def get_post_metrics_df() -> pd.DataFrame | None:
+    """成果入力タブ用: post_metrics 全行を DataFrame で返す（新しい順）"""
+    try:
+        ws = _get_named_worksheet(METRICS_SHEET_NAME, METRICS_HEADERS)
+        if ws is None:
+            return None
+        records = ws.get_all_records()
+        if not records:
+            return pd.DataFrame(columns=METRICS_HEADERS)
+        df = pd.DataFrame(records)
+        for col in METRICS_HEADERS:
+            if col not in df.columns:
+                df[col] = ""
+        df = df[METRICS_HEADERS]
+        for col in METRIC_VALUE_COLS:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+        return df.iloc[::-1].reset_index(drop=True)
+    except Exception as e:
+        print(f"get_post_metrics_df error: {e}")
+        return None
+
+
+def save_post_metrics_df(df: pd.DataFrame) -> bool:
+    """編集済みDataFrameで post_metrics シートを書き直す。
+    数字が入った行は計測日を自動記入する。"""
+    try:
+        ws = _get_named_worksheet(METRICS_SHEET_NAME, METRICS_HEADERS)
+        if ws is None:
+            return False
+        today = datetime.now(tz=JST).strftime("%Y-%m-%d")
+
+        def _cell(v):
+            if v is None or (isinstance(v, float) and pd.isna(v)):
+                return ""
+            if isinstance(v, float) and v.is_integer():
+                return int(v)
+            return v
+
+        rows = [METRICS_HEADERS]
+        for _, r in df.iloc[::-1].iterrows():  # シート上は古い順に戻す
+            has_metric = any(str(_cell(r.get(c, ""))) != "" for c in METRIC_VALUE_COLS)
+            row = []
+            for h in METRICS_HEADERS:
+                if h == "計測日":
+                    row.append(r.get(h, "") or (today if has_metric else ""))
+                else:
+                    row.append(_cell(r.get(h, "")))
+            rows.append(row)
+        ws.clear()
+        ws.update("A1", rows, value_input_option="USER_ENTERED")
+        return True
+    except Exception as e:
+        print(f"save_post_metrics_df error: {e}")
+        return False
+
+
+def save_follower_snapshot(instagram: int, tiktok: int, youtube: int) -> bool:
+    """今日のフォロワー数を記録する（同日なら上書き）"""
+    try:
+        ws = _get_named_worksheet(FOLLOWER_SHEET_NAME, FOLLOWER_HEADERS, rows=400)
+        if ws is None:
+            return False
+        today = datetime.now(tz=JST).strftime("%Y-%m-%d")
+        row = [today, int(instagram), int(tiktok), int(youtube)]
+        dates = ws.col_values(1)
+        if today in dates:
+            ws.update(f"A{dates.index(today) + 1}", [row], value_input_option="USER_ENTERED")
+        else:
+            ws.append_row(row, value_input_option="USER_ENTERED")
+        return True
+    except Exception as e:
+        print(f"save_follower_snapshot error: {e}")
+        return False
+
+
+def get_follower_history_df() -> pd.DataFrame | None:
+    """フォロワー推移を DataFrame で返す（古い順）"""
+    try:
+        ws = _get_named_worksheet(FOLLOWER_SHEET_NAME, FOLLOWER_HEADERS, rows=400)
+        if ws is None:
+            return None
+        records = ws.get_all_records()
+        if not records:
+            return pd.DataFrame(columns=FOLLOWER_HEADERS)
+        df = pd.DataFrame(records)
+        for col in ("Instagram", "TikTok", "YouTube"):
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+        return df
+    except Exception as e:
+        print(f"get_follower_history_df error: {e}")
+        return None
